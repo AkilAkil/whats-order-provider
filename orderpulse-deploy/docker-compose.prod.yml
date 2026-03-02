@@ -1,0 +1,21 @@
+version: "3.9"
+
+# ── Production override ────────────────────────────────────────────────────────
+# Use with: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up
+# Or use your container platform's native config (Railway, Render, ECS, etc.)
+
+services:
+  api:
+    restart: always
+    deploy:
+      replicas: 2                 # Run 2 instances behind load balancer
+      update_config:
+        order: start-first        # Zero-downtime deploys: start new before stopping old
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
