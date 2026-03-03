@@ -10,6 +10,7 @@ RUN apk add --no-cache git ca-certificates tzdata
 WORKDIR /build
 RUN cd orderpulse-deploy
 # Cache dependency layer separately — only re-downloads when go.mod changes
+RUN go mod tidy
 COPY go.mod go.sum ./
 RUN go mod download
 
