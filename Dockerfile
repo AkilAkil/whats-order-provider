@@ -8,11 +8,11 @@ FROM golang:1.21 AS builder
 RUN apk add --no-cache git ca-certificates tzdata
 RUN cd orderpulse-deploy
 # Cache dependency layer separately — only re-downloads when go.mod changes
-RUN go mod tidy
+#RUN go mod tidy
 WORKDIR /build
-RUN pwd
-RUN ls
-COPY go.mod ./
+##RUN pwd
+#RUN ls
+#COPY go.mod ./
 RUN go mod download
 
 # Copy source and compile
