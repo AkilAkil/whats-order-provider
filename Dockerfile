@@ -10,7 +10,8 @@ RUN cd orderpulse-deploy
 # Cache dependency layer separately — only re-downloads when go.mod changes
 RUN go mod tidy
 WORKDIR /build
-
+RUN pwd
+RUN ls
 COPY go.mod ./
 RUN go mod download
 
