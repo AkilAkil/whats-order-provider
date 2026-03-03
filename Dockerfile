@@ -8,7 +8,7 @@ FROM golang:1.22-alpine AS builder
 RUN apk add --no-cache git ca-certificates tzdata
 
 WORKDIR /build
-
+RUN cd orderpulse-deploy
 # Cache dependency layer separately — only re-downloads when go.mod changes
 COPY go.mod go.sum ./
 RUN go mod download
