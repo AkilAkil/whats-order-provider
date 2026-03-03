@@ -6,11 +6,11 @@ FROM golang:1.21 AS builder
 
 # Install git (needed for go mod download in some modules)
 RUN apk add --no-cache git ca-certificates tzdata
-
-WORKDIR /build
 RUN cd orderpulse-deploy
 # Cache dependency layer separately — only re-downloads when go.mod changes
 RUN go mod tidy
+WORKDIR /build
+
 COPY go.mod go.sum ./
 RUN go mod download
 
