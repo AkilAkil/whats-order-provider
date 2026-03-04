@@ -157,13 +157,8 @@ func (h *OnboardingHandler) Signup(w http.ResponseWriter, r *http.Request) {
 // ─── POST /api/onboarding/whatsapp/callback (JWT required) ───────────────────
 
 type waCallbackReq struct {
-	// Code is the short-lived OAuth code returned by Meta's Embedded Signup popup.
-	// The frontend captures this in the FB.login() callback and POSTs it here immediately.
-	// It is single-use and expires within a few minutes.
-	Code string `json:"code"`
-
-	// PhoneNumber is optional. If the WABA has multiple numbers, this selects
-	// the preferred one (normalised E.164 format). Falls back to first available.
+	Code        string `json:"code"`
+	RedirectURI string `json:"redirect_uri,omitempty"`
 	PhoneNumber string `json:"phone_number,omitempty"`
 }
 
@@ -201,7 +196,7 @@ func (h *OnboardingHandler) WACallback(w http.ResponseWriter, r *http.Request) {
 	slog.Info("starting WABA onboarding pipeline",
 		"tenant_id", tenantID, "current_status", currentStatus)
 
-	result, err := h.runPipeline(r.Context(), tenantID.String(), businessName, req.Code, req.PhoneNumber)
+	result, err := h.runPipeline(r.Context(), tenantID.String(), businessName, req.Code, req.PhoneNumber, req.RedirectURI)
 	if err != nil {
 		h.setStatus(r.Context(), tenantID.String(), string(models.OnboardingFailed), err.Error())
 		writeError(w, http.StatusBadGateway,
@@ -219,7 +214,7 @@ func (h *OnboardingHandler) WACallback(w http.ResponseWriter, r *http.Request) {
 // The pipeline is idempotent — safe to re-run on retry.
 func (h *OnboardingHandler) runPipeline(
 	ctx context.Context,
-	tenantID, businessName, code, preferredNumber string,
+	tenantID, businessName, code, preferredNumber, redirectURI string,
 ) (*waCallbackResp, error) {
 
 	log := func(step, status, detail string) {
@@ -236,7 +231,7 @@ func (h *OnboardingHandler) runPipeline(
 		log("token_exchange", "success", "access token received directly from JS SDK")
 	} else {
 		var exchErr error
-		tokenResp, exchErr = whatsapp.ExchangeCodeForToken(h.appID, h.appSecret, code, "")
+		tokenResp, exchErr = whatsapp.ExchangeCodeForToken(h.appID, h.appSecret, code, redirectURI)
 		if exchErr != nil {
 			log("token_exchange", "failed", exchErr.Error())
 			return nil, fmt.Errorf("step 1 — token exchange: %w", exchErr)
@@ -267,7 +262,7 @@ func (h *OnboardingHandler) runPipeline(
 	h.db.Exec(ctx, `UPDATE tenants SET fb_user_token = $1 WHERE id = $2`, finalToken, tenantID)
 
 	// ── Step 3: Discover WhatsApp Business Accounts ───────────────────────────
-	wabas, err := whatsapp.GetUserWABAs(finalToken)
+	wabas, err := whatsapp.GetUserWABAs(finalToken, h.appID, h.appSecret)
 	if err != nil {
 		log("waba_discovery", "failed", err.Error())
 		return nil, fmt.Errorf("step 3 — WABA discovery: %w", err)
