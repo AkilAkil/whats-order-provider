@@ -205,7 +205,7 @@ var (
 	// ── Pattern 4: "2 butter chicken" or "3 plates dal" ─────────────────────
 	// Simple qty + item (no unit), or qty + unit + item
 	reQtyItem = regexp.MustCompile(
-		`(?i)(?:^|[,\n+&])\s*(\d+(?:\.\d+)?)\s+(?:(` + unitPattern + `)\s+)?([a-zA-Z][^,\n*×x\d]{2,40}?)(?=\s*[,\n+&]|$)`,
+		`(?i)(?:^|[,\n+&])\s*(\d+(?:\.\d+)?)\s+(?:(` + unitPattern + `)\s+)?([a-zA-Z][^,\n*×x\d]{2,40}?)(?:\s*[,\n+&]|$)`,
 	)
 
 	// ── Pattern 5: "item x2" or "item - 3" ───────────────────────────────────
@@ -223,7 +223,7 @@ var (
 	// ── Pattern 7: Word numbers ───────────────────────────────────────────────
 	// "two butter chicken" or "ek paneer"
 	reWordQty = regexp.MustCompile(
-		`(?i)(?:^|[,\n+&])\s*(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|ek|do|teen|char|paanch|half|dozen)\s+([a-zA-Z][^,\n+&]{2,40}?)(?=\s*[,\n+&]|$)`,
+		`(?i)(?:^|[,\n+&])\s*(one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|ek|do|teen|char|paanch|half|dozen)\s+([a-zA-Z][^,\n+&]{2,40}?)(?:\s*[,\n+&]|$)`,
 	)
 
 	// ── Pattern 8: Separator-joined lines ────────────────────────────────────
