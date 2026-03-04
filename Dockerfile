@@ -1,26 +1,25 @@
 # ════════════════════════════════════════════════════════════
-#  Stage 1 — Build
-#  Compiles a fully static binary with no external dependencies
+#  OrderPulse — Railway-compatible Dockerfile
+#  Build context is the REPO ROOT.
+#  Go source lives in orderpulse-deploy/ subdirectory.
 # ════════════════════════════════════════════════════════════
-FROM golang:1.22.1-alpine AS builder
 
-# Install git (needed for go mod download in some modules)
+# ── Stage 1: Build ───────────────────────────────────────────
+FROM golang:1.22-alpine AS builder
+
 RUN apk add --no-cache git ca-certificates tzdata
-#RUN cd orderpulse-deploy
-# Cache dependency layer separately — only re-downloads when go.mod changes
-#RUN go mod tidy
+
 WORKDIR /build
-##RUN pwd
-#RUN ls
-#COPY go.mod ./
-RUN cd orderpulse-deploy
-COPY go.mod  ./
+
+# Cache go modules separately — only re-downloads when go.mod/go.sum change.
+# Source is in orderpulse-deploy/ relative to repo root (the build context).
+COPY orderpulse-deploy/go.mod orderpulse-deploy/go.sum ./
 RUN go mod download
 
-# Copy source and compile
-COPY . .
-RUN cd orderpulse-deploy
-#RUN go mod tidy
+# Copy the full Go source
+COPY orderpulse-deploy/ .
+
+# Compile a fully static binary. CGO_ENABLED=0 ensures no libc dependency.
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build \
     -ldflags="-w -s -extldflags '-static'" \
@@ -28,24 +27,21 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     -o /orderpulse \
     ./cmd/api
 
-# ════════════════════════════════════════════════════════════
-#  Stage 2 — Runtime
-#  Scratch = zero OS, minimal attack surface, ~10MB final image
-# ════════════════════════════════════════════════════════════
-FROM scratch
+# ── Stage 2: Runtime ─────────────────────────────────────────
+# alpine instead of scratch so Railway health checks + logging work cleanly.
+# Final image is ~15MB.
+FROM alpine:3.19
 
-# TLS certificates — required for outbound HTTPS to Meta Graph API
-COPY --from=builder /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/ca-certificates.crt
+RUN apk add --no-cache ca-certificates tzdata
 
-# Timezone data — required for time zone aware queries (Asia/Kolkata in stats handler)
-COPY --from=builder /usr/share/zoneinfo /usr/share/zoneinfo
+WORKDIR /app
 
-# The compiled binary (includes embedded SQL migrations)
-COPY --from=builder /orderpulse /orderpulse
+COPY --from=builder /orderpulse /app/orderpulse
 
-# Run as non-root (uid 65534 = nobody)
-USER 65534
+# Railway injects PORT env var at runtime — our app reads it via config.go
+ENV PORT=8080
+ENV ENV=production
 
 EXPOSE 8080
 
-ENTRYPOINT ["/orderpulse"]
+ENTRYPOINT ["/app/orderpulse"]
