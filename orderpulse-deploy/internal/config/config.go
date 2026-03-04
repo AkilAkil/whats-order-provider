@@ -1,6 +1,4 @@
 // Package config loads and validates all runtime configuration from environment variables.
-// The application calls config.Load() once at startup. Any missing mandatory variable
-// causes an immediate fatal log so misconfigured deployments fail fast.
 package config
 
 import (
@@ -12,66 +10,59 @@ import (
 	"github.com/joho/godotenv"
 )
 
-// Config is the single source of truth for all runtime configuration.
-// It is populated once at startup from environment variables and then
-// passed (by pointer) into every subsystem that needs it.
 type Config struct {
-	// ── Server ──────────────────────────────────────────────────────────────
 	Port        string
-	Env         string // "development" | "production"
-	FrontendURL string // Used in CORS AllowedOrigins
+	Env         string
+	FrontendURL string
 
-	// ── Database ────────────────────────────────────────────────────────────
 	DatabaseURL string
 
-	// ── Auth ────────────────────────────────────────────────────────────────
 	JWTSecret      string
 	JWTExpiryHours int
 
-	// ── Meta / WhatsApp ─────────────────────────────────────────────────────
-	// MetaAppID and MetaAppSecret belong to YOUR application registered at
-	// developers.facebook.com. Every client connects their own WhatsApp
-	// Business Account (WABA) to your app via Embedded Signup.
-	// These never change per-client; per-client tokens live in the tenants table.
-	MetaAppID     string
-	MetaAppSecret string
-
-	// WAWebhookVerifyToken is the shared secret you set in the Meta App Dashboard
-	// under WhatsApp → Configuration → Webhook → Verify Token.
-	// It is set ONCE for your app and never changes between tenants.
+	// Meta / WhatsApp — required for WABA features but not for the server to boot.
+	// Warn on missing rather than crashing so Railway health checks can pass first.
+	MetaAppID            string
+	MetaAppSecret        string
+	MetaConfigID         string // Embedded Signup configuration ID
 	WAWebhookVerifyToken string
 
-	// ── Storage (S3-compatible) ──────────────────────────────────────────────
+	// LLM for order extraction (optional)
+	LLMAPIKey string
+
+	// Storage (optional)
 	StorageBucket    string
 	StorageRegion    string
 	StorageAccessKey string
 	StorageSecretKey string
-	StorageEndpoint  string // empty = AWS; set for Cloudflare R2, MinIO, etc.
+	StorageEndpoint  string
 }
 
-// Load reads .env (if present) then environment variables, validates all mandatory
-// fields, and returns a populated *Config. Exits the process on any missing mandatory
-// value so deployments fail fast rather than running in a broken state.
 func Load() *Config {
+	// Load .env if present (local dev). On Railway, vars come from the dashboard.
 	if err := godotenv.Load(); err != nil {
-		slog.Info("no .env file found — reading from environment", "err", err)
+		slog.Info("no .env file — reading from environment")
 	}
 
-	expiryHours := intEnv("JWT_EXPIRY_HOURS", 72)
-
 	cfg := &Config{
+		// Railway injects PORT — default 8080 as fallback
 		Port:        getEnv("PORT", "8080"),
-		Env:         getEnv("ENV", "development"),
-		FrontendURL: getEnv("FRONTEND_URL", "http://localhost:3000"),
+		Env:         getEnv("ENV", "production"),
+		FrontendURL: getEnv("FRONTEND_URL", "*"),
 
 		DatabaseURL: mustGetEnv("DATABASE_URL"),
 
 		JWTSecret:      mustGetEnv("JWT_SECRET"),
-		JWTExpiryHours: expiryHours,
+		JWTExpiryHours: intEnv("JWT_EXPIRY_HOURS", 72),
 
-		MetaAppID:            mustGetEnv("META_APP_ID"),
-		MetaAppSecret:        mustGetEnv("META_APP_SECRET"),
-		WAWebhookVerifyToken: mustGetEnv("WA_WEBHOOK_VERIFY_TOKEN"),
+		// These are needed for WhatsApp features but not to start the HTTP server.
+		// Log a warning so it's visible in Railway logs, but don't crash.
+		MetaAppID:            getEnv("META_APP_ID", ""),
+		MetaConfigID:         getEnv("META_CONFIG_ID", ""),
+		MetaAppSecret:        getEnv("META_APP_SECRET", ""),
+		WAWebhookVerifyToken: getEnv("WA_WEBHOOK_VERIFY_TOKEN", "changeme"),
+
+		LLMAPIKey: getEnv("LLM_API_KEY", ""),
 
 		StorageBucket:    getEnv("STORAGE_BUCKET", ""),
 		StorageRegion:    getEnv("STORAGE_REGION", "ap-south-1"),
@@ -84,27 +75,35 @@ func Load() *Config {
 	return cfg
 }
 
-// IsProd returns true when running in production mode.
 func (c *Config) IsProd() bool {
 	return strings.EqualFold(c.Env, "production")
 }
 
-// AllowedOrigins returns the CORS allowed origins based on environment.
 func (c *Config) AllowedOrigins() []string {
+	if c.FrontendURL == "*" {
+		return []string{"*"}
+	}
 	if c.IsProd() {
 		return []string{c.FrontendURL}
 	}
 	return []string{c.FrontendURL, "http://localhost:3000", "http://localhost:5173"}
 }
 
-// validate performs semantic validation beyond "is it set".
 func (c *Config) validate() {
 	if len(c.JWTSecret) < 32 {
 		slog.Error("JWT_SECRET must be at least 32 characters — generate with: openssl rand -hex 32")
 		os.Exit(1)
 	}
-	if c.IsProd() && c.FrontendURL == "http://localhost:3000" {
-		slog.Warn("FRONTEND_URL is still localhost in production — CORS will block your frontend")
+
+	// Warn about missing Meta config — WABA features won't work but server starts fine
+	if c.MetaAppID == "" {
+		slog.Warn("META_APP_ID not set — WhatsApp Embedded Signup will not work")
+	}
+	if c.MetaAppSecret == "" {
+		slog.Warn("META_APP_SECRET not set — WhatsApp token exchange will not work")
+	}
+	if c.WAWebhookVerifyToken == "changeme" {
+		slog.Warn("WA_WEBHOOK_VERIFY_TOKEN is using default — set a real value in Railway dashboard")
 	}
 }
 
