@@ -6,7 +6,7 @@ FROM golang:1.22.1-alpine AS builder
 
 # Install git (needed for go mod download in some modules)
 RUN apk add --no-cache git ca-certificates tzdata
-RUN cd orderpulse-deploy
+#RUN cd orderpulse-deploy
 # Cache dependency layer separately — only re-downloads when go.mod changes
 #RUN go mod tidy
 WORKDIR /build
