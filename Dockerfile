@@ -13,7 +13,7 @@ WORKDIR /build
 
 # Cache go modules separately — only re-downloads when go.mod/go.sum change.
 # Source is in orderpulse-deploy/ relative to repo root (the build context).
-COPY orderpulse-deploy/go.mod orderpulse-deploy/go.sum ./
+COPY orderpulse-deploy/go.mod  ./
 RUN go mod download
 
 # Copy the full Go source
