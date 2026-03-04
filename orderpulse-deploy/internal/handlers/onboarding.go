@@ -378,6 +378,11 @@ func (h *OnboardingHandler) runPipeline(
 func (h *OnboardingHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	tenantID := middleware.TenantIDFromCtx(r.Context())
 
+	type stepSummary struct {
+		Step      string    `json:"step"`
+		Status    string    `json:"status"`
+		CreatedAt time.Time `json:"created_at"`
+	}
 	type statusResp struct {
 		Status         models.OnboardingStatus `json:"status"`
 		WhatsappNumber *string                 `json:"whatsapp_number,omitempty"`
@@ -385,11 +390,6 @@ func (h *OnboardingHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 		ActivatedAt    *time.Time              `json:"activated_at,omitempty"`
 		Error          *string                 `json:"error,omitempty"`
 		Steps          []stepSummary           `json:"steps"`
-	}
-	type stepSummary struct {
-		Step      string    `json:"step"`
-		Status    string    `json:"status"`
-		CreatedAt time.Time `json:"created_at"`
 	}
 
 	var status models.OnboardingStatus
