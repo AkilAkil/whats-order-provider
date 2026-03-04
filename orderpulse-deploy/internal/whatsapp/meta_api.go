@@ -122,7 +122,12 @@ func GetUserWABAs(userToken, appID, appSecret string) ([]WABAInfo, error) {
 		}
 	}
 	if len(wabas) == 0 {
-		return nil, fmt.Errorf("no WABA IDs found in token scopes — ensure whatsapp_business_management permission was granted")
+		// Log all scopes found to help diagnose
+		var scopeNames []string
+		for _, s := range resp.Data.GranularScopes {
+			scopeNames = append(scopeNames, s.Scope)
+		}
+		return nil, fmt.Errorf("no WABA IDs found in token scopes. Scopes present: %v", scopeNames)
 	}
 	return wabas, nil
 }
