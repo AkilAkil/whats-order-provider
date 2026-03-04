@@ -418,20 +418,16 @@ function OnboardingScreen({ user, onDone, addToast }) {
 
   const launchFBLogin = () => {
     setPhase('popup')
-    window.FB.login(async (response) => {
+    window.FB.login((response) => {
       if (!response?.authResponse?.code) {
         setPhase('idle')
         return
       }
       setPhase('pipeline')
-      try {
-        await api.connectWABA(response.authResponse.code)
-        setPhase('done')
-        setTimeout(onDone, 2000)
-      } catch (err) {
-        setErrMsg(err.error || 'Connection failed')
-        setPhase('error')
-      }
+      // Must NOT use async here — FB SDK doesn't support async callbacks
+      api.connectWABA(response.authResponse.code)
+        .then(() => { setPhase('done'); setTimeout(onDone, 2000) })
+        .catch(err => { setErrMsg(err.error || 'Connection failed'); setPhase('error') })
     }, {
       config_id: configId,
       response_type: 'code',
