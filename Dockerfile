@@ -1,9 +1,6 @@
 # ════════════════════════════════════════════════════════════
 #  OrderPulse — Railway Dockerfile
 #  Build context = repo root. Go source is in orderpulse-deploy/
-#
-#  go.sum is generated inside the builder — you don't need to
-#  commit it to the repo (it's always regenerated fresh).
 # ════════════════════════════════════════════════════════════
 
 FROM golang:1.22-alpine AS builder
@@ -12,22 +9,21 @@ RUN apk add --no-cache git ca-certificates tzdata
 
 WORKDIR /build
 
-# Skip checksum DB — lets go resolve modules without a pre-existing go.sum
 ENV GONOSUMDB=*
 ENV GOPROXY=https://proxy.golang.org,direct
 
-# Copy only go.mod first (no go.sum needed — we generate it here)
+# Copy go.mod only — go.sum is regenerated fresh
 COPY orderpulse-deploy/go.mod ./
 
-# Download deps AND generate a fresh go.sum in one step
+# Tidy resolves deps + writes go.sum in one step
 RUN go mod tidy
 
-# Copy the full source
+# Copy full source AFTER tidy so the generated go.sum is preserved
 COPY orderpulse-deploy/ .
 
-# Build static binary
+# Build — verbose flag so Railway shows the actual compiler error if it fails
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build \
+    go build -v \
     -ldflags="-w -s -extldflags '-static'" \
     -trimpath \
     -o /orderpulse \
