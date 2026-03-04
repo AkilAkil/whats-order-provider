@@ -13,10 +13,12 @@ WORKDIR /build
 ##RUN pwd
 #RUN ls
 #COPY go.mod ./
-RUN go mod download
+
 
 # Copy source and compile
 COPY . .
+RUN cd orderpulse-deploy
+RUN go mod download
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build \
     -ldflags="-w -s -extldflags '-static'" \
