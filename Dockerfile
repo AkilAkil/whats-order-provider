@@ -13,7 +13,9 @@ WORKDIR /build
 ##RUN pwd
 #RUN ls
 #COPY go.mod ./
-
+RUN cd orderpulse-deploy
+COPY go.mod go.sum ./
+RUN go mod download
 
 # Copy source and compile
 COPY . .
