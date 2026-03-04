@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"fmt"
 	"os/signal"
 	"strings"
 	"syscall"
@@ -85,6 +86,14 @@ func main() {
 		}
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
+	})
+
+	// ── Public config — frontend fetches this on mount to get Meta App ID/Config ID
+	// No VITE_ build args needed — values come from Railway Variables at runtime
+	r.Get("/api/config", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintf(w, `{"meta_app_id":%q,"meta_config_id":%q}`,
+			cfg.MetaAppID, cfg.MetaConfigID)
 	})
 
 	// ── WhatsApp Webhook ───────────────────────────────────────────────────────
