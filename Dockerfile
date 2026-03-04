@@ -15,11 +15,13 @@ ENV GOPROXY=https://proxy.golang.org,direct
 # Copy go.mod only — go.sum is regenerated fresh
 COPY orderpulse-deploy/go.mod ./
 
-# Tidy resolves deps + writes go.sum in one step
-RUN go mod tidy
+
 
 # Copy full source AFTER tidy so the generated go.sum is preserved
 COPY orderpulse-deploy/ .
+
+# Tidy resolves deps + writes go.sum in one step
+RUN go mod tidy
 
 # Build — verbose flag so Railway shows the actual compiler error if it fails
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
