@@ -85,20 +85,46 @@ type WABAInfo struct {
 }
 
 // GetUserWABAs returns all WhatsApp Business Accounts the user granted access to
-// via Embedded Signup. Uses /me/whatsapp_business_accounts which only requires
-// whatsapp_business_management permission (not business_management).
-func GetUserWABAs(userToken string) ([]WABAInfo, error) {
-	body, err := metaGet(graphBase + "/me/whatsapp_business_accounts?fields=id,name&access_token=" + userToken)
+// via Embedded Signup. Uses debug_token to extract WABA IDs from granular_scopes —
+// this is the correct approach for Embedded Signup (no business_management needed).
+func GetUserWABAs(userToken, appID, appSecret string) ([]WABAInfo, error) {
+	// App access token = appID|appSecret (used as Authorization for debug_token)
+	appToken := appID + "|" + appSecret
+	body, err := metaGet(fmt.Sprintf(
+		"%s/debug_token?input_token=%s&access_token=%s",
+		graphBase, userToken, appToken,
+	))
 	if err != nil {
 		return nil, fmt.Errorf("fetch WABAs: %w", err)
 	}
 	var resp struct {
-		Data []WABAInfo `json:"data"`
+		Data struct {
+			GranularScopes []struct {
+				Scope     string   `json:"scope"`
+				TargetIDs []string `json:"target_ids"`
+			} `json:"granular_scopes"`
+		} `json:"data"`
 	}
 	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("parse WABAs: %w", err)
+		return nil, fmt.Errorf("parse debug_token: %w", err)
 	}
-	return resp.Data, nil
+	// Extract WABA IDs from whatsapp_business_management scope
+	seen := map[string]bool{}
+	var wabas []WABAInfo
+	for _, s := range resp.Data.GranularScopes {
+		if s.Scope == "whatsapp_business_management" {
+			for _, id := range s.TargetIDs {
+				if !seen[id] {
+					seen[id] = true
+					wabas = append(wabas, WABAInfo{ID: id, Name: id})
+				}
+			}
+		}
+	}
+	if len(wabas) == 0 {
+		return nil, fmt.Errorf("no WABA IDs found in token scopes — ensure whatsapp_business_management permission was granted")
+	}
+	return wabas, nil
 }
 
 // ─── PHONE NUMBER DISCOVERY ───────────────────────────────────────────────────
