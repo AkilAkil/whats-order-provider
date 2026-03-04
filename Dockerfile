@@ -7,7 +7,7 @@ WORKDIR /app
 
 # Install deps (cached layer)
 COPY orderpulse-deploy/frontend/package*.json ./
-RUN npm ci --silent
+RUN npm install --silent
 
 # Copy source and build
 COPY orderpulse-deploy/frontend/ .
