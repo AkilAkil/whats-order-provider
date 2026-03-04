@@ -1,29 +1,20 @@
-# ════════════════════════════════════════════════════════════
-#  OrderPulse — Railway Dockerfile
-#  Build context = repo root. Go source is in orderpulse-deploy/
-# ════════════════════════════════════════════════════════════
-
 FROM golang:1.22-alpine AS builder
 
 RUN apk add --no-cache git ca-certificates tzdata
 
 WORKDIR /build
 
+# GONOSUMDB=* — skip checksum verification
+# GOFLAGS=-mod=mod — let go build resolve and download missing modules on the fly
+# No go mod tidy needed — go build handles everything with these flags
 ENV GONOSUMDB=*
+ENV GOFLAGS=-mod=mod
 ENV GOPROXY=https://proxy.golang.org,direct
 
-# Copy go.mod only — go.sum is regenerated fresh
 COPY orderpulse-deploy/go.mod ./
-
-
-
-# Copy full source AFTER tidy so the generated go.sum is preserved
 COPY orderpulse-deploy/ .
 
-# Tidy resolves deps + writes go.sum in one step
-RUN go mod tidy
-
-# Build — verbose flag so Railway shows the actual compiler error if it fails
+# go build with -mod=mod downloads all deps automatically — no separate tidy step
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build -v \
     -ldflags="-w -s -extldflags '-static'" \
@@ -31,16 +22,11 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     -o /orderpulse \
     ./cmd/api
 
-# ── Runtime ──────────────────────────────────────────────────
 FROM alpine:3.19
-
 RUN apk add --no-cache ca-certificates tzdata
-
 WORKDIR /app
 COPY --from=builder /orderpulse /app/orderpulse
-
 ENV PORT=8080
 ENV ENV=production
 EXPOSE 8080
-
 ENTRYPOINT ["/app/orderpulse"]
