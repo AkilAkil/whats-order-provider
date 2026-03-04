@@ -5,14 +5,17 @@ FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app
 
-# Install deps (cached layer)
-COPY orderpulse-deploy/frontend/package*.json ./
+# Read from Railway environment variables (set in Variables tab, not Build Args)
+ARG VITE_META_APP_ID
+ARG VITE_META_CONFIG_ID
+ENV VITE_META_APP_ID=$VITE_META_APP_ID
+ENV VITE_META_CONFIG_ID=$VITE_META_CONFIG_ID
+
+COPY orderpulse-deploy/frontend/package.json ./
 RUN npm install --silent
 
-# Copy source and build
 COPY orderpulse-deploy/frontend/ .
 RUN npm run build
-# Output: /app/dist/
 
 # ════════════════════════════════════════════════════════════
 #  Stage 2 — Build Go binary (with frontend embedded)
@@ -30,10 +33,8 @@ ENV GOPROXY=https://proxy.golang.org,direct
 COPY orderpulse-deploy/go.mod ./
 COPY orderpulse-deploy/ .
 
-# Copy the built frontend into cmd/api/frontend/ so //go:embed picks it up
 COPY --from=frontend-builder /app/dist/ ./cmd/api/frontend/
 
-# Compile — the embed directive includes the entire frontend/dist
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build \
     -ldflags="-w -s -extldflags '-static'" \
