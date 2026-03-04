@@ -53,7 +53,7 @@ func main() {
 	inboxHandler      := handlers.NewInboxHandler(pool)
 	orderHandler      := handlers.NewOrderHandler(pool)
 	statsHandler      := handlers.NewStatsHandler(pool)
-	webhookHandler    := whatsapp.NewWebhookHandler(pool, cfg.WAWebhookVerifyToken, cfg.LLMAPIKey)
+	webhookHandler    := whatsapp.NewWebhookHandler(pool, cfg.WAWebhookVerifyToken)
 
 	// ── Router ─────────────────────────────────────────────────────────────────
 	r := chi.NewRouter()
