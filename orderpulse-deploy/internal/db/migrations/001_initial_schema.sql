@@ -98,10 +98,11 @@ CREATE TABLE IF NOT EXISTS messages (
     wa_msg_id   TEXT          UNIQUE,      -- Meta message ID; NULL for outbound
     direction   TEXT          NOT NULL CHECK (direction IN ('inbound','outbound')),
     type        TEXT          NOT NULL CHECK (type IN ('text','image','audio','document','template','sticker')),
-    body        TEXT,
-    media_url   TEXT,
-    is_tagged   BOOLEAN       NOT NULL DEFAULT FALSE,  -- Flagged as order-related
-    created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW()
+    body             TEXT,
+    media_url        TEXT,
+    is_tagged        BOOLEAN       NOT NULL DEFAULT FALSE,  -- Flagged as order-related
+    extracted_order  JSONB,        -- Auto-parsed order items from message text (see order_extractor.go)
+    created_at       TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
 
 CREATE INDEX IF NOT EXISTS idx_messages_tenant  ON messages(tenant_id);
