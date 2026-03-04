@@ -419,13 +419,14 @@ function OnboardingScreen({ user, onDone, addToast }) {
   const launchFBLogin = () => {
     setPhase('popup')
     window.FB.login((response) => {
-      if (!response?.authResponse?.code) {
+      if (!response?.authResponse?.accessToken && !response?.authResponse?.code) {
         setPhase('idle')
         return
       }
       setPhase('pipeline')
-      // Must NOT use async here — FB SDK doesn't support async callbacks
-      api.connectWABA(response.authResponse.code)
+      // Send whichever token Meta returns (accessToken or code)
+      const token = response.authResponse.accessToken || response.authResponse.code
+      api.connectWABA(token)
         .then(() => { setPhase('done'); setTimeout(onDone, 2000) })
         .catch(err => { setErrMsg(err.error || 'Connection failed'); setPhase('error') })
     }, {
