@@ -228,7 +228,8 @@ func (h *OnboardingHandler) runPipeline(
 	}
 
 	// ── Step 1: Exchange code → short-lived user access token ─────────────────
-	tokenResp, err := whatsapp.ExchangeCodeForToken(h.appID, h.appSecret, code, "")
+	// For FB JS SDK Embedded Signup, redirect_uri must be this exact value
+	tokenResp, err := whatsapp.ExchangeCodeForToken(h.appID, h.appSecret, code, "https://www.facebook.com/connect/login_success.html")
 	if err != nil {
 		log("token_exchange", "failed", err.Error())
 		return nil, fmt.Errorf("step 1 — token exchange: %w", err)
