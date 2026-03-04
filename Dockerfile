@@ -2,7 +2,7 @@
 #  Stage 1 — Build
 #  Compiles a fully static binary with no external dependencies
 # ════════════════════════════════════════════════════════════
-FROM golang:alphine AS builder
+FROM golang:1.22.1-alpine AS builder
 
 # Install git (needed for go mod download in some modules)
 RUN apk add --no-cache git ca-certificates tzdata
