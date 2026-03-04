@@ -347,18 +347,49 @@ const STEP_LABELS = {
 }
 
 function OnboardingScreen({ user, onDone, addToast }) {
-  const [phase, setPhase] = useState('idle') // idle | popup | pipeline | error | done
+  const [phase, setPhase] = useState('idle')
   const [steps, setSteps] = useState({})
   const [errMsg, setErrMsg] = useState('')
+  const [sdkReady, setSdkReady] = useState(!!window.FB)
 
-  // Load FB SDK and launch Embedded Signup
+  const appId = import.meta.env.VITE_META_APP_ID || ''
+  const configId = import.meta.env.VITE_META_CONFIG_ID || ''
+
+  // Load FB SDK on mount
+  useEffect(() => {
+    if (window.FB) { setSdkReady(true); return }
+    if (!appId) return
+    const prev = window.fbAsyncInit
+    window.fbAsyncInit = () => {
+      window.FB.init({ appId, autoLogAppEvents: true, xfbml: true, version: 'v19.0' })
+      setSdkReady(true)
+    }
+    if (!document.querySelector('script[src*="connect.facebook.net"]')) {
+      const s = document.createElement('script')
+      s.src = 'https://connect.facebook.net/en_US/sdk.js'
+      s.async = true; s.defer = true; s.crossOrigin = 'anonymous'
+      document.body.appendChild(s)
+    }
+    return () => { window.fbAsyncInit = prev }
+  }, [appId])
+
   const connectWA = () => {
-    if (!window.FB) {
-      addToast('Facebook SDK not loaded. Check META_APP_ID in your .env', 'error')
+    if (!appId) {
+      setErrMsg('VITE_META_APP_ID is not set. Add it as a Railway Variable and redeploy.')
+      setPhase('error')
+      return
+    }
+    if (!sdkReady || !window.FB) {
+      setErrMsg('Facebook SDK not loaded yet. Wait a moment and try again, or check that VITE_META_APP_ID is correct.')
+      setPhase('error')
+      return
+    }
+    if (!configId) {
+      setErrMsg('VITE_META_CONFIG_ID is not set. Add it as a Railway Variable and redeploy.')
+      setPhase('error')
       return
     }
     setPhase('popup')
-    const configId = import.meta.env.VITE_META_CONFIG_ID || ''
     window.FB.login(async (response) => {
       if (!response?.authResponse?.code) {
         setPhase('idle')
@@ -377,7 +408,7 @@ function OnboardingScreen({ user, onDone, addToast }) {
       config_id: configId,
       response_type: 'code',
       override_default_response_type: true,
-      extras: { setup:{}, featurize:{ messaging_product:'whatsapp' } },
+      extras: { setup: {}, featurize: { messaging_product: 'whatsapp' } },
     })
   }
 
@@ -465,10 +496,29 @@ function OnboardingScreen({ user, onDone, addToast }) {
               )}
 
               {(phase === 'idle' || phase === 'error') && (
-                <button className="wa-btn" onClick={connectWA}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                  {phase === 'error' ? 'Try Again' : 'Connect WhatsApp Business'}
-                </button>
+                <>
+                  <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>
+                    <span style={{ fontSize:11, padding:'3px 8px', borderRadius:4, fontWeight:600,
+                      background: appId ? '#E8F5E9' : '#FFF5F5',
+                      color: appId ? '#0A6640' : '#DC2626' }}>
+                      {appId ? '✓ App ID set' : '✗ VITE_META_APP_ID missing'}
+                    </span>
+                    <span style={{ fontSize:11, padding:'3px 8px', borderRadius:4, fontWeight:600,
+                      background: configId ? '#E8F5E9' : '#FFF5F5',
+                      color: configId ? '#0A6640' : '#DC2626' }}>
+                      {configId ? '✓ Config ID set' : '✗ VITE_META_CONFIG_ID missing'}
+                    </span>
+                    <span style={{ fontSize:11, padding:'3px 8px', borderRadius:4, fontWeight:600,
+                      background: sdkReady ? '#E8F5E9' : '#FFF8E1',
+                      color: sdkReady ? '#0A6640' : '#D97706' }}>
+                      {sdkReady ? '✓ FB SDK ready' : '⏳ FB SDK loading...'}
+                    </span>
+                  </div>
+                  <button className="wa-btn" onClick={connectWA} disabled={!appId || !configId}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                    {phase === 'error' ? 'Try Again' : 'Connect WhatsApp Business'}
+                  </button>
+                </>
               )}
             </>
           )}
@@ -848,24 +898,13 @@ export default function App() {
     setScreen('login')
   }
 
-  // Load FB SDK if META_APP_ID is set
-  useEffect(() => {
-    const appId = import.meta.env.VITE_META_APP_ID
-    if (!appId || window.FB) return
-    window.fbAsyncInit = () => {
-      window.FB.init({ appId, autoLogAppEvents:true, xfbml:true, version:'v19.0' })
-    }
-    const s = document.createElement('script')
-    s.src = 'https://connect.facebook.net/en_US/sdk.js'
-    s.async = true; s.defer = true; s.crossOrigin = 'anonymous'
-    document.body.appendChild(s)
-  }, [])
+  // FB SDK is loaded inside OnboardingScreen when needed
 
   return (
     <div className="app">
       {screen==='login'      && <LoginScreen onDone={afterAuth} onSignup={() => setScreen('signup')} />}
       {screen==='signup'     && <SignupScreen onDone={afterAuth} onLogin={() => setScreen('login')} />}
-      {screen==='onboarding' && <OnboardingScreen user={user} onDone={afterOnboarding} addToast={()=>{}} />}
+      {screen==='onboarding' && <OnboardingScreen user={user} onDone={afterOnboarding} addToast={(m,t) => console.warn('onboarding:', m)} />}
       {screen==='dashboard'  && <Dashboard user={user} onLogout={logout} />}
     </div>
   )
