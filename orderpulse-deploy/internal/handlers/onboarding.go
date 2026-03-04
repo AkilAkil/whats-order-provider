@@ -236,7 +236,9 @@ func (h *OnboardingHandler) runPipeline(
 		log("token_exchange", "success", "access token received directly from JS SDK")
 	} else {
 		var exchErr error
-		tokenResp, exchErr = whatsapp.ExchangeCodeForToken(h.appID, h.appSecret, code, "")
+		// For Embedded Signup JS SDK, redirect_uri must match the page that launched FB.login()
+		redirectURI := h.frontendURL + "/"
+		tokenResp, exchErr = whatsapp.ExchangeCodeForToken(h.appID, h.appSecret, code, redirectURI)
 		if exchErr != nil {
 			log("token_exchange", "failed", exchErr.Error())
 			return nil, fmt.Errorf("step 1 — token exchange: %w", exchErr)
