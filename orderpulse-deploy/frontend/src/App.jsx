@@ -419,20 +419,20 @@ function OnboardingScreen({ user, onDone, addToast }) {
   const launchFBLogin = () => {
     setPhase('popup')
     window.FB.login((response) => {
-      if (!response?.authResponse?.accessToken && !response?.authResponse?.code) {
+      console.log('FB.login response:', JSON.stringify(response))
+      if (response.status !== 'connected' || !response?.authResponse) {
         setPhase('idle')
         return
       }
       setPhase('pipeline')
-      // Send whichever token Meta returns (accessToken or code)
-      const token = response.authResponse.accessToken || response.authResponse.code
+      // Use accessToken directly — no server-side code exchange needed
+      const token = response.authResponse.accessToken
       api.connectWABA(token)
         .then(() => { setPhase('done'); setTimeout(onDone, 2000) })
         .catch(err => { setErrMsg(err.error || 'Connection failed'); setPhase('error') })
     }, {
       config_id: configId,
-      response_type: 'code',
-      override_default_response_type: true,
+      scope: 'whatsapp_business_management,whatsapp_business_messaging',
       extras: { setup: {}, featurize: { messaging_product: 'whatsapp' } },
     })
   }
