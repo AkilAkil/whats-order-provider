@@ -366,22 +366,32 @@ function OnboardingScreen({ user, onDone, addToast }) {
       .catch(() => {})
   }, [])
 
-  // Load FB SDK once appId is known
   const [pendingLaunch, setPendingLaunch] = useState(false)
 
+  // Load FB SDK — poll for window.FB since fbAsyncInit can miss if script loads fast
   useEffect(() => {
     if (!appId) return
-    if (window.FB) { setSdkReady(true); return }
-    window.fbAsyncInit = () => {
+    const initFB = () => {
+      if (!window.FB) return
       window.FB.init({ appId, autoLogAppEvents: true, xfbml: true, version: 'v19.0' })
       setSdkReady(true)
     }
-    if (!document.querySelector('script[src*="connect.facebook.net"]')) {
+    if (window.FB) { initFB(); return }
+    // Set fbAsyncInit before injecting script (catches normal async load)
+    window.fbAsyncInit = initFB
+    // Inject script only once
+    if (!document.getElementById('fb-sdk')) {
       const s = document.createElement('script')
+      s.id = 'fb-sdk'
       s.src = 'https://connect.facebook.net/en_US/sdk.js'
-      s.async = true; s.defer = true; s.crossOrigin = 'anonymous'
+      s.async = true
       document.body.appendChild(s)
     }
+    // Fallback: poll every 200ms in case fbAsyncInit was missed
+    const poll = setInterval(() => {
+      if (window.FB) { clearInterval(poll); initFB() }
+    }, 200)
+    return () => clearInterval(poll)
   }, [appId])
 
   // Auto-launch once SDK becomes ready (user clicked before SDK finished loading)
