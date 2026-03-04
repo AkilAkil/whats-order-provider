@@ -36,7 +36,7 @@ COPY orderpulse-deploy/ .
 COPY --from=frontend-builder /app/dist/ ./cmd/api/frontend/
 
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
-    go build \
+    go build -v\
     -ldflags="-w -s -extldflags '-static'" \
     -trimpath \
     -o /orderpulse \
