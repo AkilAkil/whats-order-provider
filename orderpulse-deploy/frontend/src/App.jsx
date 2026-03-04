@@ -425,14 +425,15 @@ function OnboardingScreen({ user, onDone, addToast }) {
         return
       }
       setPhase('pipeline')
-      // Use accessToken directly — no server-side code exchange needed
-      const token = response.authResponse.accessToken
-      api.connectWABA(token)
+      // Send token OR code + current page URL as redirect_uri
+      const token = response.authResponse.accessToken || response.authResponse.code
+      const redirectUri = window.location.origin + window.location.pathname
+      api.connectWABA(token, redirectUri)
         .then(() => { setPhase('done'); setTimeout(onDone, 2000) })
         .catch(err => { setErrMsg(err.error || 'Connection failed'); setPhase('error') })
     }, {
       config_id: configId,
-      scope: 'whatsapp_business_management,whatsapp_business_messaging',
+      scope: 'public_profile,whatsapp_business_management,whatsapp_business_messaging',
       extras: { setup: {}, featurize: { messaging_product: 'whatsapp' } },
     })
   }
