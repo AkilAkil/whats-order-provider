@@ -352,14 +352,24 @@ function OnboardingScreen({ user, onDone, addToast }) {
   const [errMsg, setErrMsg] = useState('')
   const [sdkReady, setSdkReady] = useState(!!window.FB)
 
-  const appId = import.meta.env.VITE_META_APP_ID || ''
-  const configId = import.meta.env.VITE_META_CONFIG_ID || ''
+  const [appId, setAppId] = useState(import.meta.env.VITE_META_APP_ID || '')
+  const [configId, setConfigId] = useState(import.meta.env.VITE_META_CONFIG_ID || '')
 
-  // Load FB SDK on mount
+  // Fetch Meta config from backend at runtime (no build args needed)
   useEffect(() => {
-    if (window.FB) { setSdkReady(true); return }
+    fetch('/api/config')
+      .then(r => r.json())
+      .then(data => {
+        if (data.meta_app_id) setAppId(data.meta_app_id)
+        if (data.meta_config_id) setConfigId(data.meta_config_id)
+      })
+      .catch(() => {})
+  }, [])
+
+  // Load FB SDK once appId is known
+  useEffect(() => {
     if (!appId) return
-    const prev = window.fbAsyncInit
+    if (window.FB) { setSdkReady(true); return }
     window.fbAsyncInit = () => {
       window.FB.init({ appId, autoLogAppEvents: true, xfbml: true, version: 'v19.0' })
       setSdkReady(true)
@@ -370,7 +380,6 @@ function OnboardingScreen({ user, onDone, addToast }) {
       s.async = true; s.defer = true; s.crossOrigin = 'anonymous'
       document.body.appendChild(s)
     }
-    return () => { window.fbAsyncInit = prev }
   }, [appId])
 
   const connectWA = () => {
