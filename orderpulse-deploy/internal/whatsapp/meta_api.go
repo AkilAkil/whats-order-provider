@@ -85,10 +85,10 @@ type WABAInfo struct {
 }
 
 // GetUserWABAs returns all WhatsApp Business Accounts the user granted access to
-// via Embedded Signup. Most small businesses have exactly one WABA.
-// Uses the user's access token to call /me/businesses.
+// via Embedded Signup. Uses /me/whatsapp_business_accounts which only requires
+// whatsapp_business_management permission (not business_management).
 func GetUserWABAs(userToken string) ([]WABAInfo, error) {
-	body, err := metaGet(graphBase + "/me/businesses?fields=id,name&access_token=" + userToken)
+	body, err := metaGet(graphBase + "/me/whatsapp_business_accounts?fields=id,name&access_token=" + userToken)
 	if err != nil {
 		return nil, fmt.Errorf("fetch WABAs: %w", err)
 	}
