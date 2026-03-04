@@ -228,13 +228,21 @@ func (h *OnboardingHandler) runPipeline(
 	}
 
 	// ── Step 1: Exchange code → short-lived user access token ─────────────────
-	// For FB JS SDK Embedded Signup, redirect_uri must be this exact value
-	tokenResp, err := whatsapp.ExchangeCodeForToken(h.appID, h.appSecret, code, "https://www.facebook.com/connect/login_success.html")
-	if err != nil {
-		log("token_exchange", "failed", err.Error())
-		return nil, fmt.Errorf("step 1 — token exchange: %w", err)
+	// If the JS SDK returned an access token directly (starts with "EAA"),
+	// use it as-is. Otherwise exchange the code for a token.
+	var tokenResp *whatsapp.TokenResponse
+	if strings.HasPrefix(code, "EAA") {
+		tokenResp = &whatsapp.TokenResponse{AccessToken: code}
+		log("token_exchange", "success", "access token received directly from JS SDK")
+	} else {
+		var exchErr error
+		tokenResp, exchErr = whatsapp.ExchangeCodeForToken(h.appID, h.appSecret, code, "")
+		if exchErr != nil {
+			log("token_exchange", "failed", exchErr.Error())
+			return nil, fmt.Errorf("step 1 — token exchange: %w", exchErr)
+		}
+		log("token_exchange", "success", "short-lived token obtained")
 	}
-	log("token_exchange", "success", "short-lived token obtained")
 	h.setStatus(ctx, tenantID, string(models.OnboardingTokenExchanged), "")
 
 	// ── Step 2: Extend to long-lived token (60 days) ──────────────────────────
