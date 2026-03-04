@@ -17,8 +17,8 @@ WORKDIR /build
 
 # Copy source and compile
 COPY . .
-RUN cd orderpulse-deploy
-RUN go mod tidy
+#RUN cd orderpulse-deploy
+#RUN go mod tidy
 RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 \
     go build \
     -ldflags="-w -s -extldflags '-static'" \
