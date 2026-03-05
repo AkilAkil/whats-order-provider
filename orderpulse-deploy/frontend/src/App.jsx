@@ -1470,6 +1470,311 @@ function Dashboard({ user, onLogout }) {
   )
 }
 
+// ─── LANDING PAGE ─────────────────────────────────────────────────────────────
+function LandingPage({ onLogin, onSignup }) {
+  return (
+    <div style={{ minHeight:'100vh', background:'#060E09', fontFamily:"'Plus Jakarta Sans', sans-serif", overflowX:'hidden', color:'white' }}>
+
+      {/* ── Navbar ── */}
+      <nav style={{ position:'fixed', top:0, left:0, right:0, zIndex:200, padding:'0 5vw', display:'flex', alignItems:'center', justifyContent:'space-between', height:68, background:'rgba(6,14,9,0.85)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <div style={{ width:38, height:38, background:'linear-gradient(135deg,#0A6640,#10B981)', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontWeight:900, fontSize:21, letterSpacing:-1, boxShadow:'0 0 20px rgba(16,185,129,0.4)' }}>W</div>
+          <span style={{ fontWeight:900, fontSize:17, color:'white', letterSpacing:-0.5 }}>Whats<span style={{ color:'#10B981' }}>-</span>Order</span>
+        </div>
+        <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+          <button onClick={onLogin} style={{ background:'transparent', border:'1px solid rgba(255,255,255,0.12)', fontFamily:'inherit', fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.7)', cursor:'pointer', padding:'8px 18px', borderRadius:8, transition:'all .2s' }}
+            onMouseOver={e=>{e.currentTarget.style.background='rgba(255,255,255,0.06)';e.currentTarget.style.color='white'}}
+            onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='rgba(255,255,255,0.7)'}}>
+            Log in
+          </button>
+          <button onClick={onSignup} style={{ background:'linear-gradient(135deg,#0A6640,#0D8A52)', color:'white', border:'none', borderRadius:8, padding:'9px 20px', fontFamily:'inherit', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 0 20px rgba(10,102,64,0.5)', transition:'all .2s' }}
+            onMouseOver={e=>e.currentTarget.style.boxShadow='0 0 30px rgba(16,185,129,0.6)'}
+            onMouseOut={e=>e.currentTarget.style.boxShadow='0 0 20px rgba(10,102,64,0.5)'}>
+            Get Started Free →
+          </button>
+        </div>
+      </nav>
+
+      {/* ── Hero ── */}
+      <div style={{ paddingTop:68, minHeight:'100vh', display:'flex', alignItems:'center', position:'relative', overflow:'hidden' }}>
+        {/* Background glows */}
+        <div style={{ position:'absolute', top:'10%', left:'50%', transform:'translateX(-50%)', width:700, height:700, background:'radial-gradient(circle, rgba(10,102,64,0.25) 0%, transparent 70%)', pointerEvents:'none' }} />
+        <div style={{ position:'absolute', top:'20%', right:'5%', width:300, height:300, background:'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)', pointerEvents:'none' }} />
+        <div style={{ position:'absolute', bottom:'10%', left:'5%', width:250, height:250, background:'radial-gradient(circle, rgba(10,102,64,0.1) 0%, transparent 70%)', pointerEvents:'none' }} />
+
+        {/* Grid pattern overlay */}
+        <div style={{ position:'absolute', inset:0, backgroundImage:'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize:'60px 60px', pointerEvents:'none' }} />
+
+        <div style={{ maxWidth:1100, margin:'0 auto', padding:'80px 5vw', display:'grid', gridTemplateColumns:'1fr 1fr', gap:60, alignItems:'center', width:'100%' }}>
+          {/* Left */}
+          <div>
+            <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(16,185,129,0.1)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:20, padding:'6px 14px', fontSize:12, fontWeight:600, color:'#10B981', marginBottom:28, letterSpacing:.3 }}>
+              <span style={{ width:7, height:7, background:'#10B981', borderRadius:'50%', display:'inline-block', boxShadow:'0 0 6px #10B981' }} />
+              Built for WhatsApp Business · India
+            </div>
+            <h1 style={{ fontSize:'clamp(36px,4.5vw,60px)', fontWeight:900, lineHeight:1.05, letterSpacing:-2, margin:'0 0 24px', color:'white' }}>
+              Your WhatsApp<br/>
+              <span style={{ background:'linear-gradient(90deg,#10B981,#0D8A52)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>order manager</span><br/>
+              is here.
+            </h1>
+            <p style={{ fontSize:17, color:'rgba(255,255,255,0.55)', lineHeight:1.75, margin:'0 0 36px', maxWidth:460 }}>
+              Stop copying orders from WhatsApp into notebooks. One platform to receive, track, and fulfill every order — with automatic customer updates.
+            </p>
+            <div style={{ display:'flex', gap:12, flexWrap:'wrap', marginBottom:32 }}>
+              <button onClick={onSignup} style={{ background:'linear-gradient(135deg,#0A6640,#10B981)', color:'white', border:'none', borderRadius:10, padding:'14px 28px', fontFamily:'inherit', fontSize:15, fontWeight:800, cursor:'pointer', boxShadow:'0 8px 32px rgba(10,102,64,0.5)', letterSpacing:-.3, transition:'transform .15s, box-shadow .15s' }}
+                onMouseOver={e=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 12px 40px rgba(16,185,129,0.5)'}}
+                onMouseOut={e=>{e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='0 8px 32px rgba(10,102,64,0.5)'}}>
+                Start for free →
+              </button>
+              <button onClick={onLogin} style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.7)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:10, padding:'14px 24px', fontFamily:'inherit', fontSize:15, fontWeight:600, cursor:'pointer', transition:'all .15s' }}
+                onMouseOver={e=>{e.currentTarget.style.background='rgba(255,255,255,0.08)';e.currentTarget.style.color='white'}}
+                onMouseOut={e=>{e.currentTarget.style.background='rgba(255,255,255,0.05)';e.currentTarget.style.color='rgba(255,255,255,0.7)'}}>
+                Log in
+              </button>
+            </div>
+            <div style={{ display:'flex', gap:24, color:'rgba(255,255,255,0.35)', fontSize:13 }}>
+              {['No credit card required','Free forever up to 50 orders','Cancel anytime'].map((t,i)=>(
+                <span key={i} style={{ display:'flex', alignItems:'center', gap:5 }}><span style={{ color:'#10B981' }}>✓</span>{t}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Right — mock UI card */}
+          <div style={{ position:'relative' }}>
+            <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:20, overflow:'hidden', boxShadow:'0 40px 100px rgba(0,0,0,0.6)', backdropFilter:'blur(20px)' }}>
+              {/* Mock header */}
+              <div style={{ background:'rgba(10,102,64,0.15)', borderBottom:'1px solid rgba(255,255,255,0.06)', padding:'14px 20px', display:'flex', alignItems:'center', gap:10 }}>
+                <div style={{ display:'flex', gap:6 }}>{['#FF5F57','#FFBD2E','#28C840'].map((c,i)=><div key={i} style={{ width:11,height:11,borderRadius:'50%',background:c }} />)}</div>
+                <div style={{ flex:1, background:'rgba(255,255,255,0.06)', borderRadius:6, height:22, marginLeft:8 }} />
+              </div>
+              {/* Mock order rows */}
+              <div style={{ padding:16, display:'flex', flexDirection:'column', gap:10 }}>
+                {[
+                  { name:'Priya S.', item:'Idli × 10, Sambar × 2', status:'Confirmed', color:'#10B981', amt:'₹180' },
+                  { name:'Ravi K.', item:'Chicken Biryani × 3', status:'Packed', color:'#F59E0B', amt:'₹450' },
+                  { name:'Meena T.', item:'Veg Meals × 5', status:'Delivered', color:'#6366F1', amt:'₹375' },
+                ].map((o,i)=>(
+                  <div key={i} style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:'12px 14px', display:'flex', alignItems:'center', gap:12 }}>
+                    <div style={{ width:34,height:34,borderRadius:'50%',background:`hsl(${i*80+120},50%,25%)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:800,color:'white',flexShrink:0 }}>{o.name[0]}</div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ fontWeight:700, fontSize:13, color:'white', marginBottom:2 }}>{o.name}</div>
+                      <div style={{ fontSize:11, color:'rgba(255,255,255,0.4)', whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis' }}>{o.item}</div>
+                    </div>
+                    <div style={{ textAlign:'right', flexShrink:0 }}>
+                      <div style={{ fontSize:13, fontWeight:800, color:'white', marginBottom:3 }}>{o.amt}</div>
+                      <span style={{ background:`${o.color}22`, color:o.color, fontSize:10, fontWeight:700, padding:'2px 8px', borderRadius:10 }}>{o.status}</span>
+                    </div>
+                  </div>
+                ))}
+                <div style={{ background:'linear-gradient(135deg,rgba(10,102,64,0.3),rgba(16,185,129,0.1))', border:'1px dashed rgba(16,185,129,0.3)', borderRadius:12, padding:'10px 14px', display:'flex', alignItems:'center', justifyContent:'center', gap:8, fontSize:13, color:'rgba(16,185,129,0.8)', cursor:'pointer' }}>
+                  <span style={{ fontSize:16 }}>+</span> New order from WhatsApp
+                </div>
+              </div>
+              {/* Mock stats bar */}
+              <div style={{ borderTop:'1px solid rgba(255,255,255,0.06)', padding:'12px 20px', display:'flex', justifyContent:'space-around' }}>
+                {[['12','Orders today'],['₹2,340','Revenue'],['3','Pending']].map(([v,l],i)=>(
+                  <div key={i} style={{ textAlign:'center' }}>
+                    <div style={{ fontSize:16, fontWeight:900, color: i===1?'#10B981':'white' }}>{v}</div>
+                    <div style={{ fontSize:10, color:'rgba(255,255,255,0.35)', marginTop:2 }}>{l}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            {/* Floating notification card */}
+            <div style={{ position:'absolute', bottom:-20, left:-24, background:'rgba(16,185,129,0.12)', border:'1px solid rgba(16,185,129,0.25)', borderRadius:14, padding:'10px 16px', backdropFilter:'blur(20px)', display:'flex', gap:10, alignItems:'center', boxShadow:'0 8px 32px rgba(0,0,0,0.4)' }}>
+              <div style={{ width:32,height:32,borderRadius:'50%',background:'linear-gradient(135deg,#0A6640,#10B981)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16 }}>🚀</div>
+              <div>
+                <div style={{ fontSize:12,fontWeight:700,color:'white' }}>Order dispatched!</div>
+                <div style={{ fontSize:11,color:'rgba(255,255,255,0.45)' }}>Customer notified on WhatsApp</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Scrolling business types ── */}
+      <div style={{ background:'rgba(255,255,255,0.02)', borderTop:'1px solid rgba(255,255,255,0.05)', borderBottom:'1px solid rgba(255,255,255,0.05)', padding:'16px 0', overflow:'hidden' }}>
+        <div style={{ display:'flex', gap:48, animation:'scroll 20s linear infinite', width:'max-content' }}>
+          {['🍱 Tiffin Services','🧁 Bakeries','🥬 Grocery Stores','👗 Boutiques','🍔 Cloud Kitchens','💊 Medical Shops','🌸 Flower Shops','🎂 Cake Makers','🧴 Beauty Products','🫙 Pickle & Homemade Food','🍱 Tiffin Services','🧁 Bakeries','🥬 Grocery Stores','👗 Boutiques','🍔 Cloud Kitchens','💊 Medical Shops'].map((b,i)=>(
+            <span key={i} style={{ fontSize:13, color:'rgba(255,255,255,0.35)', fontWeight:500, whiteSpace:'nowrap' }}>{b}</span>
+          ))}
+        </div>
+      </div>
+
+      {/* ── How it works ── */}
+      <div style={{ maxWidth:1000, margin:'0 auto', padding:'100px 5vw' }}>
+        <div style={{ textAlign:'center', marginBottom:64 }}>
+          <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:12 }}>How it works</div>
+          <h2 style={{ fontSize:'clamp(26px,3.5vw,42px)', fontWeight:900, color:'white', margin:0, letterSpacing:-1 }}>From WhatsApp message to fulfilled order</h2>
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:0, position:'relative' }}>
+          <div style={{ position:'absolute', top:28, left:'12.5%', right:'12.5%', height:1, background:'linear-gradient(90deg, transparent, rgba(16,185,129,0.3), transparent)', pointerEvents:'none' }} />
+          {[
+            { n:'01', icon:'📲', title:'Customer messages', desc:'They send order on WhatsApp as usual. Nothing changes for them.' },
+            { n:'02', icon:'⚡', title:'Auto-detected', desc:'Whats-Order detects order intent and pre-fills items for you.' },
+            { n:'03', icon:'📦', title:'Track & notify', desc:'Move through 6 stages. Customer gets WhatsApp updates automatically.' },
+            { n:'04', icon:'💳', title:'Collect payment', desc:'Send UPI links via WhatsApp. Mark as paid. Done.' },
+          ].map((s,i)=>(
+            <div key={i} style={{ padding:'0 20px', textAlign:'center' }}>
+              <div style={{ width:56,height:56,borderRadius:16,background:`rgba(10,102,64,${0.15+i*0.05})`,border:'1px solid rgba(16,185,129,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,margin:'0 auto 16px',position:'relative',zIndex:1 }}>
+                {s.icon}
+                <div style={{ position:'absolute', top:-8, right:-8, width:22, height:22, background:'#10B981', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:900, color:'white' }}>{s.n}</div>
+              </div>
+              <div style={{ fontWeight:800, fontSize:14, color:'white', marginBottom:8 }}>{s.title}</div>
+              <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', lineHeight:1.6 }}>{s.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Features ── */}
+      <div style={{ background:'rgba(255,255,255,0.015)', borderTop:'1px solid rgba(255,255,255,0.05)', padding:'100px 5vw' }}>
+        <div style={{ maxWidth:1000, margin:'0 auto' }}>
+          <div style={{ textAlign:'center', marginBottom:64 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:12 }}>Features</div>
+            <h2 style={{ fontSize:'clamp(26px,3.5vw,42px)', fontWeight:900, color:'white', margin:0, letterSpacing:-1 }}>Everything in one place</h2>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))', gap:16 }}>
+            {[
+              { icon:'💬', title:'Smart Inbox', desc:'All WhatsApp orders in one view. Never miss a message.' },
+              { icon:'⚡', title:'Quick Replies', desc:'Saved templates — Order Ready, Dispatched, and more.' },
+              { icon:'🛒', title:'1-Click Orders', desc:'Convert any message to a tracked order instantly.' },
+              { icon:'🔔', title:'Auto Notifications', desc:'Customers get WhatsApp updates at every stage.' },
+              { icon:'💳', title:'UPI Collection', desc:'Send payment links via WhatsApp. Track instantly.' },
+              { icon:'🖨️', title:'Invoices', desc:'Clean, professional invoices in one click.' },
+              { icon:'📊', title:'Analytics', desc:'Top items, daily revenue, order stats.' },
+              { icon:'📤', title:'Export', desc:'Download orders as CSV or Excel anytime.' },
+            ].map((f,i)=>(
+              <div key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:22, cursor:'default', transition:'all .2s' }}
+                onMouseOver={e=>{e.currentTarget.style.background='rgba(10,102,64,0.12)';e.currentTarget.style.borderColor='rgba(16,185,129,0.2)';e.currentTarget.style.transform='translateY(-3px)'}}
+                onMouseOut={e=>{e.currentTarget.style.background='rgba(255,255,255,0.03)';e.currentTarget.style.borderColor='rgba(255,255,255,0.06)';e.currentTarget.style.transform='translateY(0)'}}>
+                <div style={{ fontSize:26, marginBottom:10 }}>{f.icon}</div>
+                <div style={{ fontWeight:700, fontSize:14, color:'white', marginBottom:6 }}>{f.title}</div>
+                <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', lineHeight:1.6 }}>{f.desc}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Pricing ── */}
+      <div style={{ maxWidth:820, margin:'0 auto', padding:'100px 5vw' }}>
+        <div style={{ textAlign:'center', marginBottom:64 }}>
+          <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:12 }}>Pricing</div>
+          <h2 style={{ fontSize:'clamp(26px,3.5vw,42px)', fontWeight:900, color:'white', margin:'0 0 12px', letterSpacing:-1 }}>Simple, honest pricing</h2>
+          <p style={{ fontSize:16, color:'rgba(255,255,255,0.4)', margin:0 }}>Start free. Upgrade when your business grows.</p>
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:20 }}>
+          {/* Free */}
+          <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:24, padding:32 }}>
+            <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Free Plan</div>
+            <div style={{ fontSize:48, fontWeight:900, color:'white', lineHeight:1, marginBottom:4 }}>₹0</div>
+            <div style={{ fontSize:14, color:'rgba(255,255,255,0.3)', margin:'0 0 28px' }}>Forever free</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:32 }}>
+              {['50 orders per month','WhatsApp inbox & replies','6-stage order tracking','Quick reply templates','Invoice printing','Sales analytics'].map((f,i)=>(
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:10, fontSize:14, color:'rgba(255,255,255,0.7)' }}>
+                  <span style={{ color:'#10B981', flexShrink:0, fontWeight:700 }}>✓</span>{f}
+                </div>
+              ))}
+            </div>
+            <button onClick={onSignup} style={{ width:'100%', padding:'13px', background:'rgba(16,185,129,0.1)', color:'#10B981', border:'1px solid rgba(16,185,129,0.25)', borderRadius:12, fontFamily:'inherit', fontSize:15, fontWeight:700, cursor:'pointer', transition:'all .15s' }}
+              onMouseOver={e=>{e.currentTarget.style.background='rgba(16,185,129,0.18)'}}
+              onMouseOut={e=>{e.currentTarget.style.background='rgba(16,185,129,0.1)'}}>
+              Start for free
+            </button>
+          </div>
+          {/* Pro */}
+          <div style={{ background:'linear-gradient(145deg,rgba(10,102,64,0.4),rgba(16,185,129,0.15))', border:'1px solid rgba(16,185,129,0.3)', borderRadius:24, padding:32, position:'relative', overflow:'hidden' }}>
+            <div style={{ position:'absolute', top:0, right:0, background:'linear-gradient(135deg,#0A6640,#10B981)', padding:'6px 20px', fontSize:11, fontWeight:800, letterSpacing:.5, borderRadius:'0 24px 0 14px' }}>POPULAR</div>
+            <div style={{ position:'absolute', bottom:-60, right:-60, width:180, height:180, background:'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)', pointerEvents:'none' }} />
+            <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.5)', textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Pro Plan</div>
+            <div style={{ fontSize:48, fontWeight:900, color:'white', lineHeight:1, marginBottom:4 }}>₹299</div>
+            <div style={{ fontSize:14, color:'rgba(255,255,255,0.4)', margin:'0 0 28px' }}>per month</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:32 }}>
+              {['Unlimited orders','Everything in Free','Priority support','Early access to new features'].map((f,i)=>(
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:10, fontSize:14, color:'rgba(255,255,255,0.85)' }}>
+                  <span style={{ color:'#10B981', flexShrink:0, fontWeight:700 }}>✓</span>{f}
+                </div>
+              ))}
+            </div>
+            <button onClick={onSignup} style={{ width:'100%', padding:'13px', background:'linear-gradient(135deg,#0A6640,#10B981)', color:'white', border:'none', borderRadius:12, fontFamily:'inherit', fontSize:15, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 20px rgba(10,102,64,0.5)', transition:'all .15s' }}
+              onMouseOver={e=>{e.currentTarget.style.boxShadow='0 8px 32px rgba(16,185,129,0.5)';e.currentTarget.style.transform='translateY(-1px)'}}
+              onMouseOut={e=>{e.currentTarget.style.boxShadow='0 4px 20px rgba(10,102,64,0.5)';e.currentTarget.style.transform='translateY(0)'}}>
+              Get Pro →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── About us ── */}
+      <div style={{ background:'rgba(255,255,255,0.015)', borderTop:'1px solid rgba(255,255,255,0.05)', padding:'100px 5vw' }}>
+        <div style={{ maxWidth:760, margin:'0 auto', textAlign:'center' }}>
+          <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:12 }}>About us</div>
+          <h2 style={{ fontSize:'clamp(26px,3.5vw,42px)', fontWeight:900, color:'white', margin:'0 0 24px', letterSpacing:-1 }}>We built this because we needed it</h2>
+          <p style={{ fontSize:17, color:'rgba(255,255,255,0.5)', lineHeight:1.8, marginBottom:20 }}>
+            Millions of small businesses in India run entirely on WhatsApp. They get orders over chat, manually note them down, and forget to follow up on payments. We saw this happen every day — and decided to fix it.
+          </p>
+          <p style={{ fontSize:17, color:'rgba(255,255,255,0.5)', lineHeight:1.8, marginBottom:56 }}>
+            Whats-Order is purpose-built for these businesses — <strong style={{ color:'rgba(255,255,255,0.75)' }}>zero technical knowledge required</strong>, works with your existing WhatsApp Business number.
+          </p>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:20 }}>
+            {[['50+','Free orders/month'],['₹0','Setup cost'],['6','Order stages'],['1-click','Invoice printing']].map(([n,l],i)=>(
+              <div key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'20px 16px' }}>
+                <div style={{ fontSize:28, fontWeight:900, color:'#10B981', marginBottom:4 }}>{n}</div>
+                <div style={{ fontSize:12, color:'rgba(255,255,255,0.35)', lineHeight:1.4 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Final CTA ── */}
+      <div style={{ padding:'100px 5vw', textAlign:'center', position:'relative', overflow:'hidden' }}>
+        <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:600, height:600, background:'radial-gradient(circle, rgba(10,102,64,0.2) 0%, transparent 70%)', pointerEvents:'none' }} />
+        <div style={{ position:'relative', maxWidth:600, margin:'0 auto' }}>
+          <h2 style={{ fontSize:'clamp(28px,4vw,48px)', fontWeight:900, color:'white', margin:'0 0 16px', letterSpacing:-1.5 }}>
+            Start managing orders<br/>smarter today.
+          </h2>
+          <p style={{ fontSize:16, color:'rgba(255,255,255,0.4)', margin:'0 0 40px', lineHeight:1.7 }}>Free forever for up to 50 orders/month. No credit card. No technical setup.</p>
+          <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+            <button onClick={onSignup} style={{ background:'linear-gradient(135deg,#0A6640,#10B981)', color:'white', border:'none', borderRadius:12, padding:'15px 36px', fontFamily:'inherit', fontSize:16, fontWeight:800, cursor:'pointer', boxShadow:'0 8px 40px rgba(10,102,64,0.5)', letterSpacing:-.3, transition:'all .15s' }}
+              onMouseOver={e=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 16px 48px rgba(16,185,129,0.5)'}}
+              onMouseOut={e=>{e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='0 8px 40px rgba(10,102,64,0.5)'}}>
+              Create free account →
+            </button>
+            <button onClick={onLogin} style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.6)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:12, padding:'15px 28px', fontFamily:'inherit', fontSize:16, fontWeight:600, cursor:'pointer', transition:'all .15s' }}
+              onMouseOver={e=>{e.currentTarget.style.background='rgba(255,255,255,0.08)';e.currentTarget.style.color='white'}}
+              onMouseOut={e=>{e.currentTarget.style.background='rgba(255,255,255,0.05)';e.currentTarget.style.color='rgba(255,255,255,0.6)'}}>
+              I already have an account
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Footer ── */}
+      <div style={{ borderTop:'1px solid rgba(255,255,255,0.06)', padding:'24px 5vw', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <div style={{ width:30, height:30, background:'linear-gradient(135deg,#0A6640,#10B981)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontWeight:900, fontSize:15 }}>W</div>
+          <span style={{ fontWeight:800, color:'white', fontSize:14 }}>Whats<span style={{ color:'#10B981' }}>-</span>Order</span>
+        </div>
+        <div style={{ fontSize:12, color:'rgba(255,255,255,0.2)' }}>© 2026 Whats-Order. All rights reserved.</div>
+        <div style={{ display:'flex', gap:20 }}>
+          <button onClick={onLogin} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.3)', fontFamily:'inherit', fontSize:12, cursor:'pointer', transition:'color .15s' }}
+            onMouseOver={e=>e.currentTarget.style.color='white'} onMouseOut={e=>e.currentTarget.style.color='rgba(255,255,255,0.3)'}>Log In</button>
+          <button onClick={onSignup} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.3)', fontFamily:'inherit', fontSize:12, cursor:'pointer', transition:'color .15s' }}
+            onMouseOver={e=>e.currentTarget.style.color='white'} onMouseOut={e=>e.currentTarget.style.color='rgba(255,255,255,0.3)'}>Sign Up</button>
+        </div>
+      </div>
+
+      <style>{`
+        @keyframes scroll { from { transform: translateX(0) } to { transform: translateX(-50%) } }
+        @keyframes pulse { 0%,100% { opacity:1; box-shadow:0 0 6px #10B981 } 50% { opacity:.5; box-shadow:0 0 12px #10B981 } }
+      `}</style>
+    </div>
+  )
+}
+
+
 // ─── ABOUT PAGE ───────────────────────────────────────────────────────────────
 function AboutPage({ onBack }) {
   return (
@@ -1642,7 +1947,7 @@ function ForgotPasswordScreen({ onBack }) {
 
   return (
     <div className="auth-screen"><div className="auth-bg" />
-      <div className="auth-card">
+      <div className="auth-card" style={{ position:"relative" }}>
         <div className="logo">
           <div className="logo-icon" style={{ background:"#0A6640", borderRadius:10, color:"white", fontWeight:900, fontSize:22, width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center" }}>W</div>
           <div className="logo-text">Whats-Order</div>
@@ -1704,7 +2009,7 @@ function ResetPasswordScreen({ token, onDone }) {
 
   return (
     <div className="auth-screen"><div className="auth-bg" />
-      <div className="auth-card">
+      <div className="auth-card" style={{ position:"relative" }}>
         <div className="logo">
           <div className="logo-icon" style={{ background:"#0A6640", borderRadius:10, color:"white", fontWeight:900, fontSize:22, width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center" }}>W</div>
           <div className="logo-text">Whats-Order</div>
@@ -1738,7 +2043,7 @@ function ResetPasswordScreen({ token, onDone }) {
 }
 
 // ─── AUTH SCREENS ─────────────────────────────────────────────────────────────
-function LoginScreen({ onDone, onSignup, onForgot, onAbout }) {
+function LoginScreen({ onDone, onSignup, onForgot, onAbout, onBack }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -1752,7 +2057,7 @@ function LoginScreen({ onDone, onSignup, onForgot, onAbout }) {
   }
   return (
     <div className="auth-screen"><div className="auth-bg" />
-      <div className="auth-card">
+      <div className="auth-card" style={{ position:"relative" }}>
         <div className="logo"><div className="logo-icon" style={{ background:"#0A6640", borderRadius:10, color:"white", fontWeight:900, fontSize:22, width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center" }}>W</div><div className="logo-text">Whats-Order</div></div>
         <div className="auth-title">Welcome back</div>
         <div className="auth-sub">Log in to manage your WhatsApp orders</div>
@@ -1768,7 +2073,7 @@ function LoginScreen({ onDone, onSignup, onForgot, onAbout }) {
   )
 }
 
-function SignupScreen({ onDone, onLogin }) {
+function SignupScreen({ onDone, onLogin, onBack }) {
   const [form, setForm] = useState({ business:'', name:'', email:'', password:'' })
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
@@ -1782,7 +2087,8 @@ function SignupScreen({ onDone, onLogin }) {
   }
   return (
     <div className="auth-screen"><div className="auth-bg" />
-      <div className="auth-card">
+      <div className="auth-card" style={{ position:"relative" }}>
+        {onBack && <button onClick={onBack} style={{ position:'absolute', top:20, left:20, background:'none', border:'none', cursor:'pointer', color:'#9CA3AF', fontSize:13, fontFamily:'var(--f)', display:'flex', alignItems:'center', gap:4 }}>← Back</button>}
         <div className="logo"><div className="logo-icon" style={{ background:"#0A6640", borderRadius:10, color:"white", fontWeight:900, fontSize:22, width:44, height:44, display:"flex", alignItems:"center", justifyContent:"center" }}>W</div><div className="logo-text">Whats-Order</div></div>
         <div className="auth-title">Create your account</div>
         <div className="auth-sub">Manage WhatsApp orders from one dashboard. Free to start.</div>
@@ -1806,7 +2112,8 @@ export default function App() {
   const initialScreen = () => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('token')) return 'reset-password'
-    return api.isLoggedIn() ? 'dashboard' : 'login'
+    if (api.isLoggedIn()) return 'dashboard'
+    return 'landing'
   }
 
   const [screen, setScreen] = useState(initialScreen)
@@ -1837,10 +2144,11 @@ export default function App() {
 
   return (
     <div className="app">
-      {screen==='about'        && <AboutPage onBack={() => setScreen('login')} />}
-      {screen==='login'          && <LoginScreen onDone={afterAuth} onSignup={() => setScreen('signup')} onForgot={() => setScreen('forgot')} onAbout={() => setScreen('about')} />}
-      {screen==='signup'         && <SignupScreen onDone={afterAuth} onLogin={() => setScreen('login')} />}
-      {screen==='forgot'         && <ForgotPasswordScreen onBack={() => setScreen('login')} />}
+      {screen==='landing'       && <LandingPage onLogin={() => setScreen('login')} onSignup={() => setScreen('signup')} />}
+      {screen==='about'         && <AboutPage onBack={() => setScreen('landing')} />}
+      {screen==='login'          && <LoginScreen onDone={afterAuth} onSignup={() => setScreen('signup')} onForgot={() => setScreen('forgot')} onAbout={() => setScreen('about')} onBack={() => setScreen('landing')} />}
+      {screen==='signup'         && <SignupScreen onDone={afterAuth} onLogin={() => setScreen('login')} onBack={() => setScreen('landing')} />}
+      {screen==='forgot'         && <ForgotPasswordScreen onBack={() => setScreen('landing')} />}
       {screen==='reset-password' && <ResetPasswordScreen token={resetToken} onDone={goLogin} />}
       {screen==='onboarding'     && <OnboardingScreen user={user} onDone={afterOnboarding} addToast={(m,t) => console.warn('onboarding:', m)} />}
       {screen==='dashboard'      && <Dashboard user={user} onLogout={logout} />}
