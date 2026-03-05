@@ -828,14 +828,99 @@ function OrdersView({ addToast }) {
 
   if (loading) return <div style={{ flex:1 }}><Spinner lg /></div>
 
+  const [exportOpen, setExportOpen] = useState(false)
+
+  const fmtExportDate = d => d ? new Date(d).toLocaleString('en-IN') : ''
+
+  const exportCSV = () => {
+    const rows = [
+      ['Order No','Customer','Phone','Items','Total (₹)','Status','Payment','Date']
+    ]
+    orders.forEach(o => {
+      rows.push([
+        o.order_number,
+        o.contact?.name || '',
+        o.contact?.wa_number || '',
+        (o.items||[]).map(i => `${i.name} x${i.qty}${i.unit?' '+i.unit:''}`).join(' | '),
+        o.total_amount || 0,
+        o.status,
+        o.payment_status,
+        fmtExportDate(o.created_at)
+      ])
+    })
+    const csv = rows.map(r => r.map(v => `"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url
+    a.download = `orders-${new Date().toISOString().slice(0,10)}.csv`
+    a.click(); URL.revokeObjectURL(url)
+    setExportOpen(false)
+    addToast('Orders exported as CSV', 'success')
+  }
+
+  const exportExcel = () => {
+    // Build a simple HTML table that Excel can open
+    const rows = orders.map(o => `
+      <tr>
+        <td>${o.order_number}</td>
+        <td>${o.contact?.name || ''}</td>
+        <td>${o.contact?.wa_number || ''}</td>
+        <td>${(o.items||[]).map(i => `${i.name} x${i.qty}${i.unit?' '+i.unit:''}`).join(', ')}</td>
+        <td>${o.total_amount || 0}</td>
+        <td>${o.status}</td>
+        <td>${o.payment_status}</td>
+        <td>${fmtExportDate(o.created_at)}</td>
+      </tr>`).join('')
+    const html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel">
+      <head><meta charset="UTF-8">
+      <style>td,th{border:1px solid #ccc;padding:6px 10px;font-family:Arial;}th{background:#0A6640;color:white;font-weight:bold;}</style>
+      </head><body><table>
+      <tr><th>Order No</th><th>Customer</th><th>Phone</th><th>Items</th><th>Total (₹)</th><th>Status</th><th>Payment</th><th>Date</th></tr>
+      ${rows}</table></body></html>`
+    const blob = new Blob([html], { type: 'application/vnd.ms-excel;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a'); a.href = url
+    a.download = `orders-${new Date().toISOString().slice(0,10)}.xls`
+    a.click(); URL.revokeObjectURL(url)
+    setExportOpen(false)
+    addToast('Orders exported as Excel', 'success')
+  }
+
   return (
     <div className="ord-view">
       <div className="ord-hdr">
         <div className="ord-title">Orders</div>
-        <div style={{ display:'flex', gap:8 }}>
+        <div style={{ display:'flex', gap:8, alignItems:'center' }}>
           {[['all','All'],['new','New'],['active','Active'],['delivered','Delivered']].map(([k,l]) => (
             <button key={k} onClick={() => setFilter(k)} style={{ padding:'7px 16px', borderRadius:8, border:`1.5px solid ${filter===k?'#0A6640':'#E4EDE6'}`, background:filter===k?'#0A6640':'white', color:filter===k?'white':'#1A2E22', fontFamily:'var(--f)', fontSize:13, fontWeight:600, cursor:'pointer' }}>{l}</button>
           ))}
+          {/* Export dropdown */}
+          <div style={{ position:'relative' }}>
+            <button
+              onClick={() => setExportOpen(o => !o)}
+              disabled={orders.length === 0}
+              style={{ padding:'7px 14px', borderRadius:8, border:'1.5px solid #E4EDE6', background:'white', color:'#1A2E22', fontFamily:'var(--f)', fontSize:13, fontWeight:600, cursor:orders.length?'pointer':'not-allowed', display:'flex', alignItems:'center', gap:6, opacity:orders.length?1:0.5 }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Export
+            </button>
+            {exportOpen && (
+              <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, background:'white', border:'1.5px solid #E4EDE6', borderRadius:10, boxShadow:'0 8px 24px rgba(0,0,0,0.12)', zIndex:100, minWidth:160, overflow:'hidden' }}
+                onMouseLeave={() => setExportOpen(false)}>
+                <button onClick={exportCSV} style={{ width:'100%', padding:'11px 16px', border:'none', background:'none', fontFamily:'var(--f)', fontSize:13, fontWeight:600, color:'#1A2E22', cursor:'pointer', textAlign:'left', display:'flex', alignItems:'center', gap:10 }}
+                  onMouseOver={e=>e.currentTarget.style.background='#F0FAF5'} onMouseOut={e=>e.currentTarget.style.background='none'}>
+                  <span style={{ fontSize:16 }}>📄</span> Export as CSV
+                </button>
+                <div style={{ height:1, background:'#E4EDE6' }} />
+                <button onClick={exportExcel} style={{ width:'100%', padding:'11px 16px', border:'none', background:'none', fontFamily:'var(--f)', fontSize:13, fontWeight:600, color:'#1A2E22', cursor:'pointer', textAlign:'left', display:'flex', alignItems:'center', gap:10 }}
+                  onMouseOver={e=>e.currentTarget.style.background='#F0FAF5'} onMouseOut={e=>e.currentTarget.style.background='none'}>
+                  <span style={{ fontSize:16 }}>📊</span> Export as Excel
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       <div className="stats-row">
