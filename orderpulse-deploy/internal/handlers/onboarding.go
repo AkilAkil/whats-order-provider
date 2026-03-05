@@ -157,9 +157,11 @@ func (h *OnboardingHandler) Signup(w http.ResponseWriter, r *http.Request) {
 // ─── POST /api/onboarding/whatsapp/callback (JWT required) ───────────────────
 
 type waCallbackReq struct {
-	Code        string `json:"code"`
-	RedirectURI string `json:"redirect_uri,omitempty"`
-	PhoneNumber string `json:"phone_number,omitempty"`
+	Code          string `json:"code"`
+	RedirectURI   string `json:"redirect_uri,omitempty"`
+	PhoneNumber   string `json:"phone_number,omitempty"`
+	WabaID        string `json:"waba_id,omitempty"`        // From FB.login sessionInfo
+	PhoneNumberID string `json:"phone_number_id,omitempty"` // From FB.login sessionInfo
 }
 
 type waCallbackResp struct {
@@ -196,7 +198,7 @@ func (h *OnboardingHandler) WACallback(w http.ResponseWriter, r *http.Request) {
 	slog.Info("starting WABA onboarding pipeline",
 		"tenant_id", tenantID, "current_status", currentStatus)
 
-	result, err := h.runPipeline(r.Context(), tenantID.String(), businessName, req.Code, req.PhoneNumber, req.RedirectURI)
+	result, err := h.runPipeline(r.Context(), tenantID.String(), businessName, req.Code, req.PhoneNumber, req.RedirectURI, req.WabaID, req.PhoneNumberID)
 	if err != nil {
 		h.setStatus(r.Context(), tenantID.String(), string(models.OnboardingFailed), err.Error())
 		writeError(w, http.StatusBadGateway,
@@ -214,7 +216,7 @@ func (h *OnboardingHandler) WACallback(w http.ResponseWriter, r *http.Request) {
 // The pipeline is idempotent — safe to re-run on retry.
 func (h *OnboardingHandler) runPipeline(
 	ctx context.Context,
-	tenantID, businessName, code, preferredNumber, redirectURI string,
+	tenantID, businessName, code, preferredNumber, redirectURI, sessionWabaID, sessionPhoneID string,
 ) (*waCallbackResp, error) {
 
 	log := func(step, status, detail string) {
@@ -262,58 +264,79 @@ func (h *OnboardingHandler) runPipeline(
 	h.db.Exec(ctx, `UPDATE tenants SET fb_user_token = $1 WHERE id = $2`, finalToken, tenantID)
 
 	// ── Step 3: Discover WhatsApp Business Accounts ───────────────────────────
-	wabas, err := whatsapp.GetUserWABAs(finalToken, h.appID, h.appSecret)
-	if err != nil {
-		log("waba_discovery", "failed", err.Error())
-		return nil, fmt.Errorf("step 3 — WABA discovery: %w", err)
+	// If sessionInfo from FB.login provided waba_id directly, use it.
+	// Otherwise fall back to debug_token discovery.
+	var waba whatsapp.WABAInfo
+	if sessionWabaID != "" {
+		waba = whatsapp.WABAInfo{ID: sessionWabaID, Name: businessName}
+		log("waba_discovery", "success", fmt.Sprintf(`{"waba_id":%q,"source":"session_info"}`, waba.ID))
+	} else {
+		wabas, err := whatsapp.GetUserWABAs(finalToken, h.appID, h.appSecret)
+		if err != nil {
+			log("waba_discovery", "failed", err.Error())
+			return nil, fmt.Errorf("step 3 — WABA discovery: %w", err)
+		}
+		if len(wabas) == 0 {
+			msg := "no WhatsApp Business Account found — ensure you selected the correct Facebook account and granted all permissions during Embedded Signup"
+			log("waba_discovery", "failed", msg)
+			return nil, fmt.Errorf("step 3 — %s", msg)
+		}
+		waba = wabas[0]
+		log("waba_discovery", "success", fmt.Sprintf(`{"waba_id":%q,"name":%q}`, waba.ID, waba.Name))
 	}
-	if len(wabas) == 0 {
-		msg := "no WhatsApp Business Account found — ensure you selected the correct Facebook account and granted all permissions during Embedded Signup"
-		log("waba_discovery", "failed", msg)
-		return nil, fmt.Errorf("step 3 — %s", msg)
-	}
-
-	// Use first WABA for MVP.
-	// TODO: for businesses with multiple WABAs, present a selection UI.
-	waba := wabas[0]
-	log("waba_discovery", "success", fmt.Sprintf(`{"waba_id":%q,"name":%q}`, waba.ID, waba.Name))
 
 	// ── Step 4: Fetch phone numbers on this WABA ──────────────────────────────
-	phones, err := whatsapp.GetWABAPhoneNumbers(waba.ID, finalToken)
-	if err != nil {
-		log("phone_fetch", "failed", err.Error())
-		return nil, fmt.Errorf("step 4 — phone number fetch: %w", err)
-	}
-	if len(phones) == 0 {
-		msg := "no phone numbers found on this WhatsApp Business Account — ensure at least one number is registered"
-		log("phone_fetch", "failed", msg)
-		return nil, fmt.Errorf("step 4 — %s", msg)
-	}
-
-	// Select the phone: prefer the one matching preferredNumber, else take first.
-	// Validate the phone status — warn if restricted/flagged but continue.
-	selected := phones[0]
-	if preferredNumber != "" {
-		norm := normaliseWANumber(preferredNumber)
-		for _, p := range phones {
-			if normaliseWANumber(p.DisplayPhoneNumber) == norm {
-				selected = p
-				break
+	var selected whatsapp.PhoneNumberInfo
+	if sessionPhoneID != "" {
+		// sessionInfo gave us the phone_number_id directly — look it up
+		selected = whatsapp.PhoneNumberInfo{ID: sessionPhoneID}
+		// Fetch number details to get display_phone_number
+		phones, err := whatsapp.GetWABAPhoneNumbers(waba.ID, finalToken)
+		if err == nil {
+			for _, p := range phones {
+				if p.ID == sessionPhoneID {
+					selected = p
+					break
+				}
 			}
 		}
+		if selected.DisplayPhoneNumber == "" && len(phones) > 0 {
+			selected = phones[0]
+		}
+		log("phone_fetch", "success", fmt.Sprintf(`{"phone_id":%q,"source":"session_info"}`, selected.ID))
+	} else {
+		phones, err := whatsapp.GetWABAPhoneNumbers(waba.ID, finalToken)
+		if err != nil {
+			log("phone_fetch", "failed", err.Error())
+			return nil, fmt.Errorf("step 4 — phone number fetch: %w", err)
+		}
+		if len(phones) == 0 {
+			msg := "no phone numbers found on this WhatsApp Business Account — ensure at least one number is registered"
+			log("phone_fetch", "failed", msg)
+			return nil, fmt.Errorf("step 4 — %s", msg)
+		}
+		selected = phones[0]
+		if preferredNumber != "" {
+			norm := normaliseWANumber(preferredNumber)
+			for _, p := range phones {
+				if normaliseWANumber(p.DisplayPhoneNumber) == norm {
+					selected = p
+					break
+				}
+			}
+		}
+		log("phone_fetch", "success",
+			fmt.Sprintf(`{"phone_id":%q,"number":%q,"status":%q}`,
+				selected.ID, selected.DisplayPhoneNumber, selected.Status))
 	}
 
-	if selected.Status != "CONNECTED" {
+	if selected.Status != "" && selected.Status != "CONNECTED" {
 		slog.Warn("phone number not in CONNECTED state",
 			"status", selected.Status, "number", selected.DisplayPhoneNumber,
-			"tenant", tenantID,
-			"hint", "The number may have quality issues. Check Meta Business Manager.")
+			"tenant", tenantID)
 	}
 
 	normalizedNumber := normaliseWANumber(selected.DisplayPhoneNumber)
-	log("phone_fetch", "success",
-		fmt.Sprintf(`{"phone_id":%q,"number":%q,"status":%q}`,
-			selected.ID, normalizedNumber, selected.Status))
 	h.setStatus(ctx, tenantID, string(models.OnboardingPhoneRegistered), "")
 
 	// ── Step 5: Subscribe our app to this WABA's webhook events ───────────────
