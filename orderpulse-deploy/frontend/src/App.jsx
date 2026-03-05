@@ -475,27 +475,52 @@ function OnboardingScreen({ user, onDone, addToast }) {
 
   const launchFBLogin = () => {
     setPhase('popup')
+    // waba_id and phone_number_id come via postMessage from the popup,
+    // NOT from authResponse. Must be captured before FB.login() is called.
+    let wabaId = ''
+    let phoneNumberId = ''
+    const sessionInfoListener = (event) => {
+      if (event.origin !== 'https://www.facebook.com') return
+      try {
+        const data = JSON.parse(event.data)
+        console.log('WA Embedded Signup event:', JSON.stringify(data))
+        if (data.type === 'WA_EMBEDDED_SIGNUP') {
+          if (data.event === 'FINISH' || data.event === 'FINISH_ONLY_WABA') {
+            wabaId = data.data?.waba_id || ''
+            phoneNumberId = data.data?.phone_number_id || ''
+            console.log('Got WABA ID:', wabaId, 'Phone ID:', phoneNumberId)
+          }
+        }
+      } catch {}
+    }
+    window.addEventListener('message', sessionInfoListener)
+
     window.FB.login((response) => {
+      window.removeEventListener('message', sessionInfoListener)
       console.log('FB.login response:', JSON.stringify(response))
       if (response.status !== 'connected' || !response?.authResponse) {
         setPhase('idle')
         return
       }
       setPhase('pipeline')
-      const token = response.authResponse.accessToken || response.authResponse.code
-      const redirectUri = window.location.origin + window.location.pathname
-      // Embedded Signup returns waba_id and phone_number_id in sessionInfo
-      const sessionInfo = response.authResponse?.sessionInfo || {}
-      const wabaId = sessionInfo.waba_id || ''
-      const phoneNumberId = sessionInfo.phone_number_id || ''
-      console.log('sessionInfo:', JSON.stringify(sessionInfo))
+      const code = response.authResponse.code
+      const accessToken = response.authResponse.accessToken
+      // For code flow, redirect_uri must be facebook's own success URL
+      const redirectUri = code ? 'https://www.facebook.com/connect/login_success.html' : ''
+      const token = code || accessToken
+      console.log('wabaId:', wabaId, 'phoneNumberId:', phoneNumberId)
       api.connectWABA(token, redirectUri, wabaId, phoneNumberId)
         .then(() => { setPhase('done'); setTimeout(onDone, 2000) })
         .catch(err => { setErrMsg(err.error || 'Connection failed'); setPhase('error') })
     }, {
       config_id: configId,
-      scope: 'public_profile,whatsapp_business_management,whatsapp_business_messaging',
-      extras: { setup: {}, featurize: { messaging_product: 'whatsapp' } },
+      response_type: 'code',
+      override_default_response_type: true,
+      extras: {
+        setup: {},
+        sessionInfoVersion: 3,
+        featureType: 'whatsapp_embedded_signup',
+      },
     })
   }
 
