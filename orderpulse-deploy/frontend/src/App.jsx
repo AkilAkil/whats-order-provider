@@ -703,6 +703,16 @@ function InboxView({ addToast }) {
   const [loading, setLoading] = useState(true)
   const [createModal, setCreateModal] = useState(null)
   const [hoveredMsg, setHoveredMsg] = useState(null)
+  const [search, setSearch] = useState('')
+  const [showTemplates, setShowTemplates] = useState(false)
+  const [templates, setTemplates] = useState([
+    { id:1, label:'Order Ready', text:'Your order is ready for pickup! 🎉' },
+    { id:2, label:'Out for Delivery', text:'Your order is out for delivery 🚚 Will reach you shortly!' },
+    { id:3, label:'Order Confirmed', text:'Your order has been confirmed ✅ We will start preparing it now.' },
+    { id:4, label:'Payment Reminder', text:'Friendly reminder: Payment is pending for your order. Please complete payment at your earliest convenience.' },
+    { id:5, label:'Thank You', text:'Thank you for your order! 🙏 We appreciate your business.' },
+  ])
+  const [editingTemplates, setEditingTemplates] = useState(false)
   const chatEnd = useRef(null)
 
   const loadInbox = useCallback(async () => {
@@ -759,13 +769,30 @@ function InboxView({ addToast }) {
     <>
       <div className="inbox-p">
         <div className="ph"><div className="ph-t">Inbox</div><div className="ph-s">{threads.length} conversations</div></div>
+        <div style={{ padding:'8px 12px', borderBottom:'1px solid #E4EDE6' }}>
+          <div style={{ position:'relative' }}>
+            <svg style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'#9CA3AF' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input
+              value={search} onChange={e => setSearch(e.target.value)}
+              placeholder="Search contacts or messages..."
+              style={{ width:'100%', padding:'7px 10px 7px 30px', borderRadius:8, border:'1.5px solid #E4EDE6', fontFamily:'var(--f)', fontSize:13, color:'#1A2E22', outline:'none', boxSizing:'border-box', background:'#FAFAF7' }}
+            />
+            {search && <button onClick={() => setSearch('')} style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#9CA3AF', fontSize:16, padding:0 }}>×</button>}
+          </div>
+        </div>
         <div className="threads">
           {threads.length === 0 && (
             <div style={{ padding:24, textAlign:'center', color:'#6B7F72', fontSize:13 }}>
               No messages yet. Waiting for customers to WhatsApp you...
             </div>
           )}
-          {threads.map(t => {
+          {threads.filter(t => {
+            if (!search.trim()) return true
+            const q = search.toLowerCase()
+            return (t.contact?.name || '').toLowerCase().includes(q) ||
+                   (t.contact?.wa_number || '').includes(q) ||
+                   (t.last_message?.body || '').toLowerCase().includes(q)
+          }).map(t => {
             const a = avatarFor(t.contact?.name || t.contact?.wa_number)
             const intent = intentOf(t.last_message?.body)
             return (
@@ -831,7 +858,33 @@ function InboxView({ addToast }) {
               ))}
               <div ref={chatEnd} />
             </div>
-            <div className="cinput-bar">
+            {/* Quick Reply Templates */}
+            {showTemplates && (
+              <div style={{ background:'white', borderTop:'1px solid #E4EDE6', padding:'10px 12px', maxHeight:200, overflowY:'auto' }}>
+                <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:8 }}>
+                  <span style={{ fontSize:12, fontWeight:700, color:'#6B7F72', textTransform:'uppercase', letterSpacing:0.5 }}>Quick Replies</span>
+                  <button onClick={() => setShowTemplates(false)} style={{ background:'none', border:'none', cursor:'pointer', color:'#9CA3AF', fontSize:16, padding:0 }}>×</button>
+                </div>
+                <div style={{ display:'flex', flexDirection:'column', gap:4 }}>
+                  {templates.map(t => (
+                    <button key={t.id} onClick={() => { setReply(t.text); setShowTemplates(false) }}
+                      style={{ textAlign:'left', padding:'8px 12px', borderRadius:8, border:'1.5px solid #E4EDE6', background:'#FAFAF7', cursor:'pointer', fontFamily:'var(--f)', fontSize:13, color:'#1A2E22', transition:'all .15s' }}
+                      onMouseOver={e => { e.currentTarget.style.background='#E8F5E9'; e.currentTarget.style.borderColor='#0A6640' }}
+                      onMouseOut={e => { e.currentTarget.style.background='#FAFAF7'; e.currentTarget.style.borderColor='#E4EDE6' }}
+                    >
+                      <div style={{ fontWeight:600, fontSize:12, color:'#0A6640', marginBottom:2 }}>{t.label}</div>
+                      <div style={{ color:'#6B7F72', fontSize:12 }}>{t.text}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            <div className="cinput-bar" style={{ alignItems:'flex-end' }}>
+              <button
+                onClick={() => setShowTemplates(v => !v)}
+                title="Quick replies"
+                style={{ background:'none', border:'none', cursor:'pointer', padding:'8px 6px', color: showTemplates ? '#0A6640' : '#9CA3AF', fontSize:18, flexShrink:0 }}
+              >⚡</button>
               <textarea className="cinput" rows={1} placeholder={`Reply to ${contact?.name || contact?.wa_number}...`} value={reply} onChange={e => setReply(e.target.value)} onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send() } }} />
               <button className="sbtn" onClick={send} disabled={sending}>{sending ? <Spinner /> : '▶'}</button>
             </div>
@@ -844,6 +897,139 @@ function InboxView({ addToast }) {
   )
 }
 
+// ─── PRINT INVOICE MODAL ──────────────────────────────────────────────────────
+function PrintInvoiceModal({ order, onClose }) {
+  const printRef = useRef()
+  const print = () => {
+    const w = window.open('', '_blank')
+    w.document.write(`
+      <html><head><title>Invoice ${order.order_number}</title>
+      <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body { font-family: Arial, sans-serif; color: #111; padding: 40px; }
+        .header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:32px; padding-bottom:20px; border-bottom:2px solid #0A6640; }
+        .brand { font-size:22px; font-weight:800; color:#0A6640; }
+        .brand-sub { font-size:11px; color:#6B7F72; margin-top:2px; }
+        .inv-title { font-size:13px; color:#6B7F72; text-align:right; }
+        .inv-num { font-size:20px; font-weight:800; color:#111; }
+        .section { margin-bottom:24px; }
+        .section-title { font-size:11px; font-weight:700; color:#6B7F72; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; }
+        .customer-name { font-size:16px; font-weight:700; }
+        .customer-phone { font-size:13px; color:#6B7F72; margin-top:2px; }
+        table { width:100%; border-collapse:collapse; margin-bottom:20px; }
+        th { background:#F0FAF5; color:#0A6640; font-size:11px; text-transform:uppercase; letter-spacing:0.5px; padding:10px 12px; text-align:left; border-bottom:1px solid #BBE0CC; }
+        td { padding:10px 12px; border-bottom:1px solid #F0F0F0; font-size:13px; }
+        .total-row td { font-weight:700; font-size:15px; border-bottom:none; padding-top:14px; }
+        .status-row { display:flex; gap:12px; margin-top:20px; }
+        .badge { padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; }
+        .paid { background:#D1FAE5; color:#065F46; }
+        .unpaid { background:#FEF3C7; color:#92400E; }
+        .footer { margin-top:40px; padding-top:16px; border-top:1px solid #E4EDE6; font-size:11px; color:#9CA3AF; text-align:center; }
+      </style></head><body>
+      <div class="header">
+        <div><div class="brand">OrderPulse</div><div class="brand-sub">Order Management</div></div>
+        <div><div class="inv-title">INVOICE</div><div class="inv-num">${order.order_number}</div><div style="font-size:12px;color:#6B7F72;margin-top:4px;">${new Date(order.created_at).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'})}</div></div>
+      </div>
+      <div class="section">
+        <div class="section-title">Bill To</div>
+        <div class="customer-name">${order.contact?.name || 'Customer'}</div>
+        <div class="customer-phone">${order.contact?.wa_number || ''}</div>
+      </div>
+      <div class="section">
+        <div class="section-title">Order Items</div>
+        <table>
+          <thead><tr><th>#</th><th>Item</th><th>Qty</th><th>Unit</th><th style="text-align:right">Price (₹)</th></tr></thead>
+          <tbody>
+            ${(order.items||[]).map((item,i) => `
+              <tr>
+                <td style="color:#9CA3AF">${i+1}</td>
+                <td style="font-weight:600">${item.name}</td>
+                <td>${item.qty}</td>
+                <td style="color:#6B7F72">${item.unit||'—'}</td>
+                <td style="text-align:right">${item.price ? '₹'+Number(item.price).toLocaleString('en-IN') : '—'}</td>
+              </tr>`).join('')}
+            <tr class="total-row">
+              <td colspan="4" style="text-align:right;color:#6B7F72;font-size:13px;">Total Amount</td>
+              <td style="text-align:right;color:#0A6640">₹${Number(order.total_amount||0).toLocaleString('en-IN')}</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="status-row">
+          <span class="badge ${order.payment_status==='paid'?'paid':'unpaid'}">${order.payment_status==='paid'?'✓ Paid':'⏳ Payment Pending'}</span>
+          <span class="badge" style="background:#F3F4F6;color:#374151">${order.status?.toUpperCase()}</span>
+        </div>
+      </div>
+      <div class="footer">Generated by OrderPulse • ${new Date().toLocaleString('en-IN')}</div>
+      </body></html>
+    `)
+    w.document.close()
+    w.focus()
+    setTimeout(() => { w.print(); w.close() }, 500)
+  }
+
+  return (
+    <div className="modal-ov" onClick={onClose}>
+      <div className="modal-box" onClick={e => e.stopPropagation()} style={{ maxWidth:480 }}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+          <div>
+            <div style={{ fontWeight:800, fontSize:18, color:'#0F1A14' }}>Invoice Preview</div>
+            <div style={{ fontSize:13, color:'#6B7F72', marginTop:2 }}>{order.order_number} • {order.contact?.name || order.contact?.wa_number}</div>
+          </div>
+          <button onClick={onClose} style={{ background:'none', border:'none', fontSize:20, cursor:'pointer', color:'#9CA3AF' }}>×</button>
+        </div>
+
+        {/* Preview */}
+        <div style={{ background:'#F9FAFB', border:'1px solid #E4EDE6', borderRadius:10, padding:20, marginBottom:20 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', marginBottom:16, paddingBottom:12, borderBottom:'2px solid #0A6640' }}>
+            <div style={{ fontWeight:800, color:'#0A6640', fontSize:16 }}>OrderPulse</div>
+            <div style={{ textAlign:'right' }}>
+              <div style={{ fontSize:11, color:'#6B7F72' }}>INVOICE</div>
+              <div style={{ fontWeight:800, fontSize:15 }}>{order.order_number}</div>
+            </div>
+          </div>
+          <div style={{ marginBottom:12 }}>
+            <div style={{ fontSize:11, color:'#6B7F72', fontWeight:700, textTransform:'uppercase', marginBottom:4 }}>Bill To</div>
+            <div style={{ fontWeight:700 }}>{order.contact?.name || 'Customer'}</div>
+            <div style={{ fontSize:12, color:'#6B7F72' }}>{order.contact?.wa_number}</div>
+          </div>
+          <table style={{ width:'100%', borderCollapse:'collapse', fontSize:13 }}>
+            <thead><tr style={{ background:'#F0FAF5' }}>
+              <th style={{ padding:'6px 8px', textAlign:'left', color:'#0A6640', fontSize:11 }}>Item</th>
+              <th style={{ padding:'6px 8px', textAlign:'center', color:'#0A6640', fontSize:11 }}>Qty</th>
+              <th style={{ padding:'6px 8px', textAlign:'right', color:'#0A6640', fontSize:11 }}>Price</th>
+            </tr></thead>
+            <tbody>
+              {(order.items||[]).map((item,i) => (
+                <tr key={i} style={{ borderBottom:'1px solid #F0F0F0' }}>
+                  <td style={{ padding:'6px 8px', fontWeight:600 }}>{item.name}</td>
+                  <td style={{ padding:'6px 8px', textAlign:'center', color:'#6B7F72' }}>{item.qty}{item.unit?' '+item.unit:''}</td>
+                  <td style={{ padding:'6px 8px', textAlign:'right' }}>{item.price ? '₹'+Number(item.price).toLocaleString('en-IN') : '—'}</td>
+                </tr>
+              ))}
+              <tr>
+                <td colSpan={2} style={{ padding:'10px 8px', textAlign:'right', fontWeight:700, color:'#6B7F72', fontSize:12 }}>Total</td>
+                <td style={{ padding:'10px 8px', textAlign:'right', fontWeight:800, color:'#0A6640', fontSize:15 }}>₹{Number(order.total_amount||0).toLocaleString('en-IN')}</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style={{ display:'flex', gap:8, marginTop:10 }}>
+            <span style={{ padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:600, background: order.payment_status==='paid'?'#D1FAE5':'#FEF3C7', color: order.payment_status==='paid'?'#065F46':'#92400E' }}>
+              {order.payment_status==='paid'?'✓ Paid':'⏳ Pending'}
+            </span>
+            <span style={{ padding:'3px 10px', borderRadius:20, fontSize:11, fontWeight:600, background:'#F3F4F6', color:'#374151' }}>
+              {order.status?.toUpperCase()}
+            </span>
+          </div>
+        </div>
+
+        <button onClick={print} style={{ width:'100%', padding:'12px', background:'#0A6640', color:'white', border:'none', borderRadius:10, fontFamily:'var(--f)', fontSize:15, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+          🖨️ Print Invoice
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── ORDERS ───────────────────────────────────────────────────────────────────
 function OrdersView({ addToast }) {
   const [orders, setOrders] = useState([])
@@ -853,6 +1039,9 @@ function OrdersView({ addToast }) {
   const [upiModal, setUpiModal] = useState(null)
   const [payModal, setPayModal] = useState(null)
   const [exportOpen, setExportOpen] = useState(false)
+  const [printModal, setPrintModal] = useState(null)
+  const [searchQ, setSearchQ] = useState('')
+  const [showTopItems, setShowTopItems] = useState(true)
 
   const load = useCallback(async () => {
     try {
@@ -907,6 +1096,13 @@ function OrdersView({ addToast }) {
     if (filter === 'active') return ['confirmed','packed','dispatched'].includes(o.status)
     if (filter === 'delivered') return o.status === 'delivered'
     return true
+  }).filter(o => {
+    if (!searchQ.trim()) return true
+    const q = searchQ.toLowerCase()
+    return (o.order_number||'').toLowerCase().includes(q) ||
+           (o.contact?.name||'').toLowerCase().includes(q) ||
+           (o.contact?.wa_number||'').includes(q) ||
+           (o.items||[]).some(i => (i.name||'').toLowerCase().includes(q))
   })
 
   if (loading) return <div style={{ flex:1 }}><Spinner lg /></div>
@@ -1004,12 +1200,55 @@ function OrdersView({ addToast }) {
           </div>
         </div>
       </div>
+      {/* Orders search bar */}
+      <div style={{ padding:'0 0 12px 0', display:'flex' }}>
+        <div style={{ position:'relative', width:'100%', maxWidth:340 }}>
+          <svg style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'#9CA3AF' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search orders, customers, items..."
+            style={{ width:'100%', padding:'8px 10px 8px 32px', borderRadius:8, border:'1.5px solid #E4EDE6', fontFamily:'var(--f)', fontSize:13, color:'#1A2E22', outline:'none', background:'white' }} />
+          {searchQ && <button onClick={() => setSearchQ('')} style={{ position:'absolute', right:8, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'#9CA3AF', fontSize:16, padding:0 }}>×</button>}
+        </div>
+      </div>
       <div className="stats-row">
         <div className="stat"><div className="sl">Total Orders</div><div className="sv">{stats.total_orders||0}</div><div className="ss">All time</div></div>
         <div className="stat"><div className="sl">New</div><div className="sv" style={{ color:'#3B82F6' }}>{stats.new_orders||0}</div><div className="ss">Need attention</div></div>
         <div className="stat"><div className="sl">Pending Payment</div><div className="sv" style={{ color:'#D97706' }}>{stats.pending_payment||0}</div><div className="ss">Follow up</div></div>
         <div className="stat"><div className="sl">Today Revenue</div><div className="sv" style={{ color:'#10B981' }}>₹{(stats.today_revenue||0).toLocaleString('en-IN')}</div><div className="ss">Paid orders</div></div>
       </div>
+      {/* Top Selling Items */}
+      {stats.top_items && stats.top_items.length > 0 && (
+        <div style={{ background:'white', border:'1.5px solid #E4EDE6', borderRadius:12, padding:'16px 20px', marginBottom:20 }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom: showTopItems ? 14 : 0 }}>
+            <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ fontSize:16 }}>🔥</span>
+              <span style={{ fontWeight:700, fontSize:15, color:'#0F1A14' }}>Top Selling Items</span>
+            </div>
+            <button onClick={() => setShowTopItems(v => !v)} style={{ background:'none', border:'none', cursor:'pointer', color:'#9CA3AF', fontSize:13 }}>{showTopItems ? '▲ Hide' : '▼ Show'}</button>
+          </div>
+          {showTopItems && (
+            <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+              {stats.top_items.map((item, i) => {
+                const maxQty = stats.top_items[0].total_qty
+                const pct = Math.round((item.total_qty / maxQty) * 100)
+                return (
+                  <div key={i} style={{ display:'flex', alignItems:'center', gap:12 }}>
+                    <div style={{ width:22, height:22, borderRadius:'50%', background: i===0?'#FEF3C7': i===1?'#F3F4F6': i===2?'#FDE8D8':'#F9FAFB', color: i===0?'#92400E':i===1?'#6B7280':i===2?'#C2410C':'#9CA3AF', fontWeight:800, fontSize:11, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0 }}>{i+1}</div>
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:'flex', justifyContent:'space-between', marginBottom:3 }}>
+                        <span style={{ fontWeight:600, fontSize:13, color:'#0F1A14', textTransform:'capitalize' }}>{item.name}</span>
+                        <span style={{ fontSize:12, color:'#6B7F72', whiteSpace:'nowrap', marginLeft:8 }}>{item.total_qty} units • {item.order_count} orders</span>
+                      </div>
+                      <div style={{ height:5, background:'#F0F0F0', borderRadius:3, overflow:'hidden' }}>
+                        <div style={{ height:'100%', width:`${pct}%`, background: i===0?'#0A6640':i===1?'#6B7280':'#BBE0CC', borderRadius:3, transition:'width .5s' }} />
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      )}
       <div className="ords">
         {filtered.length === 0 && <div style={{ textAlign:'center', padding:'48px 0', color:'#6B7F72', fontSize:14 }}>No orders yet. Create one from the Inbox!</div>}
         {filtered.map(order => {
@@ -1045,6 +1284,7 @@ function OrdersView({ addToast }) {
                   {['new','confirmed'].includes(order.status) && (
                     <button className="abtn" style={{ fontSize:12, color:'#EF4444' }} onClick={() => cancel(order)}>Cancel</button>
                   )}
+                  <button className="abtn" style={{ fontSize:12 }} onClick={() => setPrintModal(order)} title="Print Invoice">🖨️</button>
                 </div>
               </div>
               <StatusBar status={order.status} />
@@ -1054,6 +1294,7 @@ function OrdersView({ addToast }) {
       </div>
       {upiModal && <UPIModal order={upiModal} onClose={() => setUpiModal(null)} onSent={sendUPI} />}
       {payModal && <PaymentModal order={payModal} onClose={() => setPayModal(null)} onConfirm={confirmPay} />}
+      {printModal && <PrintInvoiceModal order={printModal} onClose={() => setPrintModal(null)} />}
     </div>
   )
 }
