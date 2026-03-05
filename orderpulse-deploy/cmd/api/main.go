@@ -8,6 +8,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"encoding/json"
 	"fmt"
 	"os/signal"
 	"strings"
@@ -118,6 +119,35 @@ func main() {
 		r.Use(middleware.RequireOnboardingComplete(pool))
 
 		r.Get("/stats", statsHandler.Get)
+
+		// Profile — returns current user + tenant details
+		r.Get("/me", func(w http.ResponseWriter, r *http.Request) {
+			tenantID := middleware.TenantIDFromCtx(r.Context())
+			userID   := middleware.UserIDFromCtx(r.Context())
+			var name, email, role string
+			pool.QueryRow(r.Context(),
+				`SELECT name, email, role FROM users WHERE id = $1`, userID,
+			).Scan(&name, &email, &role)
+			var bizName, waNumber, wabaID, plan, status string
+			var activatedAt *time.Time
+			pool.QueryRow(r.Context(),
+				`SELECT business_name, whatsapp_number, waba_id, plan, onboarding_status, activated_at FROM tenants WHERE id = $1`, tenantID,
+			).Scan(&bizName, &waNumber, &wabaID, &plan, &status, &activatedAt)
+			w.Header().Set("Content-Type", "application/json")
+			enc := json.NewEncoder(w)
+			type resp struct {
+				Name            string     `json:"name"`
+				Email           string     `json:"email"`
+				Role            string     `json:"role"`
+				BusinessName    string     `json:"business_name"`
+				WhatsappNumber  string     `json:"whatsapp_number"`
+				WabaID          string     `json:"waba_id"`
+				Plan            string     `json:"plan"`
+				Status          string     `json:"onboarding_status"`
+				ActivatedAt     *time.Time `json:"activated_at"`
+			}
+			enc.Encode(resp{name, email, role, bizName, waNumber, wabaID, plan, status, activatedAt})
+		})
 
 		r.Get("/inbox", inboxHandler.ListThreads)
 		r.Get("/inbox/{contactId}/messages", inboxHandler.GetMessages)
