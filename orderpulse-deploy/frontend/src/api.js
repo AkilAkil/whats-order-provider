@@ -139,3 +139,11 @@ export async function confirmPayment(id, amount, method, ref, screenshotUrl) {
     screenshot_url: screenshotUrl || '',
   })
 }
+
+export async function forgotPassword(email) {
+  return request('POST', '/auth/forgot-password', { email })
+}
+
+export async function resetPassword(token, password) {
+  return request('POST', '/auth/reset-password', { token, password })
+}
