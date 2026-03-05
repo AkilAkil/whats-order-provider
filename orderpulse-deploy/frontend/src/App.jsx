@@ -509,7 +509,7 @@ function OnboardingScreen({ user, onDone, addToast }) {
       setPhase('pipeline')
       const code = response.authResponse.code
       const accessToken = response.authResponse.accessToken
-      const redirectUri = '' // JS SDK manages redirect internally
+      const redirectUri = 'https://www.facebook.com/connect/login_success.html'
       const token = code || accessToken
       console.log('wabaId:', wabaId, 'phoneNumberId:', phoneNumberId)
       api.connectWABA(token, redirectUri, wabaId, phoneNumberId)
@@ -517,6 +517,8 @@ function OnboardingScreen({ user, onDone, addToast }) {
         .catch(err => { setErrMsg(err.error || 'Connection failed'); setPhase('error') })
     }, {
       config_id: configId,
+      response_type: 'code',
+      override_default_response_type: true,
       scope: 'public_profile,business_management,whatsapp_business_management,whatsapp_business_messaging',
       extras: {
         setup: {},
