@@ -54,7 +54,8 @@ func main() {
 	}
 
 	// ── Handlers ───────────────────────────────────────────────────────────────
-	authHandler       := handlers.NewAuthHandler(pool, cfg.JWTSecret, cfg.JWTExpiryHours)
+	authHandler          := handlers.NewAuthHandler(pool, cfg.JWTSecret, cfg.JWTExpiryHours)
+	passwordResetHandler := handlers.NewPasswordResetHandler(pool)
 	onboardingHandler := handlers.NewOnboardingHandler(pool, cfg.JWTSecret, cfg.JWTExpiryHours, cfg.MetaAppID, cfg.MetaAppSecret)
 	inboxHandler      := handlers.NewInboxHandler(pool)
 	orderHandler      := handlers.NewOrderHandler(pool)
