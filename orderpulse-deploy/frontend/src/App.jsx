@@ -612,6 +612,7 @@ function InboxView({ addToast }) {
   const [sending, setSending] = useState(false)
   const [loading, setLoading] = useState(true)
   const [createModal, setCreateModal] = useState(null)
+  const [hoveredMsg, setHoveredMsg] = useState(null)
   const chatEnd = useRef(null)
 
   const loadInbox = useCallback(async () => {
@@ -712,10 +713,30 @@ function InboxView({ addToast }) {
             </div>
             <div className="msgs">
               {msgs.map((m,i) => (
-                <div key={i} className={`msg ${m.direction==='inbound'?'in':'out'}`}>
+                <div key={i}
+                  className={`msg ${m.direction==='inbound'?'in':'out'}`}
+                  style={{ position:'relative' }}
+                  onMouseEnter={() => m.direction==='inbound' && m.body && setHoveredMsg(i)}
+                  onMouseLeave={() => setHoveredMsg(null)}
+                >
                   {m.direction==='inbound' && <div className="ms">{contact?.name || contact?.wa_number}</div>}
                   <div className="mb">{m.body || '[media message]'}</div>
                   <div className="mt2">{fmtTime(m.created_at)}{m.direction==='outbound'&&' ✓✓'}</div>
+                  {hoveredMsg === i && m.direction === 'inbound' && m.body && (
+                    <button
+                      onClick={() => setCreateModal({ contact, msgs: [m] })}
+                      style={{
+                        position:'absolute', top:-10, right:-8,
+                        background:'#0A6640', color:'white', border:'none',
+                        borderRadius:20, padding:'4px 10px', fontSize:11,
+                        fontWeight:700, cursor:'pointer', whiteSpace:'nowrap',
+                        boxShadow:'0 2px 8px rgba(0,0,0,0.2)', zIndex:10,
+                        fontFamily:'var(--f)'
+                      }}
+                    >
+                      🛒 Order this
+                    </button>
+                  )}
                 </div>
               ))}
               <div ref={chatEnd} />
