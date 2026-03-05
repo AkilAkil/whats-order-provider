@@ -424,6 +424,10 @@ function OnboardingScreen({ user, onDone, addToast }) {
   }, [])
 
   const [pendingLaunch, setPendingLaunch] = useState(false)
+  const [manualMode, setManualMode] = useState(false)
+  const [manualWabaId, setManualWabaId] = useState('')
+  const [manualPhoneId, setManualPhoneId] = useState('')
+  const [manualToken, setManualToken] = useState('')
 
   // Load FB SDK — poll for window.FB since fbAsyncInit can miss if script loads fast
   useEffect(() => {
@@ -513,13 +517,20 @@ function OnboardingScreen({ user, onDone, addToast }) {
         .catch(err => { setErrMsg(err.error || 'Connection failed'); setPhase('error') })
     }, {
       config_id: configId,
-      response_type: 'code',
-      override_default_response_type: true,
       extras: {
         setup: {},
         sessionInfoVersion: 3,
       },
     })
+  }
+
+  const submitManual = () => {
+    if (!manualWabaId.trim() || !manualPhoneId.trim() || !manualToken.trim()) return
+    setPhase('pipeline')
+    setManualMode(false)
+    api.connectWABA(manualToken.trim(), '', manualWabaId.trim(), manualPhoneId.trim())
+      .then(() => { setPhase('done'); setTimeout(onDone, 2000) })
+      .catch(err => { setErrMsg(err.error || 'Connection failed'); setPhase('error') })
   }
 
   // Poll onboarding status to show real pipeline steps
@@ -583,10 +594,51 @@ function OnboardingScreen({ user, onDone, addToast }) {
                 </div>
               )}
 
-              {phase === 'error' && (
-                <div className="err" style={{ marginBottom:16 }}>
-                  <strong>Connection failed:</strong> {errMsg}<br/>
-                  <span style={{ fontSize:12, marginTop:4, display:'block' }}>Check your META_APP_ID and META_APP_SECRET in .env, then try again.</span>
+              {phase === 'error' && !manualMode && (
+                <div style={{ marginBottom:16 }}>
+                  <div className="err" style={{ marginBottom:10 }}>
+                    <strong>Connection failed:</strong> {errMsg}
+                  </div>
+                  {errMsg.includes('WABA') || errMsg.includes('waba') || errMsg.includes('step 3') ? (
+                    <div style={{ background:'#F0FAF5', border:'1px solid #BBE0CC', borderRadius:10, padding:'14px 16px', fontSize:13, color:'#1A2E22' }}>
+                      <div style={{ fontWeight:700, marginBottom:6 }}>📋 Connect manually instead</div>
+                      <div style={{ color:'#6B7F72', marginBottom:10, lineHeight:1.5 }}>
+                        Get your details from <strong>business.facebook.com → WhatsApp Accounts → your account → API Setup</strong>
+                      </div>
+                      <button onClick={() => setManualMode(true)} style={{ background:'#0A6640', color:'white', border:'none', borderRadius:8, padding:'8px 16px', fontFamily:'var(--f)', fontSize:13, fontWeight:700, cursor:'pointer' }}>
+                        Enter details manually →
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+
+              {manualMode && (
+                <div style={{ background:'#F0FAF5', border:'1px solid #BBE0CC', borderRadius:12, padding:20, marginBottom:16 }}>
+                  <div style={{ fontWeight:700, fontSize:15, color:'#0F1A14', marginBottom:4 }}>Manual Setup</div>
+                  <div style={{ fontSize:12, color:'#6B7F72', marginBottom:16, lineHeight:1.5 }}>
+                    Find these in <strong>Meta Business Suite → WhatsApp Accounts → your WABA → API Setup</strong>
+                  </div>
+                  <div style={{ marginBottom:10 }}>
+                    <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#1A2E22', marginBottom:4 }}>WABA ID</label>
+                    <input className="inp" placeholder="e.g. 191254092271447" value={manualWabaId} onChange={e => setManualWabaId(e.target.value)} style={{ padding:'8px 12px', fontSize:13 }} />
+                  </div>
+                  <div style={{ marginBottom:10 }}>
+                    <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#1A2E22', marginBottom:4 }}>Phone Number ID</label>
+                    <input className="inp" placeholder="e.g. 123456789012345" value={manualPhoneId} onChange={e => setManualPhoneId(e.target.value)} style={{ padding:'8px 12px', fontSize:13 }} />
+                  </div>
+                  <div style={{ marginBottom:14 }}>
+                    <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#1A2E22', marginBottom:4 }}>Access Token <span style={{ color:'#6B7F72', fontWeight:400 }}>(from API Setup → Generate token)</span></label>
+                    <input className="inp" placeholder="EAAxxxxxxxx..." value={manualToken} onChange={e => setManualToken(e.target.value)} style={{ padding:'8px 12px', fontSize:13 }} />
+                  </div>
+                  <div style={{ display:'flex', gap:8 }}>
+                    <button onClick={submitManual} disabled={!manualWabaId.trim() || !manualPhoneId.trim() || !manualToken.trim()} style={{ flex:1, padding:'10px', background:'#0A6640', color:'white', border:'none', borderRadius:8, fontFamily:'var(--f)', fontSize:14, fontWeight:700, cursor:'pointer', opacity: (!manualWabaId || !manualPhoneId || !manualToken) ? 0.5 : 1 }}>
+                      Connect
+                    </button>
+                    <button onClick={() => { setManualMode(false); setPhase('idle') }} style={{ padding:'10px 16px', background:'white', color:'#6B7F72', border:'1.5px solid #E4EDE6', borderRadius:8, fontFamily:'var(--f)', fontSize:14, fontWeight:600, cursor:'pointer' }}>
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               )}
 
@@ -605,7 +657,7 @@ function OnboardingScreen({ user, onDone, addToast }) {
                 </div>
               )}
 
-              {(phase === 'idle' || phase === 'error') && (
+              {(phase === 'idle' || phase === 'error') && !manualMode && (
                 <>
                   <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>
                     <span style={{ fontSize:11, padding:'3px 8px', borderRadius:4, fontWeight:600,
