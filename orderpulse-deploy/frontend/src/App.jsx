@@ -517,6 +517,7 @@ function OnboardingScreen({ user, onDone, addToast }) {
         .catch(err => { setErrMsg(err.error || 'Connection failed'); setPhase('error') })
     }, {
       config_id: configId,
+      scope: 'public_profile,business_management,whatsapp_business_management,whatsapp_business_messaging',
       extras: {
         setup: {},
         sessionInfoVersion: 3,
