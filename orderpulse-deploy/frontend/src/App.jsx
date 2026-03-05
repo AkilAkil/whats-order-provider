@@ -1470,6 +1470,159 @@ function Dashboard({ user, onLogout }) {
   )
 }
 
+// ─── ABOUT PAGE ───────────────────────────────────────────────────────────────
+function AboutPage({ onBack }) {
+  return (
+    <div style={{ minHeight:'100vh', background:'#FAFAF7', fontFamily:'var(--f)' }}>
+      {/* Nav */}
+      <div style={{ background:'white', borderBottom:'1px solid #E4EDE6', padding:'0 40px', display:'flex', alignItems:'center', justifyContent:'space-between', height:64, position:'sticky', top:0, zIndex:100 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <div style={{ width:36, height:36, background:'#0A6640', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontWeight:900, fontSize:20 }}>W</div>
+          <span style={{ fontWeight:800, fontSize:18, color:'#0A6640' }}>Whats-Order</span>
+        </div>
+        <button onClick={onBack} style={{ background:'#0A6640', color:'white', border:'none', borderRadius:8, padding:'8px 20px', fontFamily:'var(--f)', fontSize:14, fontWeight:700, cursor:'pointer' }}>
+          Get Started →
+        </button>
+      </div>
+
+      {/* Hero */}
+      <div style={{ background:'linear-gradient(135deg, #0A6640 0%, #0D8A52 60%, #10B981 100%)', padding:'80px 40px', textAlign:'center', color:'white' }}>
+        <div style={{ maxWidth:640, margin:'0 auto' }}>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(255,255,255,0.15)', borderRadius:20, padding:'6px 16px', fontSize:13, fontWeight:600, marginBottom:24 }}>
+            <span>🟢</span> Built for WhatsApp Business
+          </div>
+          <h1 style={{ fontSize:48, fontWeight:900, margin:'0 0 16px', lineHeight:1.1 }}>
+            Turn WhatsApp messages<br/>into managed orders
+          </h1>
+          <p style={{ fontSize:18, opacity:.85, margin:'0 0 32px', lineHeight:1.6 }}>
+            Whats-Order helps small businesses receive, track and fulfill orders directly from WhatsApp — no coding, no complicated setup.
+          </p>
+          <button onClick={onBack} style={{ background:'white', color:'#0A6640', border:'none', borderRadius:10, padding:'14px 32px', fontFamily:'var(--f)', fontSize:16, fontWeight:800, cursor:'pointer' }}>
+            Start for free →
+          </button>
+        </div>
+      </div>
+
+      {/* What we do */}
+      <div style={{ maxWidth:900, margin:'0 auto', padding:'64px 40px' }}>
+        <div style={{ textAlign:'center', marginBottom:48 }}>
+          <h2 style={{ fontSize:32, fontWeight:900, color:'#0F1A14', margin:'0 0 12px' }}>What we do</h2>
+          <p style={{ fontSize:16, color:'#6B7F72', maxWidth:560, margin:'0 auto', lineHeight:1.6 }}>
+            We connect your WhatsApp Business account to a powerful order management system — so you spend less time in chats and more time running your business.
+          </p>
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(250px, 1fr))', gap:24 }}>
+          {[
+            { icon:'💬', title:'Smart Inbox', desc:'All your WhatsApp conversations in one place. Auto-detects order messages so you never miss a customer.' },
+            { icon:'🛒', title:'One-click Orders', desc:'Convert any WhatsApp message into a tracked order with items, quantities, and price — in seconds.' },
+            { icon:'📦', title:'Order Tracking', desc:'Track every order from New → Confirmed → Packed → Dispatched → Delivered. Customers get WhatsApp notifications at every step.' },
+            { icon:'💳', title:'Payment Tracking', desc:'Send UPI payment links via WhatsApp, mark orders as paid, track pending payments.' },
+            { icon:'🖨️', title:'Invoice Generation', desc:'Print clean, professional invoices for any order with one click.' },
+            { icon:'📊', title:'Business Insights', desc:'See your top selling items, daily revenue, and order stats at a glance.' },
+          ].map((f, i) => (
+            <div key={i} style={{ background:'white', border:'1.5px solid #E4EDE6', borderRadius:16, padding:24 }}>
+              <div style={{ fontSize:32, marginBottom:12 }}>{f.icon}</div>
+              <div style={{ fontWeight:800, fontSize:16, color:'#0F1A14', marginBottom:8 }}>{f.title}</div>
+              <div style={{ fontSize:14, color:'#6B7F72', lineHeight:1.6 }}>{f.desc}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Who is it for */}
+      <div style={{ background:'#F0FAF5', padding:'64px 40px' }}>
+        <div style={{ maxWidth:700, margin:'0 auto', textAlign:'center' }}>
+          <h2 style={{ fontSize:32, fontWeight:900, color:'#0F1A14', margin:'0 0 12px' }}>Built for small businesses</h2>
+          <p style={{ fontSize:16, color:'#6B7F72', marginBottom:40, lineHeight:1.6 }}>
+            If your customers order from you on WhatsApp, Whats-Order is for you.
+          </p>
+          <div style={{ display:'flex', flexWrap:'wrap', gap:12, justifyContent:'center' }}>
+            {['🍱 Home cooks & tiffin services','🧁 Bakeries & sweet shops','🥬 Vegetable & grocery sellers','🍔 Cloud kitchens','👗 Boutiques & tailors','💊 Medical shops','🌸 Flower shops','📦 Any WhatsApp business'].map((b,i) => (
+              <span key={i} style={{ background:'white', border:'1.5px solid #BBE0CC', borderRadius:20, padding:'8px 16px', fontSize:14, fontWeight:600, color:'#1A2E22' }}>{b}</span>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Pricing */}
+      <div style={{ maxWidth:800, margin:'0 auto', padding:'64px 40px' }}>
+        <div style={{ textAlign:'center', marginBottom:48 }}>
+          <h2 style={{ fontSize:32, fontWeight:900, color:'#0F1A14', margin:'0 0 12px' }}>Simple pricing</h2>
+          <p style={{ fontSize:16, color:'#6B7F72' }}>Start free. Upgrade when you grow.</p>
+        </div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:24 }}>
+          {/* Free */}
+          <div style={{ background:'white', border:'1.5px solid #E4EDE6', borderRadius:20, padding:32 }}>
+            <div style={{ fontSize:13, fontWeight:700, color:'#6B7F72', textTransform:'uppercase', letterSpacing:.8, marginBottom:8 }}>Free Plan</div>
+            <div style={{ fontSize:40, fontWeight:900, color:'#0F1A14', marginBottom:4 }}>₹0</div>
+            <div style={{ fontSize:14, color:'#6B7F72', marginBottom:24 }}>Forever free</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:28 }}>
+              {['50 orders per month','WhatsApp inbox & replies','Order tracking (6 stages)','Invoice printing','Top selling items report','Quick reply templates'].map((f,i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:10, fontSize:14 }}>
+                  <span style={{ color:'#0A6640', fontWeight:700 }}>✓</span> {f}
+                </div>
+              ))}
+            </div>
+            <button onClick={onBack} style={{ width:'100%', padding:'12px', background:'#F0FAF5', color:'#0A6640', border:'1.5px solid #BBE0CC', borderRadius:10, fontFamily:'var(--f)', fontSize:15, fontWeight:700, cursor:'pointer' }}>
+              Get started free
+            </button>
+          </div>
+          {/* Pro */}
+          <div style={{ background:'linear-gradient(135deg, #0A6640 0%, #0D8A52 100%)', borderRadius:20, padding:32, color:'white', position:'relative', overflow:'hidden' }}>
+            <div style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.2)', borderRadius:20, padding:'4px 12px', fontSize:12, fontWeight:700 }}>POPULAR</div>
+            <div style={{ fontSize:13, fontWeight:700, opacity:.8, textTransform:'uppercase', letterSpacing:.8, marginBottom:8 }}>Pro Plan</div>
+            <div style={{ fontSize:40, fontWeight:900, marginBottom:4 }}>₹299</div>
+            <div style={{ fontSize:14, opacity:.8, marginBottom:24 }}>per month</div>
+            <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:28 }}>
+              {['Unlimited orders','Everything in Free','Priority support','Early access to new features'].map((f,i) => (
+                <div key={i} style={{ display:'flex', alignItems:'center', gap:10, fontSize:14 }}>
+                  <span style={{ fontWeight:700 }}>✓</span> {f}
+                </div>
+              ))}
+            </div>
+            <button onClick={onBack} style={{ width:'100%', padding:'12px', background:'white', color:'#0A6640', border:'none', borderRadius:10, fontFamily:'var(--f)', fontSize:15, fontWeight:800, cursor:'pointer' }}>
+              Start with Pro →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* About us */}
+      <div style={{ background:'#0F1A14', color:'white', padding:'64px 40px' }}>
+        <div style={{ maxWidth:700, margin:'0 auto', textAlign:'center' }}>
+          <h2 style={{ fontSize:32, fontWeight:900, margin:'0 0 16px' }}>About us</h2>
+          <p style={{ fontSize:16, opacity:.7, lineHeight:1.8, marginBottom:32 }}>
+            Whats-Order is built for the millions of small business owners in India who run their business over WhatsApp. We saw business owners manually copying orders from chats into notebooks, missing messages, and losing track of payments — and decided to fix it.
+          </p>
+          <p style={{ fontSize:16, opacity:.7, lineHeight:1.8, marginBottom:40 }}>
+            Our mission is simple: make it effortless for any small business to manage orders on WhatsApp, without any technical knowledge or expensive software.
+          </p>
+          <div style={{ display:'flex', gap:40, justifyContent:'center', flexWrap:'wrap' }}>
+            {[['50+','Free orders/month'],['0','Setup cost'],['6','Order stages'],['1-click','Invoice printing']].map(([n,l],i) => (
+              <div key={i} style={{ textAlign:'center' }}>
+                <div style={{ fontSize:32, fontWeight:900, color:'#10B981' }}>{n}</div>
+                <div style={{ fontSize:13, opacity:.6, marginTop:4 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div style={{ background:'#0A0F0D', color:'white', padding:'24px 40px', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+          <div style={{ width:28, height:28, background:'#0A6640', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontWeight:900, fontSize:14 }}>W</div>
+          <span style={{ fontWeight:700, color:'white' }}>Whats-Order</span>
+        </div>
+        <div style={{ fontSize:13, opacity:.5 }}>© 2026 Whats-Order. All rights reserved.</div>
+        <button onClick={onBack} style={{ background:'#0A6640', color:'white', border:'none', borderRadius:8, padding:'8px 20px', fontFamily:'var(--f)', fontSize:13, fontWeight:700, cursor:'pointer' }}>
+          Get Started →
+        </button>
+      </div>
+    </div>
+  )
+}
+
 // ─── FORGOT PASSWORD ──────────────────────────────────────────────────────────
 function ForgotPasswordScreen({ onBack }) {
   const [email, setEmail] = useState('')
@@ -1585,7 +1738,7 @@ function ResetPasswordScreen({ token, onDone }) {
 }
 
 // ─── AUTH SCREENS ─────────────────────────────────────────────────────────────
-function LoginScreen({ onDone, onSignup, onForgot }) {
+function LoginScreen({ onDone, onSignup, onForgot, onAbout }) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -1609,6 +1762,7 @@ function LoginScreen({ onDone, onSignup, onForgot }) {
         <button className="btn" onClick={submit} disabled={loading}>{loading ? <><Spinner /> Logging in...</> : 'Log In'}</button>
         <div className="switch" style={{ textAlign:'right', marginBottom:4 }}><a onClick={onForgot} style={{ fontSize:12, color:'#6B7F72' }}>Forgot password?</a></div>
         <div className="switch">New here? <a onClick={onSignup}>Create a free account</a></div>
+        <div style={{ textAlign:'center', marginTop:8 }}><a onClick={onAbout} style={{ fontSize:12, color:'#9CA3AF' }}>About Whats-Order</a></div>
       </div>
     </div>
   )
@@ -1683,7 +1837,8 @@ export default function App() {
 
   return (
     <div className="app">
-      {screen==='login'          && <LoginScreen onDone={afterAuth} onSignup={() => setScreen('signup')} onForgot={() => setScreen('forgot')} />}
+      {screen==='about'        && <AboutPage onBack={() => setScreen('login')} />}
+      {screen==='login'          && <LoginScreen onDone={afterAuth} onSignup={() => setScreen('signup')} onForgot={() => setScreen('forgot')} onAbout={() => setScreen('about')} />}
       {screen==='signup'         && <SignupScreen onDone={afterAuth} onLogin={() => setScreen('login')} />}
       {screen==='forgot'         && <ForgotPasswordScreen onBack={() => setScreen('login')} />}
       {screen==='reset-password' && <ResetPasswordScreen token={resetToken} onDone={goLogin} />}
