@@ -215,12 +215,19 @@ type Transaction struct {
 // ─── API TYPES ────────────────────────────────────────────────────────────────
 
 // DashboardStats is returned by GET /api/stats.
+type TopItem struct {
+	Name       string  `json:"name"`
+	TotalQty   float64 `json:"total_qty"`
+	OrderCount int     `json:"order_count"`
+}
+
 type DashboardStats struct {
 	TotalOrders    int     `json:"total_orders"`
 	NewOrders      int     `json:"new_orders"`
 	PendingPayment int     `json:"pending_payment"`
 	TodayRevenue   float64 `json:"today_revenue"`
-	TotalRevenue   float64 `json:"total_revenue"`
+	TotalRevenue   float64   `json:"total_revenue"`
+	TopItems       []TopItem `json:"top_items"`
 }
 
 // ErrorResponse is the standard error envelope for all 4xx / 5xx responses.
