@@ -17,8 +17,7 @@ func NewStatsHandler(db *pgxpool.Pool) *StatsHandler {
 	return &StatsHandler{db: db}
 }
 
-// GET /api/stats — returns order counts and revenue for the dashboard cards.
-// All four values are fetched in a single conditional aggregation query.
+// GET /api/stats
 func (h *StatsHandler) Get(w http.ResponseWriter, r *http.Request) {
 	tenantID := middleware.TenantIDFromCtx(r.Context())
 
@@ -47,5 +46,31 @@ func (h *StatsHandler) Get(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "failed to fetch stats", "server_error")
 		return
 	}
+
+	// Top selling items — explode order items JSONB and aggregate
+	rows, err := h.db.Query(r.Context(), `
+		SELECT
+			LOWER(TRIM(item->>'name'))          AS item_name,
+			SUM((item->>'qty')::numeric)        AS total_qty,
+			COUNT(*)                            AS order_count
+		FROM orders,
+			jsonb_array_elements(items) AS item
+		WHERE tenant_id = $1
+		  AND status != 'cancelled'
+		  AND items IS NOT NULL
+		GROUP BY 1
+		ORDER BY total_qty DESC
+		LIMIT 10
+	`, tenantID)
+	if err == nil {
+		defer rows.Close()
+		for rows.Next() {
+			var item models.TopItem
+			if rows.Scan(&item.Name, &item.TotalQty, &item.OrderCount) == nil {
+				stats.TopItems = append(stats.TopItems, item)
+			}
+		}
+	}
+
 	writeJSON(w, http.StatusOK, stats)
 }
