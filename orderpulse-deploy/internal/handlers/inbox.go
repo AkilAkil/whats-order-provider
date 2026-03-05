@@ -77,7 +77,7 @@ func (h *InboxHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 	contactID := chi.URLParam(r, "contactId")
 
 	rows, err := h.db.Query(r.Context(), `
-		SELECT id, direction, type, body, media_url, is_tagged, created_at
+		SELECT id, direction, type, body, media_url, is_tagged, extracted_order::text, created_at
 		FROM messages
 		WHERE tenant_id = $1 AND contact_id = $2::uuid
 		ORDER BY created_at ASC
@@ -91,7 +91,7 @@ func (h *InboxHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 	msgs := make([]models.Message, 0)
 	for rows.Next() {
 		var m models.Message
-		rows.Scan(&m.ID, &m.Direction, &m.Type, &m.Body, &m.MediaURL, &m.IsTagged, &m.CreatedAt)
+		rows.Scan(&m.ID, &m.Direction, &m.Type, &m.Body, &m.MediaURL, &m.IsTagged, &m.ExtractedOrder, &m.CreatedAt)
 		msgs = append(msgs, m)
 	}
 	writeJSON(w, http.StatusOK, msgs)
