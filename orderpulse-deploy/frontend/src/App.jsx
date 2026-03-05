@@ -482,10 +482,14 @@ function OnboardingScreen({ user, onDone, addToast }) {
         return
       }
       setPhase('pipeline')
-      // Send token OR code + current page URL as redirect_uri
       const token = response.authResponse.accessToken || response.authResponse.code
       const redirectUri = window.location.origin + window.location.pathname
-      api.connectWABA(token, redirectUri)
+      // Embedded Signup returns waba_id and phone_number_id in sessionInfo
+      const sessionInfo = response.authResponse?.sessionInfo || {}
+      const wabaId = sessionInfo.waba_id || ''
+      const phoneNumberId = sessionInfo.phone_number_id || ''
+      console.log('sessionInfo:', JSON.stringify(sessionInfo))
+      api.connectWABA(token, redirectUri, wabaId, phoneNumberId)
         .then(() => { setPhase('done'); setTimeout(onDone, 2000) })
         .catch(err => { setErrMsg(err.error || 'Connection failed'); setPhase('error') })
     }, {
