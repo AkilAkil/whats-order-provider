@@ -250,8 +250,7 @@ function CreateOrderModal({ contact, msgs, onClose, onCreated }) {
     const parseBody = (body) => {
       if (!body) return []
       const items = []
-      const lines = body.split(/[,
-+&]/).map(s => s.trim()).filter(Boolean)
+      const lines = body.split(/[,\n+&]/).map(s => s.trim()).filter(Boolean)
       for (const line of lines) {
         // "2 butter chicken" or "2kg rice" or "rice 2"
         const m1 = line.match(/^(\d+(?:\.\d+)?)\s*(?:kg|gm?|pcs?|pieces?|packets?|packet|pc|nos?)?\s+(?:of\s+)?([a-zA-Z].{1,40})$/i)
