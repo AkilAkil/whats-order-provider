@@ -833,6 +833,95 @@ function OrdersView({ addToast }) {
   )
 }
 
+
+// ─── PROFILE VIEW ─────────────────────────────────────────────────────────────
+function ProfileView({ user, onLogout }) {
+  const [profile, setProfile] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    api.getMe()
+      .then(d => setProfile(d))
+      .catch(() => {})
+      .finally(() => setLoading(false))
+  }, [])
+
+  const av = avatarFor(user?.name || user?.email || 'U')
+  const fmtDate = d => d ? new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' }) : '—'
+
+  const Row = ({ label, value, mono }) => (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 0', borderBottom:'1px solid #E4EDE6' }}>
+      <span style={{ fontSize:13, color:'#6B7F72', fontWeight:500 }}>{label}</span>
+      <span style={{ fontSize:14, fontWeight:600, color:'#0F1A14', fontFamily: mono ? 'monospace' : 'inherit', fontSize: mono ? 12 : 14 }}>{value || '—'}</span>
+    </div>
+  )
+
+  return (
+    <div style={{ flex:1, overflowY:'auto', background:'#FAFAF7', padding:'32px 40px' }}>
+      <div style={{ maxWidth:600, margin:'0 auto' }}>
+
+        {/* Header */}
+        <div style={{ marginBottom:32 }}>
+          <div style={{ fontSize:22, fontWeight:800, color:'#0F1A14' }}>Account</div>
+          <div style={{ fontSize:14, color:'#6B7F72', marginTop:4 }}>Your profile and business details</div>
+        </div>
+
+        {loading ? <div style={{ textAlign:'center', padding:60 }}><Spinner lg /></div> : (
+          <>
+            {/* Avatar card */}
+            <div style={{ background:'white', borderRadius:16, padding:24, marginBottom:20, border:'1px solid #E4EDE6', display:'flex', alignItems:'center', gap:20 }}>
+              <div style={{ width:72, height:72, borderRadius:'50%', background:av.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, fontWeight:800, color:'#0F1A14', flexShrink:0 }}>
+                {av.initials}
+              </div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontSize:20, fontWeight:800, color:'#0F1A14' }}>{profile?.name}</div>
+                <div style={{ fontSize:14, color:'#6B7F72', marginTop:2 }}>{profile?.email}</div>
+                <div style={{ display:'flex', gap:8, marginTop:8 }}>
+                  <span style={{ fontSize:11, padding:'3px 10px', borderRadius:20, background:'#E8F5E9', color:'#0A6640', fontWeight:700, textTransform:'uppercase' }}>{profile?.role}</span>
+                  <span style={{ fontSize:11, padding:'3px 10px', borderRadius:20, background: profile?.onboarding_status === 'active' ? '#E8F5E9' : '#FFF8E1', color: profile?.onboarding_status === 'active' ? '#0A6640' : '#D97706', fontWeight:700, textTransform:'uppercase' }}>
+                    {profile?.onboarding_status === 'active' ? '● Connected' : profile?.onboarding_status}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* User details */}
+            <div style={{ background:'white', borderRadius:16, padding:'4px 24px', marginBottom:20, border:'1px solid #E4EDE6' }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'#6B7F72', textTransform:'uppercase', letterSpacing:.8, padding:'16px 0 4px' }}>User</div>
+              <Row label="Full Name" value={profile?.name} />
+              <Row label="Email" value={profile?.email} />
+              <Row label="Role" value={profile?.role?.charAt(0).toUpperCase() + profile?.role?.slice(1)} />
+            </div>
+
+            {/* Business details */}
+            <div style={{ background:'white', borderRadius:16, padding:'4px 24px', marginBottom:20, border:'1px solid #E4EDE6' }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'#6B7F72', textTransform:'uppercase', letterSpacing:.8, padding:'16px 0 4px' }}>Business</div>
+              <Row label="Business Name" value={profile?.business_name} />
+              <Row label="Plan" value={profile?.plan?.charAt(0).toUpperCase() + profile?.plan?.slice(1)} />
+              <Row label="Member Since" value={fmtDate(profile?.activated_at)} />
+            </div>
+
+            {/* WhatsApp details */}
+            <div style={{ background:'white', borderRadius:16, padding:'4px 24px', marginBottom:28, border:'1px solid #E4EDE6' }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'#6B7F72', textTransform:'uppercase', letterSpacing:.8, padding:'16px 0 4px' }}>WhatsApp</div>
+              <Row label="Business Number" value={profile?.whatsapp_number} />
+              <Row label="WABA ID" value={profile?.waba_id} mono />
+              <Row label="Status" value={profile?.onboarding_status === 'active' ? 'Connected ✓' : profile?.onboarding_status} />
+            </div>
+
+            {/* Logout */}
+            <button onClick={onLogout} style={{ width:'100%', padding:'13px', background:'white', color:'#DC2626', border:'1.5px solid #FCA5A5', borderRadius:10, fontFamily:'var(--f)', fontSize:15, fontWeight:700, cursor:'pointer', transition:'all .2s' }}
+              onMouseOver={e => { e.target.style.background='#FFF5F5' }}
+              onMouseOut={e => { e.target.style.background='white' }}>
+              Sign Out
+            </button>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function Dashboard({ user, onLogout }) {
   const [view, setView] = useState('inbox')
@@ -850,12 +939,13 @@ function Dashboard({ user, onLogout }) {
         <div className="sb-logo">📦</div>
         <button className={`sb-btn ${view==='inbox'?'on':''}`} onClick={() => setView('inbox')} title="Inbox">💬<span className="dot-badge" /></button>
         <button className={`sb-btn ${view==='orders'?'on':''}`} onClick={() => setView('orders')} title="Orders">📋</button>
+        <button className={`sb-btn ${view==='profile'?'on':''}`} onClick={() => setView('profile')} title="Profile">👤</button>
         <div style={{ flex:1 }} />
-        <button className="sb-btn" title="Logout" onClick={onLogout} style={{ fontSize:16 }}>⏻</button>
-        <div style={{ width:36, height:36, borderRadius:'50%', background:av.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#0F1A14' }}>{av.initials}</div>
+        <div onClick={() => setView('profile')} style={{ width:36, height:36, borderRadius:'50%', background:av.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#0F1A14', cursor:'pointer', border: view==='profile' ? '2px solid var(--wa)' : '2px solid transparent' }}>{av.initials}</div>
       </div>
       {view==='inbox' && <InboxView addToast={addToast} />}
       {view==='orders' && <OrdersView addToast={addToast} />}
+      {view==='profile' && <ProfileView user={user} onLogout={onLogout} />}
       {toasts.map(t => <Toast key={t.id} msg={t.msg} type={t.type} onDone={() => removeToast(t.id)} />)}
     </div>
   )
