@@ -144,6 +144,28 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+
+	// ── Plan limit check ──────────────────────────────────────────────────────
+	// Free plan: 50 orders/month. Pro plan: unlimited.
+	var plan string
+	var monthlyCount int
+	h.db.QueryRow(ctx, `
+		SELECT t.plan, COUNT(o.id)
+		FROM tenants t
+		LEFT JOIN orders o ON o.tenant_id = t.id
+			AND DATE_TRUNC('month', o.created_at) = DATE_TRUNC('month', NOW())
+			AND o.status != 'cancelled'
+		WHERE t.id = $1
+		GROUP BY t.plan
+	`, tenantID).Scan(&plan, &monthlyCount)
+
+	if plan == "free" && monthlyCount >= 50 {
+		writeError(w, http.StatusPaymentRequired,
+			"You've reached the 50 orders/month limit on the free plan. Upgrade to Pro (₹299/month) for unlimited orders.",
+			"plan_limit_exceeded")
+		return
+	}
+
 	tx, err := h.db.Begin(ctx)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "db error", "server_error")
@@ -429,6 +451,28 @@ func (h *OrderHandler) ConfirmPayment(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ctx := r.Context()
+
+	// ── Plan limit check ──────────────────────────────────────────────────────
+	// Free plan: 50 orders/month. Pro plan: unlimited.
+	var plan string
+	var monthlyCount int
+	h.db.QueryRow(ctx, `
+		SELECT t.plan, COUNT(o.id)
+		FROM tenants t
+		LEFT JOIN orders o ON o.tenant_id = t.id
+			AND DATE_TRUNC('month', o.created_at) = DATE_TRUNC('month', NOW())
+			AND o.status != 'cancelled'
+		WHERE t.id = $1
+		GROUP BY t.plan
+	`, tenantID).Scan(&plan, &monthlyCount)
+
+	if plan == "free" && monthlyCount >= 50 {
+		writeError(w, http.StatusPaymentRequired,
+			"You've reached the 50 orders/month limit on the free plan. Upgrade to Pro (₹299/month) for unlimited orders.",
+			"plan_limit_exceeded")
+		return
+	}
+
 	tx, err := h.db.Begin(ctx)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "db error", "server_error")
