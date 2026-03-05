@@ -59,8 +59,8 @@ export async function signup(businessName, ownerName, email, password) {
   return data
 }
 
-export async function connectWABA(code) {
-  return request('POST', '/onboarding/whatsapp/callback', { code })
+export async function connectWABA(code, redirectUri) {
+  return request('POST', '/onboarding/whatsapp/callback', { code, redirect_uri: redirectUri || '' })
 }
 
 export async function getOnboardingStatus() {
@@ -72,6 +72,10 @@ export async function disconnectWABA() {
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
+export async function getMe() {
+  return request('GET', '/me')
+}
+
 export async function getStats() {
   return request('GET', '/stats')
 }
