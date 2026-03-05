@@ -103,6 +103,8 @@ func main() {
 
 	// ── Public Auth ────────────────────────────────────────────────────────────
 	r.Post("/api/auth/login", authHandler.Login)
+	r.Post("/api/auth/forgot-password", passwordResetHandler.ForgotPassword)
+	r.Post("/api/auth/reset-password", passwordResetHandler.ResetPassword)
 
 	// ── Onboarding ─────────────────────────────────────────────────────────────
 	r.Post("/api/onboarding/signup", onboardingHandler.Signup)
