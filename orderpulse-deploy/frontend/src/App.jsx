@@ -226,14 +226,33 @@ function Toast({ msg, type, onDone }) {
 }
 
 // ─── CREATE ORDER MODAL ───────────────────────────────────────────────────────
-function CreateOrderModal({ contact, onClose, onCreated }) {
-  const [items, setItems] = useState([{ name:'', qty:1, price:0 }])
+function CreateOrderModal({ contact, msgs, onClose, onCreated }) {
+  // Pre-fill from most recent extracted_order in messages
+  const extracted = useMemo(() => {
+    if (!msgs) return []
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      const m = msgs[i]
+      if (!m.extracted_order) continue
+      try {
+        // extracted_order is a JSON string from the backend
+        const parsed = typeof m.extracted_order === 'string'
+          ? JSON.parse(m.extracted_order)
+          : m.extracted_order
+        if (parsed?.items?.length) {
+          return parsed.items.map(it => ({ name: it.name, qty: it.qty || 1, price: 0 }))
+        }
+      } catch {}
+    }
+    return []
+  }, [msgs])
+
+  const [items, setItems] = useState(() => extracted.length ? extracted : [{ name:'', qty:1, price:0 }])
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const total = items.reduce((s,i) => s + i.qty * i.price, 0)
   const upd = (i,f,v) => { const n=[...items]; n[i]={...n[i],[f]:f==='name'?v:Number(v)}; setItems(n) }
   const submit = async () => {
-    const valid = items.filter(i => i.name && i.price > 0)
+    const valid = items.filter(i => i.name.trim())
     if (!valid.length) return
     setLoading(true)
     try { await onCreated(valid, total, notes) }
@@ -262,7 +281,7 @@ function CreateOrderModal({ contact, onClose, onCreated }) {
           <input className="inp" placeholder="Delivery address, special instructions..." value={notes} onChange={e => setNotes(e.target.value)} style={{ padding:'8px 12px' }} />
         </div>
         <div style={{ fontSize:18, fontWeight:800, textAlign:'right', color:'#0F1A14', marginBottom:16 }}>Total: ₹{total.toLocaleString('en-IN')}</div>
-        <button className="btn" onClick={submit} disabled={loading || !items.some(i=>i.name&&i.price>0)}>
+        <button className="btn" onClick={submit} disabled={loading || !items.some(i=>i.name.trim())}>
           {loading ? <><Spinner /> Creating...</> : 'Confirm Order & Notify Customer'}
         </button>
       </div>
@@ -658,7 +677,7 @@ function InboxView({ addToast }) {
                 <div className="chat-online">● {contact?.wa_number}</div>
               </div>
               <div className="chat-acts">
-                <button className="abtn" onClick={() => setCreateModal(contact)}>🛒 Create Order</button>
+                <button className="abtn" onClick={() => setCreateModal({contact, msgs})}>🛒 Create Order</button>
               </div>
             </div>
             <div className="msgs">
@@ -679,7 +698,7 @@ function InboxView({ addToast }) {
         )}
       </div>
 
-      {createModal && <CreateOrderModal contact={createModal} onClose={() => setCreateModal(null)} onCreated={handleCreateOrder} />}
+      {createModal && <CreateOrderModal contact={createModal.contact} msgs={createModal.msgs} onClose={() => setCreateModal(null)} onCreated={handleCreateOrder} />}
     </>
   )
 }
