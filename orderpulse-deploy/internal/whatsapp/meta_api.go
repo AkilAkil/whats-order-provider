@@ -84,50 +84,90 @@ type WABAInfo struct {
 	Name string `json:"name"`
 }
 
-// GetUserWABAs returns all WhatsApp Business Accounts the user granted access to
-// via Embedded Signup. Uses debug_token to extract WABA IDs from granular_scopes —
-// this is the correct approach for Embedded Signup (no business_management needed).
+// GetUserWABAs returns all WhatsApp Business Accounts the user granted access to.
+// Strategy:
+//  1. Check debug_token granular_scopes for direct WABA IDs (works for some flows)
+//  2. Fall back to listing the user's Business Portfolios and their WABAs
 func GetUserWABAs(userToken, appID, appSecret string) ([]WABAInfo, error) {
-	// App access token = appID|appSecret (used as Authorization for debug_token)
+	// ── Strategy 1: debug_token granular_scopes ───────────────────────────────
 	appToken := appID + "|" + appSecret
 	body, err := metaGet(fmt.Sprintf(
 		"%s/debug_token?input_token=%s&access_token=%s",
 		graphBase, userToken, appToken,
 	))
-	if err != nil {
-		return nil, fmt.Errorf("fetch WABAs: %w", err)
-	}
-	var resp struct {
-		Data struct {
-			GranularScopes []struct {
-				Scope     string   `json:"scope"`
-				TargetIDs []string `json:"target_ids"`
-			} `json:"granular_scopes"`
-		} `json:"data"`
-	}
-	if err := json.Unmarshal(body, &resp); err != nil {
-		return nil, fmt.Errorf("parse debug_token: %w", err)
-	}
-	// Extract WABA IDs from whatsapp_business_management scope
-	seen := map[string]bool{}
-	var wabas []WABAInfo
-	for _, s := range resp.Data.GranularScopes {
-		if s.Scope == "whatsapp_business_management" {
-			for _, id := range s.TargetIDs {
-				if !seen[id] {
-					seen[id] = true
-					wabas = append(wabas, WABAInfo{ID: id, Name: id})
+	if err == nil {
+		var resp struct {
+			Data struct {
+				GranularScopes []struct {
+					Scope     string   `json:"scope"`
+					TargetIDs []string `json:"target_ids"`
+				} `json:"granular_scopes"`
+			} `json:"data"`
+		}
+		if json.Unmarshal(body, &resp) == nil {
+			seen := map[string]bool{}
+			var wabas []WABAInfo
+			for _, s := range resp.Data.GranularScopes {
+				if s.Scope == "whatsapp_business_management" {
+					for _, id := range s.TargetIDs {
+						if !seen[id] {
+							seen[id] = true
+							wabas = append(wabas, WABAInfo{ID: id, Name: id})
+						}
+					}
 				}
+			}
+			if len(wabas) > 0 {
+				return wabas, nil
 			}
 		}
 	}
-	if len(wabas) == 0 {
-		// Log all scopes found to help diagnose
-		var scopeNames []string
-		for _, s := range resp.Data.GranularScopes {
-			scopeNames = append(scopeNames, s.Scope)
+
+	// ── Strategy 2: user → businesses → owned_whatsapp_business_accounts ─────
+	// Works when WABA is owned by a Business Portfolio (most common case)
+	bizBody, err := metaGet(fmt.Sprintf(
+		"%s/me/businesses?fields=id,name&access_token=%s",
+		graphBase, userToken,
+	))
+	if err != nil {
+		return nil, fmt.Errorf("fetch businesses: %w", err)
+	}
+	var bizResp struct {
+		Data []struct {
+			ID   string `json:"id"`
+			Name string `json:"name"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(bizBody, &bizResp); err != nil {
+		return nil, fmt.Errorf("parse businesses: %w", err)
+	}
+
+	seen := map[string]bool{}
+	var wabas []WABAInfo
+	for _, biz := range bizResp.Data {
+		waBody, err := metaGet(fmt.Sprintf(
+			"%s/%s/owned_whatsapp_business_accounts?fields=id,name&access_token=%s",
+			graphBase, biz.ID, userToken,
+		))
+		if err != nil {
+			continue // skip businesses we can't access
 		}
-		return nil, fmt.Errorf("no WABA IDs found in token scopes. Scopes present: %v", scopeNames)
+		var waResp struct {
+			Data []WABAInfo `json:"data"`
+		}
+		if json.Unmarshal(waBody, &waResp) != nil {
+			continue
+		}
+		for _, w := range waResp.Data {
+			if !seen[w.ID] {
+				seen[w.ID] = true
+				wabas = append(wabas, w)
+			}
+		}
+	}
+
+	if len(wabas) == 0 {
+		return nil, fmt.Errorf("no WhatsApp Business Accounts found. Ensure your Facebook account is linked to a Business Portfolio that owns a WABA")
 	}
 	return wabas, nil
 }
