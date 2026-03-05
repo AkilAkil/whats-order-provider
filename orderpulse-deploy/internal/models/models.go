@@ -109,8 +109,9 @@ type Message struct {
 	Type      MessageType `json:"type"`
 	Body      *string     `json:"body"`
 	MediaURL  *string     `json:"media_url,omitempty"`
-	IsTagged  bool        `json:"is_tagged"` // flagged as order-related by the business
-	CreatedAt time.Time   `json:"created_at"`
+	IsTagged       bool        `json:"is_tagged"`
+	ExtractedOrder *string     `json:"extracted_order,omitempty"` // JSON blob of parsed order items
+	CreatedAt      time.Time   `json:"created_at"`
 }
 
 // ChatThread is the inbox view: contact + last message + unread count.
