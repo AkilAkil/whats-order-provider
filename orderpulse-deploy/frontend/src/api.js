@@ -59,8 +59,13 @@ export async function signup(businessName, ownerName, email, password) {
   return data
 }
 
-export async function connectWABA(code, redirectUri) {
-  return request('POST', '/onboarding/whatsapp/callback', { code, redirect_uri: redirectUri || '' })
+export async function connectWABA(code, redirectUri, wabaId, phoneNumberId) {
+  return request('POST', '/onboarding/whatsapp/callback', {
+    code,
+    redirect_uri: redirectUri || '',
+    waba_id: wabaId || '',
+    phone_number_id: phoneNumberId || ''
+  })
 }
 
 export async function getOnboardingStatus() {
