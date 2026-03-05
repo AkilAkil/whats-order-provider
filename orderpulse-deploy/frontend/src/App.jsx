@@ -480,7 +480,7 @@ function OnboardingScreen({ user, onDone, addToast }) {
     let wabaId = ''
     let phoneNumberId = ''
     const sessionInfoListener = (event) => {
-      if (event.origin !== 'https://www.facebook.com') return
+      if (!['https://www.facebook.com', 'https://web.facebook.com'].includes(event.origin)) return
       try {
         const data = JSON.parse(event.data)
         console.log('WA Embedded Signup event:', JSON.stringify(data))
@@ -505,8 +505,7 @@ function OnboardingScreen({ user, onDone, addToast }) {
       setPhase('pipeline')
       const code = response.authResponse.code
       const accessToken = response.authResponse.accessToken
-      // For code flow, redirect_uri must be facebook's own success URL
-      const redirectUri = code ? 'https://www.facebook.com/connect/login_success.html' : ''
+      const redirectUri = '' // JS SDK manages redirect internally
       const token = code || accessToken
       console.log('wabaId:', wabaId, 'phoneNumberId:', phoneNumberId)
       api.connectWABA(token, redirectUri, wabaId, phoneNumberId)
@@ -519,7 +518,6 @@ function OnboardingScreen({ user, onDone, addToast }) {
       extras: {
         setup: {},
         sessionInfoVersion: 3,
-        featureType: 'whatsapp_embedded_signup',
       },
     })
   }
