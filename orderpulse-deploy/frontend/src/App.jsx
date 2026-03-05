@@ -240,7 +240,7 @@ function CreateOrderModal({ contact, msgs, onClose, onCreated }) {
           ? JSON.parse(m.extracted_order)
           : m.extracted_order
         if (parsed?.items?.length) {
-          return parsed.items.map(it => ({ name: it.name, qty: it.qty || 1, price: 0 }))
+          return parsed.items.map(it => ({ name: it.name, qty: it.qty || 1, unit: it.unit || '', price: 0 }))
         }
       } catch {}
     }
@@ -253,14 +253,15 @@ function CreateOrderModal({ contact, msgs, onClose, onCreated }) {
       const lines = body.split(/[,\n+&]/).map(s => s.trim()).filter(Boolean)
       for (const line of lines) {
         // "2 butter chicken" or "2kg rice" or "rice 2"
-        const m1 = line.match(/^(\d+(?:\.\d+)?)\s*(?:kg|gm?|pcs?|pieces?|packets?|packet|pc|nos?)?\s+(?:of\s+)?([a-zA-Z].{1,40})$/i)
-        if (m1) { items.push({ name: m1[2].trim(), qty: parseFloat(m1[1]) || 1, price: 0 }); continue }
+        const unitRe = /kg|kgs|kilo|gms?|grams?|ml|ltr|litres?|pcs?|pieces?|packets?|pack|nos?|dozen/i
+        const m1 = line.match(/^(\d+(?:\.\d+)?)\s*(kg|kgs?|kilo|gms?|grams?|ml|ltr|litres?|pcs?|pieces?|packets?|pack|nos?|dozen)?\s+(?:of\s+)?([a-zA-Z].{1,40})$/i)
+        if (m1) { items.push({ name: m1[3].trim(), qty: parseFloat(m1[1]) || 1, unit: m1[2] || '', price: 0 }); continue }
         // "butter chicken 2" or "rice 1kg"
-        const m2 = line.match(/^([a-zA-Z][^0-9]{1,40}?)\s+(\d+(?:\.\d+)?)\s*(?:kg|gm?|pcs?|pieces?|packets?)?$/i)
-        if (m2) { items.push({ name: m2[1].trim(), qty: parseFloat(m2[2]) || 1, price: 0 }); continue }
+        const m2 = line.match(/^([a-zA-Z][^0-9]{1,40}?)\s+(\d+(?:\.\d+)?)\s*(kg|kgs?|gms?|grams?|ml|ltr|pcs?|pieces?|packets?)?$/i)
+        if (m2) { items.push({ name: m2[1].trim(), qty: parseFloat(m2[2]) || 1, unit: m2[3] || '', price: 0 }); continue }
         // Single word/phrase with no qty — treat as qty 1
         if (/^[a-zA-Z][a-zA-Z\s]{2,40}$/.test(line)) {
-          items.push({ name: line, qty: 1, price: 0 })
+          items.push({ name: line, qty: 1, unit: '', price: 0 })
         }
       }
       return items
@@ -276,11 +277,11 @@ function CreateOrderModal({ contact, msgs, onClose, onCreated }) {
     return []
   }, [msgs])
 
-  const [items, setItems] = useState(() => extracted.length ? extracted : [{ name:'', qty:1, price:0 }])
+  const [items, setItems] = useState(() => extracted.length ? extracted : [{ name:'', qty:1, unit:'', price:0 }])
   const [notes, setNotes] = useState('')
   const [loading, setLoading] = useState(false)
   const total = items.reduce((s,i) => s + i.qty * i.price, 0)
-  const upd = (i,f,v) => { const n=[...items]; n[i]={...n[i],[f]:f==='name'?v:Number(v)}; setItems(n) }
+  const upd = (i,f,v) => { const n=[...items]; n[i]={...n[i],[f]:(f==='name'||f==='unit')?v:Number(v)}; setItems(n) }
   const submit = async () => {
     const valid = items.filter(i => i.name.trim())
     if (!valid.length) return
@@ -297,15 +298,22 @@ function CreateOrderModal({ contact, msgs, onClose, onCreated }) {
           <button onClick={onClose} style={{ border:'none', background:'none', fontSize:22, cursor:'pointer', color:'#9CA3AF' }}>×</button>
         </div>
         <div style={{ fontSize:12, fontWeight:700, color:'#6B7080', textTransform:'uppercase', letterSpacing:.5, marginBottom:10 }}>Items</div>
+        {/* Column headers */}
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 56px 80px 72px 32px', gap:8, marginBottom:4 }}>
+          {['Item','Qty','Unit','₹ Price',''].map((h,i) => (
+            <div key={i} style={{ fontSize:11, color:'#9CA3AF', fontWeight:600, textAlign: i>=1?'center':'left' }}>{h}</div>
+          ))}
+        </div>
         {items.map((item,i) => (
-          <div key={i} style={{ display:'grid', gridTemplateColumns:'1fr 64px 96px 32px', gap:8, marginBottom:8 }}>
-            <input className="inp" placeholder="Item name" value={item.name} onChange={e => upd(i,'name',e.target.value)} style={{ padding:'8px 12px' }} />
-            <input className="inp" type="number" min="1" value={item.qty} onChange={e => upd(i,'qty',e.target.value)} style={{ padding:'8px', textAlign:'center' }} />
-            <input className="inp" type="number" min="0" placeholder="₹ Price" value={item.price||''} onChange={e => upd(i,'price',e.target.value)} style={{ padding:'8px 10px' }} />
-            <button onClick={() => setItems(items.filter((_,j)=>j!==i))} style={{ border:'none', background:'#FFF5F5', borderRadius:8, cursor:'pointer', color:'#EF4444' }}>×</button>
+          <div key={i} style={{ display:'grid', gridTemplateColumns:'1fr 56px 80px 72px 32px', gap:8, marginBottom:8 }}>
+            <input className="inp" placeholder="Item name" value={item.name} onChange={e => upd(i,'name',e.target.value)} style={{ padding:'8px 10px' }} />
+            <input className="inp" type="number" min="1" value={item.qty} onChange={e => upd(i,'qty',e.target.value)} style={{ padding:'8px 6px', textAlign:'center' }} />
+            <input className="inp" placeholder="kg/pcs…" value={item.unit||''} onChange={e => upd(i,'unit',e.target.value)} style={{ padding:'8px 6px', textAlign:'center' }} />
+            <input className="inp" type="number" min="0" placeholder="0" value={item.price||''} onChange={e => upd(i,'price',e.target.value)} style={{ padding:'8px 6px', textAlign:'right' }} />
+            <button onClick={() => setItems(items.filter((_,j)=>j!==i))} style={{ border:'none', background:'#FFF5F5', borderRadius:8, cursor:'pointer', color:'#EF4444', fontSize:16 }}>×</button>
           </div>
         ))}
-        <button onClick={() => setItems([...items,{name:'',qty:1,price:0}])} style={{ fontSize:13, color:'#0A6640', background:'none', border:'none', cursor:'pointer', fontWeight:600, padding:'4px 0', marginBottom:12 }}>+ Add item</button>
+        <button onClick={() => setItems([...items,{name:'',qty:1,unit:'',price:0}])} style={{ fontSize:13, color:'#0A6640', background:'none', border:'none', cursor:'pointer', fontWeight:600, padding:'4px 0', marginBottom:12 }}>+ Add item</button>
         <div className="fg">
           <label className="lbl">Notes (optional)</label>
           <input className="inp" placeholder="Delivery address, special instructions..." value={notes} onChange={e => setNotes(e.target.value)} style={{ padding:'8px 12px' }} />
