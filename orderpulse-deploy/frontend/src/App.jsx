@@ -230,11 +230,12 @@ function CreateOrderModal({ contact, msgs, onClose, onCreated }) {
   // Pre-fill from most recent extracted_order in messages
   const extracted = useMemo(() => {
     if (!msgs) return []
+
+    // Try extracted_order from backend first
     for (let i = msgs.length - 1; i >= 0; i--) {
       const m = msgs[i]
       if (!m.extracted_order) continue
       try {
-        // extracted_order is a JSON string from the backend
         const parsed = typeof m.extracted_order === 'string'
           ? JSON.parse(m.extracted_order)
           : m.extracted_order
@@ -243,6 +244,36 @@ function CreateOrderModal({ contact, msgs, onClose, onCreated }) {
         }
       } catch {}
     }
+
+    // Fallback: parse the last inbound message body directly in the browser
+    // Handles common formats: "2 butter chicken", "1kg rice", "3 naan, 2 lassi"
+    const parseBody = (body) => {
+      if (!body) return []
+      const items = []
+      const lines = body.split(/[,
++&]/).map(s => s.trim()).filter(Boolean)
+      for (const line of lines) {
+        // "2 butter chicken" or "2kg rice" or "rice 2"
+        const m1 = line.match(/^(\d+(?:\.\d+)?)\s*(?:kg|gm?|pcs?|pieces?|packets?|packet|pc|nos?)?\s+(?:of\s+)?([a-zA-Z].{1,40})$/i)
+        if (m1) { items.push({ name: m1[2].trim(), qty: parseFloat(m1[1]) || 1, price: 0 }); continue }
+        // "butter chicken 2" or "rice 1kg"
+        const m2 = line.match(/^([a-zA-Z][^0-9]{1,40}?)\s+(\d+(?:\.\d+)?)\s*(?:kg|gm?|pcs?|pieces?|packets?)?$/i)
+        if (m2) { items.push({ name: m2[1].trim(), qty: parseFloat(m2[2]) || 1, price: 0 }); continue }
+        // Single word/phrase with no qty — treat as qty 1
+        if (/^[a-zA-Z][a-zA-Z\s]{2,40}$/.test(line)) {
+          items.push({ name: line, qty: 1, price: 0 })
+        }
+      }
+      return items
+    }
+
+    for (let i = msgs.length - 1; i >= 0; i--) {
+      const m = msgs[i]
+      if (m.direction !== 'inbound' || !m.body) continue
+      const items = parseBody(m.body)
+      if (items.length > 0) return items
+    }
+
     return []
   }, [msgs])
 
