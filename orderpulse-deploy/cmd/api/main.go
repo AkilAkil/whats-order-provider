@@ -204,7 +204,7 @@ func main() {
 	}
 
 	go func() {
-		slog.Info("OrderPulse starting", "port", cfg.Port, "env", cfg.Env)
+		slog.Info("Whats-Order starting", "port", cfg.Port, "env", cfg.Env)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			slog.Error("server error", "err", err)
 			os.Exit(1)
