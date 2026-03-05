@@ -770,6 +770,7 @@ function OrdersView({ addToast }) {
   const [filter, setFilter] = useState('all')
   const [upiModal, setUpiModal] = useState(null)
   const [payModal, setPayModal] = useState(null)
+  const [exportOpen, setExportOpen] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -827,8 +828,6 @@ function OrdersView({ addToast }) {
   })
 
   if (loading) return <div style={{ flex:1 }}><Spinner lg /></div>
-
-  const [exportOpen, setExportOpen] = useState(false)
 
   const fmtExportDate = d => d ? new Date(d).toLocaleString('en-IN') : ''
 
