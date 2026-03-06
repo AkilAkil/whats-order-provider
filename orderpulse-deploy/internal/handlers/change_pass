@@ -6,6 +6,7 @@ import (
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
+	"orderpulse/internal/middleware"
 )
 
 type ChangePasswordHandler struct{ db *pgxpool.Pool }
@@ -15,7 +16,7 @@ func NewChangePasswordHandler(db *pgxpool.Pool) *ChangePasswordHandler {
 }
 
 func (h *ChangePasswordHandler) Change(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(TenantIDKey).(string)
+	tenantID := middleware.TenantIDFromCtx(r.Context())
 	var req struct {
 		CurrentPassword string `json:"current_password"`
 		NewPassword     string `json:"new_password"`
@@ -28,10 +29,9 @@ func (h *ChangePasswordHandler) Change(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "new password must be at least 8 characters", "too_short")
 		return
 	}
-	// Get current hash
 	var userID, hash string
 	err := h.db.QueryRow(r.Context(),
-		`SELECT u.id, u.password_hash FROM users u JOIN tenants t ON t.id = u.tenant_id WHERE t.id = $1 LIMIT 1`,
+		`SELECT u.id, u.password_hash FROM users u WHERE u.tenant_id = $1 LIMIT 1`,
 		tenantID).Scan(&userID, &hash)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "user not found", "not_found")
