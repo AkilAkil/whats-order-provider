@@ -524,7 +524,7 @@ func (h *OrderHandler) fetchItems(ctx context.Context, orderID uuid.UUID) []mode
 
 // ─── PATCH /api/orders/{id}/items ─────────────────────────────────────────────
 func (h *OrderHandler) UpdateItems(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(TenantIDKey).(string)
+	tenantID := middleware.TenantIDFromCtx(r.Context())
 	orderID := chi.URLParam(r, "id")
 	var req struct {
 		Items []struct {
