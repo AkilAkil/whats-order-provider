@@ -147,3 +147,15 @@ export async function forgotPassword(email) {
 export async function resetPassword(token, password) {
   return request('POST', '/auth/reset-password', { token, password })
 }
+
+export async function updateContactName(contactId, name) {
+  return request('PATCH', `/api/inbox/${contactId}/name`, { name })
+}
+
+export async function changePassword(currentPassword, newPassword) {
+  return request('POST', '/api/auth/change-password', { current_password: currentPassword, new_password: newPassword })
+}
+
+export async function updateOrderItems(id, items, notes) {
+  return request('PATCH', `/api/orders/${id}/items`, { items, notes })
+}
