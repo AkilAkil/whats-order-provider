@@ -3,140 +3,172 @@ import * as api from './api.js'
 
 // ─── CSS ──────────────────────────────────────────────────────────────────────
 const CSS = `
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
-  --g:#0A6640;--wa:#25D366;--cr:#FAFAF7;--dk:#0F1A14;
-  --tx:#1A2E22;--mt:#6B7F72;--bd:#E4EDE6;--f:'Plus Jakarta Sans',sans-serif;
+  --g:#0A6640;--g2:#0D8A52;--wa:#25D366;--cr:#F7F8F6;--dk:#0C1710;
+  --tx:#1A2E22;--mt:#7A8E82;--bd:#E2EBE4;--f:'Plus Jakarta Sans',sans-serif;
+  --sb-w:220px;--sb-bg:#0C1710;
 }
 body{font-family:var(--f);background:var(--cr);color:var(--tx);overflow:hidden;}
 body.scrollable{overflow:auto;height:auto;}
 .app{height:100vh;display:flex;flex-direction:column;}
 .app.scrollable{height:auto;min-height:100vh;overflow:visible;}
-.auth-screen{flex:1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0A6640 0%,#082B1A 100%);position:relative;overflow:hidden;}
-.auth-bg{position:absolute;inset:0;opacity:.06;background-image:radial-gradient(circle at 2px 2px,white 1px,transparent 0);background-size:32px 32px;}
-.auth-card{background:white;border-radius:24px;padding:48px 40px;width:440px;position:relative;z-index:1;box-shadow:0 32px 80px rgba(0,0,0,0.35);animation:slideUp .4s ease;}
+
+/* ── AUTH ── */
+.auth-screen{flex:1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0A6640 0%,#051409 100%);position:relative;overflow:hidden;}
+.auth-bg{position:absolute;inset:0;opacity:.04;background-image:radial-gradient(circle at 2px 2px,white 1px,transparent 0);background-size:28px 28px;}
+.auth-card{background:white;border-radius:20px;padding:44px 40px;width:420px;position:relative;z-index:1;box-shadow:0 40px 100px rgba(0,0,0,0.4);animation:slideUp .4s ease;}
 .logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;}
-.logo-icon{width:40px;height:40px;background:var(--g);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:20px;}
-.logo-text{font-size:20px;font-weight:800;color:var(--g);}
-.auth-title{font-size:26px;font-weight:800;color:var(--dk);margin-bottom:6px;}
-.auth-sub{color:var(--mt);font-size:14px;margin-bottom:28px;line-height:1.5;}
+.logo-icon{width:38px;height:38px;background:var(--g);border-radius:9px;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:18px;}
+.logo-text{font-size:19px;font-weight:900;color:var(--g);letter-spacing:-0.5px;}
+.auth-title{font-size:24px;font-weight:800;color:var(--dk);margin-bottom:6px;letter-spacing:-0.3px;}
+.auth-sub{color:var(--mt);font-size:14px;margin-bottom:28px;line-height:1.55;}
 .fg{margin-bottom:16px;}
-.lbl{display:block;font-size:13px;font-weight:600;color:var(--tx);margin-bottom:6px;}
-.inp{width:100%;padding:12px 16px;border:1.5px solid var(--bd);border-radius:10px;font-family:var(--f);font-size:14px;color:var(--dk);background:var(--cr);transition:all .2s;outline:none;}
+.lbl{display:block;font-size:12px;font-weight:700;color:var(--tx);margin-bottom:6px;letter-spacing:0.2px;text-transform:uppercase;}
+.inp{width:100%;padding:11px 14px;border:1.5px solid var(--bd);border-radius:9px;font-family:var(--f);font-size:14px;color:var(--dk);background:#FAFBFA;transition:all .15s;outline:none;}
 .inp:focus{border-color:var(--g);background:white;box-shadow:0 0 0 3px rgba(10,102,64,.08);}
-.btn{width:100%;padding:13px;background:var(--g);color:white;border:none;border-radius:10px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px;}
-.btn:hover{background:#0D5533;transform:translateY(-1px);box-shadow:0 8px 20px rgba(10,102,64,.3);}
+.btn{width:100%;padding:12px;background:var(--g);color:white;border:none;border-radius:9px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;margin-top:8px;letter-spacing:-0.2px;}
+.btn:hover{background:#0D5533;transform:translateY(-1px);box-shadow:0 8px 24px rgba(10,102,64,.32);}
 .btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
 .err{background:#FFF5F5;border:1px solid #FCA5A5;border-radius:8px;padding:10px 14px;font-size:13px;color:#DC2626;margin-bottom:12px;}
 .switch{text-align:center;margin-top:20px;font-size:14px;color:var(--mt);}
-.switch a{color:var(--g);font-weight:600;cursor:pointer;}
+.switch a{color:var(--g);font-weight:700;cursor:pointer;}
+
+/* ── LAYOUT ── */
 .layout{flex:1;display:flex;overflow:hidden;}
-.sidebar{width:64px;background:var(--dk);display:flex;flex-direction:column;align-items:center;padding:16px 0;gap:8px;}
-.sb-logo{width:40px;height:40px;background:var(--g);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:16px;cursor:pointer;}
-.sb-btn{width:44px;height:44px;border-radius:12px;border:none;background:transparent;color:#6B7280;display:flex;align-items:center;justify-content:center;font-size:20px;cursor:pointer;transition:all .2s;position:relative;}
-.sb-btn:hover,.sb-btn.on{background:rgba(255,255,255,.1);color:white;}
-.dot-badge{position:absolute;top:6px;right:6px;width:8px;height:8px;background:var(--wa);border-radius:50%;border:2px solid var(--dk);}
-.inbox-p{width:320px;border-right:1px solid var(--bd);display:flex;flex-direction:column;background:white;}
-.ph{padding:18px 16px 12px;border-bottom:1px solid var(--bd);}
-.ph-t{font-size:16px;font-weight:800;color:var(--dk);}
-.ph-s{font-size:12px;color:var(--mt);margin-top:2px;}
+.sidebar{width:var(--sb-w);background:var(--sb-bg);display:flex;flex-direction:column;padding:0;flex-shrink:0;border-right:1px solid rgba(255,255,255,0.04);}
+.sb-header{padding:20px 16px 8px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(255,255,255,.05);margin-bottom:8px;}
+.sb-logo{width:34px;height:34px;background:linear-gradient(135deg,#0A6640,#10B981);border-radius:9px;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:17px;flex-shrink:0;cursor:pointer;transition:opacity .15s;}
+.sb-logo:hover{opacity:.85;}
+.sb-brand{font-size:15px;font-weight:800;color:white;letter-spacing:-0.3px;}
+.sb-brand span{color:#10B981;}
+.sb-nav{display:flex;flex-direction:column;gap:2px;padding:0 8px;flex:1;}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;border:none;background:transparent;color:rgba(255,255,255,.5);fontFamily:var(--f);font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;text-align:left;width:100%;position:relative;}
+.sb-item:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.85);}
+.sb-item.on{background:rgba(16,185,129,.12);color:#10B981;}
+.sb-item.on .sb-icon{opacity:1;}
+.sb-icon{font-size:17px;opacity:.6;width:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.sb-label{font-size:13.5px;}
+.sb-badge{margin-left:auto;min-width:18px;height:18px;padding:0 5px;background:#25D366;border-radius:9px;font-size:10px;font-weight:800;color:white;display:flex;align-items:center;justify-content:center;}
+.sb-footer{padding:12px 8px;border-top:1px solid rgba(255,255,255,.05);}
+.sb-user{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;cursor:pointer;transition:background .15s;}
+.sb-user:hover{background:rgba(255,255,255,.06);}
+.sb-uname{font-size:13px;font-weight:700;color:rgba(255,255,255,.8);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-uemail{font-size:11px;color:rgba(255,255,255,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+/* ── INBOX ── */
+.inbox-p{width:300px;border-right:1px solid var(--bd);display:flex;flex-direction:column;background:white;flex-shrink:0;}
+.ph{padding:16px 16px 10px;border-bottom:1px solid var(--bd);}
+.ph-t{font-size:15px;font-weight:800;color:var(--dk);letter-spacing:-0.2px;}
+.ph-s{font-size:11.5px;color:var(--mt);margin-top:2px;}
 .threads{overflow-y:auto;flex:1;}
-.thread{display:flex;align-items:flex-start;gap:10px;padding:14px 16px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--bd);}
-.thread:hover,.thread.on{background:#E8F5E9;}
-.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.thread{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;cursor:pointer;transition:background .12s;border-bottom:1px solid var(--bd);}
+.thread:hover{background:#F2F9F4;}
+.thread.on{background:#E6F5EC;border-left:3px solid var(--g);}
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;flex-shrink:0;}
 .ti{flex:1;min-width:0;}
-.tn{font-size:14px;font-weight:700;color:var(--dk);}
-.tp{font-size:12px;color:var(--mt);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.tt{font-size:11px;color:var(--mt);}
-.ubadge{min-width:18px;height:18px;padding:0 4px;background:var(--wa);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white;flex-shrink:0;}
-.itag{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;margin-top:4px;}
-.io{background:#EFF6FF;color:#3B82F6;}.ip{background:#F0FFF4;color:#059669;}.ir{background:#FFF7ED;color:#D97706;}
-.chat-p{flex:1;display:flex;flex-direction:column;}
-.chat-h{padding:14px 20px;border-bottom:1px solid var(--bd);background:white;display:flex;align-items:center;gap:12px;}
-.chat-online{font-size:12px;color:#059669;font-weight:500;}
-.chat-acts{display:flex;gap:8px;margin-left:auto;}
-.abtn{padding:7px 14px;border-radius:8px;border:1.5px solid var(--bd);background:white;font-family:var(--f);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--tx);}
+.tn{font-size:13.5px;font-weight:700;color:var(--dk);}
+.tp{font-size:12px;color:var(--mt);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4;}
+.tt{font-size:10.5px;color:#9CAA9F;}
+.ubadge{min-width:17px;height:17px;padding:0 4px;background:var(--wa);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;color:white;flex-shrink:0;}
+.itag{display:inline-flex;align-items:center;padding:2px 7px;border-radius:20px;font-size:10.5px;font-weight:700;margin-top:3px;}
+.io{background:#EFF6FF;color:#3B82F6;}.ip{background:#ECFDF5;color:#059669;}.ir{background:#FFF7ED;color:#D97706;}
+
+/* ── CHAT ── */
+.chat-p{flex:1;display:flex;flex-direction:column;background:#F5F7F5;}
+.chat-h{padding:12px 20px;border-bottom:1px solid var(--bd);background:white;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.chat-online{font-size:11.5px;color:#059669;font-weight:600;}
+.chat-acts{display:flex;gap:6px;margin-left:auto;}
+.abtn{padding:6px 13px;border-radius:7px;border:1.5px solid var(--bd);background:white;font-family:var(--f);font-size:12.5px;font-weight:600;cursor:pointer;transition:all .15s;color:var(--tx);}
 .abtn:hover{border-color:var(--g);color:var(--g);background:#E8F5E9;}
 .abtn.pr{background:var(--g);color:white;border-color:var(--g);}
-.abtn.pr:hover{background:#0D5533;}
+.abtn.pr:hover{background:#0D5533;box-shadow:0 2px 8px rgba(10,102,64,.25);}
 .abtn:disabled{opacity:.5;cursor:not-allowed;}
-.msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:12px;background:#f0f2f5;}
-.msg{max-width:70%;}
+.msgs{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:10px;}
+.msg{max-width:68%;}
 .msg.in{align-self:flex-start;}.msg.out{align-self:flex-end;}
-.mb{padding:10px 14px;border-radius:14px;font-size:14px;line-height:1.5;}
-.msg.in .mb{background:white;border-bottom-left-radius:4px;box-shadow:0 1px 2px rgba(0,0,0,.08);}
+.mb{padding:10px 14px;border-radius:14px;font-size:13.5px;line-height:1.55;}
+.msg.in .mb{background:white;border-bottom-left-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.06);}
 .msg.out .mb{background:#DCF8C6;border-bottom-right-radius:4px;}
-.mt2{font-size:11px;color:var(--mt);margin-top:4px;padding:0 4px;}
+.mt2{font-size:10.5px;color:#9CAA9F;margin-top:3px;padding:0 4px;}
 .msg.out .mt2{text-align:right;}
-.ms{font-size:12px;font-weight:600;color:var(--g);margin-bottom:4px;}
-.cinput-bar{padding:14px 16px;background:white;border-top:1px solid var(--bd);display:flex;gap:10px;align-items:flex-end;}
-.cinput{flex:1;padding:10px 14px;border:1.5px solid var(--bd);border-radius:24px;font-family:var(--f);font-size:14px;outline:none;resize:none;background:var(--cr);transition:border .2s;line-height:1.4;}
+.ms{font-size:11.5px;font-weight:700;color:var(--g);margin-bottom:3px;}
+.cinput-bar{padding:12px 14px;background:white;border-top:1px solid var(--bd);display:flex;gap:8px;align-items:flex-end;}
+.cinput{flex:1;padding:9px 14px;border:1.5px solid var(--bd);border-radius:22px;font-family:var(--f);font-size:13.5px;outline:none;resize:none;background:#FAFBFA;transition:border .15s;line-height:1.45;}
 .cinput:focus{border-color:var(--g);background:white;}
-.sbtn{width:40px;height:40px;background:var(--wa);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;color:white;font-size:18px;}
-.sbtn:hover{background:#1DA851;transform:scale(1.05);}
+.sbtn{width:38px;height:38px;background:var(--wa);border:none;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;color:white;font-size:16px;flex-shrink:0;}
+.sbtn:hover{background:#1DA851;transform:scale(1.06);}
+
+/* ── ORDERS ── */
 .ord-view{flex:1;overflow-y:auto;background:var(--cr);}
-.ord-hdr{padding:24px 28px 0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--cr);z-index:10;padding-bottom:16px;}
-.ord-title{font-size:22px;font-weight:800;color:var(--dk);}
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:0 28px 20px;}
-.stat{background:white;border-radius:14px;padding:18px;border:1px solid var(--bd);transition:all .2s;}
-.stat:hover{box-shadow:0 4px 24px rgba(10,102,64,.10);transform:translateY(-2px);}
-.sl{font-size:12px;color:var(--mt);font-weight:600;text-transform:uppercase;letter-spacing:.5px;}
-.sv{font-size:28px;font-weight:800;color:var(--dk);margin-top:6px;}
-.ss{font-size:12px;color:var(--mt);margin-top:2px;}
-.ords{padding:0 28px 28px;display:flex;flex-direction:column;gap:10px;}
-.ocard{background:white;border-radius:14px;border:1px solid var(--bd);overflow:hidden;transition:box-shadow .2s;}
-.ocard:hover{box-shadow:0 4px 24px rgba(10,102,64,.10);}
-.ocin{padding:16px 18px;display:flex;align-items:center;gap:14px;}
+.ord-hdr{padding:20px 24px 0;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--cr);z-index:10;padding-bottom:14px;border-bottom:1px solid var(--bd);}
+.ord-title{font-size:20px;font-weight:800;color:var(--dk);letter-spacing:-0.3px;}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 24px;}
+.stat{background:white;border-radius:12px;padding:16px 18px;border:1px solid var(--bd);transition:all .2s;position:relative;overflow:hidden;}
+.stat:hover{box-shadow:0 4px 20px rgba(10,102,64,.08);transform:translateY(-1px);}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.stat.blue::before{background:#3B82F6;}.stat.amber::before{background:#F59E0B;}.stat.green::before{background:#10B981;}.stat.dark::before{background:var(--g);}
+.sl{font-size:11px;color:var(--mt);font-weight:700;text-transform:uppercase;letter-spacing:.6px;}
+.sv{font-size:26px;font-weight:900;color:var(--dk);margin-top:5px;letter-spacing:-0.5px;}
+.ss{font-size:11.5px;color:var(--mt);margin-top:2px;}
+.ords{padding:0 24px 24px;display:flex;flex-direction:column;gap:8px;}
+.ocard{background:white;border-radius:12px;border:1px solid var(--bd);overflow:hidden;transition:all .2s;}
+.ocard:hover{box-shadow:0 4px 16px rgba(10,102,64,.08);border-color:#C8DDD0;}
+.ocin{padding:14px 16px;display:flex;align-items:center;gap:12px;}
 .oi{flex:1;min-width:0;}
-.on2{font-size:13px;font-weight:700;color:var(--g);font-family:monospace;}
-.oc{font-size:15px;font-weight:700;color:var(--dk);margin:2px 0;}
-.oit{font-size:12px;color:var(--mt);}
-.sbadge{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:4px;}
-.pbadge{padding:3px 8px;border-radius:20px;font-size:11px;font-weight:600;}
-.ppen{background:#FFF8E1;color:#D97706;}.ppaid{background:#F0FFF4;color:#059669;}
-.oa{font-size:18px;font-weight:800;color:var(--dk);}
-.oacts{display:flex;gap:8px;align-items:center;flex-shrink:0;}
-.sbar{height:3px;background:var(--bd);}
-.sfill{height:100%;border-radius:2px;transition:width .6s ease;}
-.toast{position:fixed;bottom:24px;right:24px;z-index:1000;background:white;border-radius:16px;padding:16px 18px;width:340px;box-shadow:0 20px 60px rgba(0,0,0,.2);border:1px solid var(--bd);animation:siR .4s ease;}
-.th2{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
-.ta{font-size:12px;font-weight:700;color:#25D366;}
-.tm{font-size:11px;color:var(--mt);margin-left:auto;}
-.tsn{font-size:13px;font-weight:700;color:var(--dk);margin-bottom:4px;}
-.tmsg{font-size:13px;color:var(--tx);line-height:1.5;}
-.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:500;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease;}
-.modal{background:white;border-radius:20px;padding:28px;width:480px;max-height:85vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.3);animation:slideUp .3s ease;}
-.mt{font-size:20px;font-weight:800;color:var(--dk);margin-bottom:4px;}
-.ms2{font-size:14px;color:var(--mt);margin-bottom:20px;}
-.loading{display:flex;align-items:center;justify-content:center;flex:1;font-size:14px;color:var(--mt);}
-.spinner-lg{width:32px;height:32px;border:3px solid var(--bd);border-top-color:var(--g);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:12px;}
-.spinner-sm{width:14px;height:14px;border:2px solid rgba(255,255,255,.5);border-top-color:white;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;}
+.on2{font-size:11.5px;font-weight:700;color:var(--g);font-family:monospace;letter-spacing:.3px;}
+.oc{font-size:14px;font-weight:700;color:var(--dk);margin:1px 0;letter-spacing:-0.1px;}
+.oit{font-size:12px;color:var(--mt);line-height:1.4;}
+.sbadge{padding:3px 9px;border-radius:20px;font-size:11.5px;font-weight:700;display:inline-flex;align-items:center;gap:3px;}
+.pbadge{padding:3px 8px;border-radius:20px;font-size:11px;font-weight:700;}
+.ppen{background:#FFFBEB;color:#B45309;}.ppaid{background:#ECFDF5;color:#059669;}
+.oa{font-size:17px;font-weight:900;color:var(--dk);letter-spacing:-0.3px;}
+.oacts{display:flex;gap:6px;align-items:center;flex-shrink:0;}
+.sbar{height:2px;background:#F0F4F1;}
+.sfill{height:100%;transition:width .6s ease;}
+
+/* ── MODALS ── */
+.toast{position:fixed;bottom:20px;right:20px;z-index:1000;background:white;border-radius:14px;padding:14px 16px;width:320px;box-shadow:0 16px 50px rgba(0,0,0,.18);border:1px solid var(--bd);animation:siR .35s ease;}
+.th2{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.ta{font-size:11.5px;font-weight:700;color:#25D366;}
+.tm{font-size:10.5px;color:var(--mt);margin-left:auto;}
+.tsn{font-size:13px;font-weight:700;color:var(--dk);margin-bottom:3px;}
+.tmsg{font-size:12.5px;color:var(--tx);line-height:1.5;}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center;animation:fadeIn .2s ease;}
+.modal{background:white;border-radius:18px;padding:26px;width:460px;max-height:85vh;overflow-y:auto;box-shadow:0 32px 80px rgba(0,0,0,.28);animation:slideUp .3s ease;}
+.mt{font-size:18px;font-weight:800;color:var(--dk);margin-bottom:4px;letter-spacing:-0.2px;}
+.ms2{font-size:13.5px;color:var(--mt);margin-bottom:18px;}
+.loading{display:flex;align-items:center;justify-content:center;flex:1;font-size:13.5px;color:var(--mt);}
+.spinner-lg{width:30px;height:30px;border:3px solid var(--bd);border-top-color:var(--g);border-radius:50%;animation:spin .8s linear infinite;margin-bottom:10px;}
+.spinner-sm{width:13px;height:13px;border:2px solid rgba(255,255,255,.5);border-top-color:white;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;}
+
+/* ── ONBOARDING ── */
 .onb-screen{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0;}
-.onb-top{padding:18px 28px;background:white;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;}
+.onb-top{padding:16px 24px;background:white;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;}
 .onb-body{flex:1;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;background:var(--cr);padding:32px 16px;min-height:0;}
-.onb-card{background:white;border-radius:24px;padding:40px;width:100%;max-width:520px;box-shadow:0 4px 24px rgba(10,102,64,.10);border:1px solid var(--bd);animation:slideUp .4s ease;}
-.steps-ind{display:flex;gap:8px;margin-bottom:32px;}
-.step-dot{height:4px;border-radius:2px;transition:all .4s;background:var(--bd);flex:1;}
+.onb-card{background:white;border-radius:20px;padding:40px;width:100%;max-width:520px;box-shadow:0 4px 24px rgba(10,102,64,.08);border:1px solid var(--bd);animation:slideUp .4s ease;}
+.steps-ind{display:flex;gap:8px;margin-bottom:28px;}
+.step-dot{height:3px;border-radius:2px;transition:all .4s;background:var(--bd);flex:1;}
 .step-dot.on{background:var(--g);}
-.wa-btn{width:100%;padding:16px;display:flex;align-items:center;justify-content:center;gap:12px;background:var(--wa);color:white;border:none;border-radius:14px;font-family:var(--f);font-size:16px;font-weight:700;cursor:pointer;transition:all .3s;margin-top:8px;}
-.wa-btn:hover{background:#1DA851;transform:translateY(-2px);box-shadow:0 12px 30px rgba(37,211,102,.3);}
+.wa-btn{width:100%;padding:14px;display:flex;align-items:center;justify-content:center;gap:10px;background:var(--wa);color:white;border:none;border-radius:12px;font-family:var(--f);font-size:15px;font-weight:700;cursor:pointer;transition:all .25s;margin-top:8px;}
+.wa-btn:hover{background:#1DA851;transform:translateY(-1px);box-shadow:0 10px 28px rgba(37,211,102,.28);}
 .wa-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
-.pip-steps{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
-.pip-step{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:10px;background:var(--cr);border:1px solid var(--bd);transition:all .3s;font-size:13px;}
-.pip-step.running{background:#FFF8E1;border-color:#F59E0B;}
-.pip-step.done{background:#E8F5E9;border-color:var(--g);}
+.pip-steps{display:flex;flex-direction:column;gap:6px;margin-top:14px;}
+.pip-step{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:9px;background:var(--cr);border:1px solid var(--bd);transition:all .3s;font-size:13px;}
+.pip-step.running{background:#FFFBEB;border-color:#F59E0B;}
+.pip-step.done{background:#ECFDF5;border-color:var(--g);}
 .pip-step.failed{background:#FFF5F5;border-color:#EF4444;}
-.upi-modal input{margin-bottom:10px;}
-@keyframes slideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes siR{from{opacity:0;transform:translateX(40px)}to{opacity:1;transform:translateX(0)}}
+
+@keyframes slideUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes siR{from{opacity:0;transform:translateX(36px)}to{opacity:1;transform:translateX(0)}}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-@keyframes popIn{from{transform:scale(.9);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
 .pulse{animation:pulse 1.5s ease infinite;}
 .pop-in{animation:popIn .3s ease;}
-`
+``
 
 function injectCSS() {
   if (!document.getElementById('op-css')) {
@@ -1291,7 +1323,7 @@ function OrdersView({ addToast }) {
         </div>
       </div>
       {/* Orders search bar */}
-      <div style={{ padding:'0 0 12px 0', display:'flex' }}>
+      <div style={{ padding:'12px 24px 0', display:'flex' }}>
         <div style={{ position:'relative', width:'100%', maxWidth:340 }}>
           <svg style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'#9CA3AF' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search orders, customers, items..."
@@ -1300,10 +1332,10 @@ function OrdersView({ addToast }) {
         </div>
       </div>
       <div className="stats-row">
-        <div className="stat"><div className="sl">Total Orders</div><div className="sv">{stats.total_orders||0}</div><div className="ss">All time</div></div>
-        <div className="stat"><div className="sl">New</div><div className="sv" style={{ color:'#3B82F6' }}>{stats.new_orders||0}</div><div className="ss">Need attention</div></div>
-        <div className="stat"><div className="sl">Pending Payment</div><div className="sv" style={{ color:'#D97706' }}>{stats.pending_payment||0}</div><div className="ss">Follow up</div></div>
-        <div className="stat"><div className="sl">Today Revenue</div><div className="sv" style={{ color:'#10B981' }}>₹{(stats.today_revenue||0).toLocaleString('en-IN')}</div><div className="ss">Paid orders</div></div>
+        <div className="stat dark"><div className="sl">Total Orders</div><div className="sv">{stats.total_orders||0}</div><div className="ss">All time</div></div>
+        <div className="stat blue"><div className="sl">New</div><div className="sv" style={{ color:'#3B82F6' }}>{stats.new_orders||0}</div><div className="ss">Need attention</div></div>
+        <div className="stat amber"><div className="sl">Pending Payment</div><div className="sv" style={{ color:'#D97706' }}>{stats.pending_payment||0}</div><div className="ss">Follow up</div></div>
+        <div className="stat green"><div className="sl">Today Revenue</div><div className="sv" style={{ color:'#059669' }}>₹{(stats.today_revenue||0).toLocaleString('en-IN')}</div><div className="ss">Paid orders</div></div>
       </div>
       {/* Top Selling Items */}
       {stats.top_items && stats.top_items.length > 0 && (
@@ -1413,13 +1445,25 @@ function ProfileView({ user, onLogout }) {
   )
 
   return (
-    <div style={{ flex:1, overflowY:'auto', background:'#FAFAF7', padding:'32px 40px' }}>
-      <div style={{ maxWidth:600, margin:'0 auto' }}>
+    <div style={{ flex:1, overflowY:'auto', background:'#F7F8F6' }}>
+      {/* Profile header */}
+      <div style={{ background:'linear-gradient(135deg,#0C1710 0%,#1A3A24 100%)', padding:'28px 32px 36px', position:'relative', overflow:'hidden' }}>
+        <div style={{ position:'absolute', inset:0, opacity:.04, backgroundImage:'radial-gradient(circle at 2px 2px,white 1px,transparent 0)', backgroundSize:'24px 24px' }} />
+        <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'center', gap:16 }}>
+          <div style={{ width:60, height:60, borderRadius:'50%', background:av.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, fontWeight:900, color:'#0F1A14', border:'3px solid rgba(255,255,255,.15)', flexShrink:0 }}>{av.initials}</div>
+          <div>
+            <div style={{ fontSize:20, fontWeight:900, color:'white', letterSpacing:-0.4, marginBottom:4 }}>{user?.name || user?.email?.split('@')[0]}</div>
+            <div style={{ display:'flex', gap:6 }}>
+              <span style={{ fontSize:11, padding:'3px 9px', borderRadius:20, background:'rgba(16,185,129,.2)', color:'#10B981', fontWeight:700, textTransform:'uppercase', letterSpacing:.3 }}>Admin</span>
+              <span style={{ fontSize:11, padding:'3px 9px', borderRadius:20, background:'rgba(255,255,255,.1)', color:'rgba(255,255,255,.7)', fontWeight:700, textTransform:'uppercase', letterSpacing:.3 }}>● Connected</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding:'24px 28px', maxWidth:640 }}>
 
         {/* Header */}
-        <div style={{ marginBottom:32 }}>
-          <div style={{ fontSize:22, fontWeight:800, color:'#0F1A14' }}>Account</div>
-          <div style={{ fontSize:14, color:'#6B7F72', marginTop:4 }}>Your profile and business details</div>
+        <div style={{ marginBottom:0 }}>
         </div>
 
         {loading ? <div style={{ textAlign:'center', padding:60 }}><Spinner lg /></div> : (
@@ -1525,9 +1569,101 @@ function ProfileView({ user, onLogout }) {
   )
 }
 
+// ─── HOME VIEW ────────────────────────────────────────────────────────────────
+function HomeView({ user, onNav }) {
+  const [stats, setStats] = useState({})
+  useEffect(() => {
+    api.getStats().then(s => setStats(s)).catch(() => {})
+  }, [])
+  const av = avatarFor(user?.name || user?.email || 'U')
+  const hour = new Date().getHours()
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
+
+  return (
+    <div style={{ flex:1, overflowY:'auto', background:'#F7F8F6' }}>
+      {/* Hero banner */}
+      <div style={{ background:'linear-gradient(135deg, #0A6640 0%, #0D8A52 60%, #10B981 100%)', padding:'36px 36px 40px', position:'relative', overflow:'hidden' }}>
+        <div style={{ position:'absolute', inset:0, opacity:.06, backgroundImage:'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize:'24px 24px' }} />
+        <div style={{ position:'relative', zIndex:1 }}>
+          <div style={{ display:'flex', alignItems:'center', gap:14, marginBottom:20 }}>
+            <div style={{ width:52, height:52, borderRadius:'50%', background:av.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, fontWeight:800, color:'#0F1A14', border:'3px solid rgba(255,255,255,.3)', flexShrink:0 }}>{av.initials}</div>
+            <div>
+              <div style={{ fontSize:13, color:'rgba(255,255,255,.7)', fontWeight:600, marginBottom:2 }}>{greeting} 👋</div>
+              <div style={{ fontSize:22, fontWeight:900, color:'white', letterSpacing:-0.5 }}>{user?.name || user?.email?.split('@')[0]}</div>
+            </div>
+          </div>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12 }}>
+            {[
+              { label:'Total Orders', value: stats.total_orders || 0, sub:'All time', icon:'📦' },
+              { label:'New Orders', value: stats.new_orders || 0, sub:'Need attention', icon:'🔔' },
+              { label:"Today's Revenue", value: '₹' + (stats.today_revenue || 0).toLocaleString('en-IN'), sub:'Paid orders', icon:'💰' },
+            ].map((s,i) => (
+              <div key={i} style={{ background:'rgba(255,255,255,.12)', borderRadius:12, padding:'14px 16px', backdropFilter:'blur(8px)', border:'1px solid rgba(255,255,255,.15)' }}>
+                <div style={{ fontSize:18, marginBottom:6 }}>{s.icon}</div>
+                <div style={{ fontSize:22, fontWeight:900, color:'white', letterSpacing:-0.5 }}>{s.value}</div>
+                <div style={{ fontSize:11.5, color:'rgba(255,255,255,.65)', marginTop:2, fontWeight:600 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick actions */}
+      <div style={{ padding:'24px 28px 0' }}>
+        <div style={{ fontSize:12, fontWeight:700, color:'#7A8E82', textTransform:'uppercase', letterSpacing:.6, marginBottom:12 }}>Quick actions</div>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:24 }}>
+          {[
+            { icon:'💬', label:'Open Inbox', sub:'View WhatsApp messages', view:'inbox', color:'#3B82F6', bg:'#EFF6FF' },
+            { icon:'📋', label:'View Orders', sub:'Manage all orders', view:'orders', color:'#0A6640', bg:'#ECFDF5' },
+          ].map((a,i) => (
+            <button key={i} onClick={() => onNav(a.view)}
+              style={{ background:'white', border:'1px solid #E2EBE4', borderRadius:12, padding:'16px', cursor:'pointer', textAlign:'left', transition:'all .15s', display:'flex', gap:12, alignItems:'center', fontFamily:'var(--f)' }}
+              onMouseOver={e => e.currentTarget.style.boxShadow='0 4px 16px rgba(0,0,0,.08)'}
+              onMouseOut={e => e.currentTarget.style.boxShadow='none'}>
+              <div style={{ width:42, height:42, borderRadius:10, background:a.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, flexShrink:0 }}>{a.icon}</div>
+              <div>
+                <div style={{ fontWeight:700, fontSize:14, color:'#0C1710', marginBottom:2 }}>{a.label}</div>
+                <div style={{ fontSize:12, color:'#7A8E82' }}>{a.sub}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {/* About section */}
+        <div style={{ fontSize:12, fontWeight:700, color:'#7A8E82', textTransform:'uppercase', letterSpacing:.6, marginBottom:12 }}>About Whats-Order</div>
+        <div style={{ background:'white', border:'1px solid #E2EBE4', borderRadius:14, overflow:'hidden', marginBottom:24 }}>
+          {[
+            { icon:'📲', title:'Receive orders from WhatsApp', desc:'Customers message your WhatsApp Business number. Messages appear in your inbox in real time.' },
+            { icon:'🛒', title:'Convert messages into orders', desc:'One click to turn any message into a tracked order with items, quantity, and price.' },
+            { icon:'🚀', title:'Update customers automatically', desc:'When you advance an order status, we notify the customer on WhatsApp instantly.' },
+            { icon:'📊', title:'Track revenue and analytics', desc:'See your top-selling items, daily revenue, and order stats at a glance.' },
+            { icon:'🖨️', title:'Print invoices', desc:'Generate professional invoice PDFs for any order in one click.' },
+          ].map((f, i, arr) => (
+            <div key={i} style={{ display:'flex', gap:14, padding:'16px 18px', borderBottom: i<arr.length-1 ? '1px solid #F0F4F1' : 'none' }}>
+              <div style={{ width:38, height:38, borderRadius:9, background:'#F0FAF5', display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, flexShrink:0 }}>{f.icon}</div>
+              <div>
+                <div style={{ fontWeight:700, fontSize:13.5, color:'#0C1710', marginBottom:3 }}>{f.title}</div>
+                <div style={{ fontSize:12.5, color:'#7A8E82', lineHeight:1.55 }}>{f.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer links */}
+        <div style={{ display:'flex', gap:16, paddingBottom:28 }}>
+          {[['Privacy Policy','/privacy'],['Terms of Service','/terms'],['support@whats-order.com','mailto:support@whats-order.com']].map(([label,href],i) => (
+            <a key={i} href={href} target="_blank" style={{ fontSize:12, color:'#7A8E82', textDecoration:'none', fontWeight:600 }}
+              onMouseOver={e=>e.currentTarget.style.color='#0A6640'} onMouseOut={e=>e.currentTarget.style.color='#7A8E82'}>{label}</a>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function Dashboard({ user, onLogout }) {
-  const [view, setView] = useState('inbox')
+  const [view, setView] = useState('home')
   const [toasts, setToasts] = useState([])
   const addToast = useCallback((msg, type='success') => {
     const id = Date.now()
@@ -1536,18 +1672,47 @@ function Dashboard({ user, onLogout }) {
   const removeToast = id => setToasts(t => t.filter(x => x.id!==id))
   const av = avatarFor(user?.name || user?.email || 'U')
 
+  const NAV = [
+    { id:'inbox', icon:'💬', label:'Inbox' },
+    { id:'orders', icon:'📋', label:'Orders' },
+  ]
+
   return (
     <div className="layout">
       <div className="sidebar">
-        <div className="sb-logo" style={{ background:'#0A6640', borderRadius:10, width:36, height:36, display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontWeight:900, fontSize:18, letterSpacing:-1 }}>W</div>
-        <button className={`sb-btn ${view==='inbox'?'on':''}`} onClick={() => setView('inbox')} title="Inbox">💬<span className="dot-badge" /></button>
-        <button className={`sb-btn ${view==='orders'?'on':''}`} onClick={() => setView('orders')} title="Orders">📋</button>
-        <button className={`sb-btn ${view==='profile'?'on':''}`} onClick={() => setView('profile')} title="Profile">👤</button>
-        <div style={{ flex:1 }} />
-        <div onClick={() => setView('profile')} style={{ width:36, height:36, borderRadius:'50%', background:av.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:13, fontWeight:700, color:'#0F1A14', cursor:'pointer', border: view==='profile' ? '2px solid var(--wa)' : '2px solid transparent' }}>{av.initials}</div>
+        {/* Brand */}
+        <div className="sb-header">
+          <div className="sb-logo" onClick={() => setView('home')}>W</div>
+          <div className="sb-brand">Whats<span>-</span>Order</div>
+        </div>
+
+        {/* Nav */}
+        <div className="sb-nav">
+          {NAV.map(n => (
+            <button key={n.id} className={`sb-item ${view===n.id?'on':''}`} onClick={() => setView(n.id)}>
+              <span className="sb-icon">{n.icon}</span>
+              <span className="sb-label">{n.label}</span>
+              {n.id === 'inbox' && <span className="sb-badge">●</span>}
+            </button>
+          ))}
+        </div>
+
+        {/* Footer user */}
+        <div className="sb-footer">
+          <div className="sb-user" onClick={() => setView('profile')}>
+            <div style={{ width:32, height:32, borderRadius:'50%', background:av.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:800, color:'#0F1A14', flexShrink:0, border: view==='profile' ? '2px solid #10B981' : '2px solid transparent' }}>{av.initials}</div>
+            <div style={{ flex:1, minWidth:0 }}>
+              <div className="sb-uname">{user?.name || 'Account'}</div>
+              <div className="sb-uemail">{user?.email}</div>
+            </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,.3)" strokeWidth="2"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </div>
       </div>
-      {view==='inbox' && <InboxView addToast={addToast} />}
-      {view==='orders' && <OrdersView addToast={addToast} />}
+
+      {view==='home'    && <HomeView user={user} onNav={setView} />}
+      {view==='inbox'   && <InboxView addToast={addToast} />}
+      {view==='orders'  && <OrdersView addToast={addToast} />}
       {view==='profile' && <ProfileView user={user} onLogout={onLogout} />}
       {toasts.map(t => <Toast key={t.id} msg={t.msg} type={t.type} onDone={() => removeToast(t.id)} />)}
     </div>
