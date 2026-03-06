@@ -10,7 +10,9 @@ const CSS = `
   --tx:#1A2E22;--mt:#6B7F72;--bd:#E4EDE6;--f:'Plus Jakarta Sans',sans-serif;
 }
 body{font-family:var(--f);background:var(--cr);color:var(--tx);overflow:hidden;}
+body.scrollable{overflow:auto;height:auto;}
 .app{height:100vh;display:flex;flex-direction:column;}
+.app.scrollable{height:auto;min-height:100vh;overflow:visible;}
 .auth-screen{flex:1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0A6640 0%,#082B1A 100%);position:relative;overflow:hidden;}
 .auth-bg{position:absolute;inset:0;opacity:.06;background-image:radial-gradient(circle at 2px 2px,white 1px,transparent 0);background-size:32px 32px;}
 .auth-card{background:white;border-radius:24px;padding:48px 40px;width:440px;position:relative;z-index:1;box-shadow:0 32px 80px rgba(0,0,0,0.35);animation:slideUp .4s ease;}
@@ -1472,6 +1474,14 @@ function Dashboard({ user, onLogout }) {
 
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
 function LandingPage({ onLogin, onSignup }) {
+  useEffect(() => {
+    document.body.classList.add('scrollable')
+    document.querySelector('.app')?.classList.add('scrollable')
+    return () => {
+      document.body.classList.remove('scrollable')
+      document.querySelector('.app')?.classList.remove('scrollable')
+    }
+  }, [])
   return (
     <div style={{ minHeight:'100vh', background:'#060E09', fontFamily:"'Plus Jakarta Sans', sans-serif", overflowX:'hidden', color:'white' }}>
 
@@ -1781,6 +1791,14 @@ function LandingPage({ onLogin, onSignup }) {
 
 // ─── LEGAL PAGE SHELL ─────────────────────────────────────────────────────────
 function LegalPage({ title, onBack, children }) {
+  useEffect(() => {
+    document.body.classList.add('scrollable')
+    document.querySelector('.app')?.classList.add('scrollable')
+    return () => {
+      document.body.classList.remove('scrollable')
+      document.querySelector('.app')?.classList.remove('scrollable')
+    }
+  }, [])
   return (
     <div style={{ minHeight:'100vh', background:'#060E09', fontFamily:"'Plus Jakarta Sans', sans-serif", color:'white' }}>
       {/* Nav */}
@@ -1988,6 +2006,14 @@ function TermsPage({ onBack }) {
 
 // ─── ABOUT PAGE ───────────────────────────────────────────────────────────────
 function AboutPage({ onBack }) {
+  useEffect(() => {
+    document.body.classList.add('scrollable')
+    document.querySelector('.app')?.classList.add('scrollable')
+    return () => {
+      document.body.classList.remove('scrollable')
+      document.querySelector('.app')?.classList.remove('scrollable')
+    }
+  }, [])
   return (
     <div style={{ minHeight:'100vh', background:'#FAFAF7', fontFamily:'var(--f)' }}>
       {/* Nav */}
