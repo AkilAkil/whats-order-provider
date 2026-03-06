@@ -427,6 +427,7 @@ function OnboardingScreen({ user, onDone, addToast }) {
 
   const [pendingLaunch, setPendingLaunch] = useState(false)
   const [manualMode, setManualMode] = useState(false)
+  const [accepted, setAccepted] = useState(false)
   const [manualWabaId, setManualWabaId] = useState('')
   const [manualPhoneId, setManualPhoneId] = useState('')
   const [manualToken, setManualToken] = useState('')
@@ -561,7 +562,7 @@ function OnboardingScreen({ user, onDone, addToast }) {
   return (
     <div className="onb-screen">
       <div className="onb-top">
-        <div style={{ width:32, height:32, background:'#0A6640', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:16 }}>📦</div>
+        <div style={{ width:32, height:32, background:'#0A6640', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', fontSize:18, color:'white', fontWeight:900 }}>W</div>
         <span style={{ fontWeight:800, color:'#0A6640' }}>Whats-Order</span>
         <span style={{ marginLeft:'auto', fontSize:13, color:'#6B7F72' }}>Signed in as {user?.name || user?.email}</span>
       </div>
@@ -591,6 +592,85 @@ function OnboardingScreen({ user, onDone, addToast }) {
               <div style={{ fontSize:14, color:'#6B7F72', marginBottom:24, lineHeight:1.6 }}>
                 Link your WhatsApp Business Account. Takes 10 seconds — no technical setup needed.
               </div>
+
+              {!accepted ? (
+                <div style={{ marginBottom:20 }}>
+                  {/* What we do */}
+                  <div style={{ background:'#F8FFFE', border:'1.5px solid #BBE0CC', borderRadius:14, padding:20, marginBottom:16 }}>
+                    <div style={{ fontWeight:800, fontSize:15, color:'#0F1A14', marginBottom:14, display:'flex', alignItems:'center', gap:8 }}>
+                      <span style={{ fontSize:18 }}>🔗</span> What happens when you connect
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                      {[
+                        { icon:'📲', title:'We link your WhatsApp number', desc:"Your WhatsApp Business number gets connected to Whats-Order so we can show you incoming messages in the dashboard." },
+                        { icon:'📥', title:'Incoming messages are routed here', desc:"When customers message you on WhatsApp, those messages appear in your Whats-Order inbox in real time. We don't block or intercept — your WhatsApp app still works normally." },
+                        { icon:'📤', title:'You send replies from here', desc:"When you reply from the dashboard, the message is sent on behalf of your WhatsApp Business number — it looks exactly like a normal WhatsApp message to your customer." },
+                        { icon:'🛒', title:'We help you create orders', desc:"We help you convert messages into tracked orders. We never auto-send messages or create orders without your action." },
+                      ].map((item, i) => (
+                        <div key={i} style={{ display:'flex', gap:12, padding:'10px 12px', background:'white', borderRadius:10, border:'1px solid #E4EDE6' }}>
+                          <span style={{ fontSize:20, flexShrink:0 }}>{item.icon}</span>
+                          <div>
+                            <div style={{ fontWeight:700, fontSize:13, color:'#0F1A14', marginBottom:3 }}>{item.title}</div>
+                            <div style={{ fontSize:12, color:'#6B7F72', lineHeight:1.6 }}>{item.desc}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Security & privacy */}
+                  <div style={{ background:'#F0FAF5', border:'1.5px solid #BBE0CC', borderRadius:14, padding:20, marginBottom:16 }}>
+                    <div style={{ fontWeight:800, fontSize:15, color:'#0F1A14', marginBottom:14, display:'flex', alignItems:'center', gap:8 }}>
+                      <span style={{ fontSize:18 }}>🔒</span> Your messages are safe
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:8 }}>
+                      {[
+                        "Your messages are stored securely in an encrypted database — only you can see them.",
+                        "We never read, share, or sell your messages or customer data to anyone.",
+                        "Your WhatsApp access token is stored encrypted and never exposed outside the server.",
+                        "We don't send any message to your customers without you clicking Send.",
+                        "You can disconnect your WhatsApp account from Whats-Order at any time from your profile.",
+                      ].map((point, i) => (
+                        <div key={i} style={{ display:'flex', gap:10, alignItems:'flex-start', fontSize:13, color:'#1A2E22' }}>
+                          <span style={{ color:'#0A6640', fontWeight:800, flexShrink:0, marginTop:1 }}>✓</span>
+                          <span style={{ lineHeight:1.6 }}>{point}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Cost info */}
+                  <div style={{ background:'#FFFBEB', border:'1.5px solid #FDE68A', borderRadius:14, padding:20, marginBottom:20 }}>
+                    <div style={{ fontWeight:800, fontSize:15, color:'#0F1A14', marginBottom:14, display:'flex', alignItems:'center', gap:8 }}>
+                      <span style={{ fontSize:18 }}>💰</span> About costs
+                    </div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:8, fontSize:13, color:'#1A2E22' }}>
+                      <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
+                        <span style={{ color:'#0A6640', fontWeight:800, flexShrink:0, marginTop:1 }}>✓</span>
+                        <span style={{ lineHeight:1.6 }}><strong>Whats-Order is free</strong> for up to 50 orders/month. Pro plan is ₹299/month for unlimited orders.</span>
+                      </div>
+                      <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
+                        <span style={{ color:'#D97706', fontWeight:800, flexShrink:0, marginTop:1 }}>ℹ</span>
+                        <span style={{ lineHeight:1.6 }}><strong>WhatsApp API costs:</strong> Meta gives you <strong>1,000 free conversations/month</strong> per WhatsApp number. Beyond that, Meta charges approximately ₹0.58–₹0.83 per conversation. This is a Meta charge — not us. At typical small business usage you will stay within the free limit.</span>
+                      </div>
+                      <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
+                        <span style={{ color:'#0A6640', fontWeight:800, flexShrink:0, marginTop:1 }}>✓</span>
+                        <span style={{ lineHeight:1.6 }}>We have <strong>no hidden fees</strong>. You can see your WhatsApp API usage anytime at business.facebook.com.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Accept button */}
+                  <button
+                    onClick={() => setAccepted(true)}
+                    style={{ width:'100%', padding:'14px', background:'#0A6640', color:'white', border:'none', borderRadius:12, fontFamily:'var(--f)', fontSize:15, fontWeight:800, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8, boxShadow:'0 4px 16px rgba(10,102,64,0.3)' }}>
+                    I understand — Continue to connect →
+                  </button>
+                  <div style={{ textAlign:'center', marginTop:10, fontSize:12, color:'#9CA3AF' }}>
+                    By continuing you agree to our <a href="/terms" style={{ color:'#0A6640' }} target="_blank">Terms of Service</a> and <a href="/privacy" style={{ color:'#0A6640' }} target="_blank">Privacy Policy</a>
+                  </div>
+                </div>
+              ) : null}
 
               {phase === 'popup' && (
                 <div style={{ background:'#FFF8E1', border:'1px solid #F59E0B', borderRadius:12, padding:'14px 16px', marginBottom:16, fontSize:13, color:'#92400E', display:'flex', gap:10, alignItems:'center' }}>
@@ -662,7 +742,7 @@ function OnboardingScreen({ user, onDone, addToast }) {
                 </div>
               )}
 
-              {(phase === 'idle' || phase === 'error') && !manualMode && (
+              {accepted && (phase === 'idle' || phase === 'error') && !manualMode && (
                 <>
                   <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>
                     <span style={{ fontSize:11, padding:'3px 8px', borderRadius:4, fontWeight:600,
