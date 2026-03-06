@@ -779,6 +779,8 @@ function OnboardingScreen({ user, onDone, addToast }) {
 function InboxView({ addToast }) {
   const [threads, setThreads] = useState([])
   const [active, setActive] = useState(null)
+  const activeRef = useRef(null)
+  const setActiveWithRef = (t) => { activeRef.current = t; setActive(t) }
   const [msgs, setMsgs] = useState([])
   const [reply, setReply] = useState('')
   const [sending, setSending] = useState(false)
@@ -798,7 +800,7 @@ function InboxView({ addToast }) {
   const chatEnd = useRef(null)
 
   const loadInbox = useCallback(async () => {
-    try { const data = await api.getInbox(); setThreads(data); if (!active && data.length) setActive(data[0]) }
+    try { const data = await api.getInbox(); setThreads(data); if (!activeRef.current && data.length) setActiveWithRef(data[0]) }
     catch { addToast('Failed to load inbox', 'error') }
     finally { setLoading(false) }
   }, [])
@@ -884,7 +886,7 @@ function InboxView({ addToast }) {
             const a = avatarFor(t.contact?.name || t.contact?.wa_number)
             const intent = intentOf(t.last_message?.body)
             return (
-              <div key={t.contact?.id} className={`thread ${active?.contact?.id===t.contact?.id?'on':''}`} onClick={() => setActive(t)}>
+              <div key={t.contact?.id} className={`thread ${active?.contact?.id===t.contact?.id?'on':''}`} onClick={() => setActiveWithRef(t)}>
                 <div className="av" style={{ width:42, height:42, background:a.bg }}>{a.initials}</div>
                 <div className="ti">
                   <div style={{ display:'flex', justifyContent:'space-between' }}>
