@@ -1763,6 +1763,10 @@ function LandingPage({ onLogin, onSignup }) {
             onMouseOver={e=>e.currentTarget.style.color='white'} onMouseOut={e=>e.currentTarget.style.color='rgba(255,255,255,0.3)'}>Log In</button>
           <button onClick={onSignup} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.3)', fontFamily:'inherit', fontSize:12, cursor:'pointer', transition:'color .15s' }}
             onMouseOver={e=>e.currentTarget.style.color='white'} onMouseOut={e=>e.currentTarget.style.color='rgba(255,255,255,0.3)'}>Sign Up</button>
+          <a href="/privacy" style={{ color:'rgba(255,255,255,0.3)', fontSize:12, textDecoration:'none', transition:'color .15s' }}
+            onMouseOver={e=>e.currentTarget.style.color='white'} onMouseOut={e=>e.currentTarget.style.color='rgba(255,255,255,0.3)'}>Privacy Policy</a>
+          <a href="/terms" style={{ color:'rgba(255,255,255,0.3)', fontSize:12, textDecoration:'none', transition:'color .15s' }}
+            onMouseOver={e=>e.currentTarget.style.color='white'} onMouseOut={e=>e.currentTarget.style.color='rgba(255,255,255,0.3)'}>Terms of Service</a>
         </div>
       </div>
 
@@ -1774,6 +1778,213 @@ function LandingPage({ onLogin, onSignup }) {
   )
 }
 
+
+// ─── LEGAL PAGE SHELL ─────────────────────────────────────────────────────────
+function LegalPage({ title, onBack, children }) {
+  return (
+    <div style={{ minHeight:'100vh', background:'#060E09', fontFamily:"'Plus Jakarta Sans', sans-serif", color:'white' }}>
+      {/* Nav */}
+      <nav style={{ position:'sticky', top:0, zIndex:100, background:'rgba(6,14,9,0.9)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(255,255,255,0.06)', padding:'0 5vw', display:'flex', alignItems:'center', justifyContent:'space-between', height:64 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <div style={{ width:36,height:36,background:'linear-gradient(135deg,#0A6640,#10B981)',borderRadius:10,display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontWeight:900,fontSize:20 }}>W</div>
+          <span style={{ fontWeight:900,fontSize:17,color:'white',letterSpacing:-0.5 }}>Whats<span style={{ color:'#10B981' }}>-</span>Order</span>
+        </div>
+        <button onClick={onBack} style={{ background:'rgba(255,255,255,0.05)',border:'1px solid rgba(255,255,255,0.1)',color:'rgba(255,255,255,0.7)',fontFamily:'inherit',fontSize:13,fontWeight:600,cursor:'pointer',padding:'8px 18px',borderRadius:8 }}>← Back</button>
+      </nav>
+      <div style={{ maxWidth:760, margin:'0 auto', padding:'60px 5vw 100px' }}>
+        <h1 style={{ fontSize:'clamp(28px,4vw,44px)', fontWeight:900, letterSpacing:-1, marginBottom:8 }}>{title}</h1>
+        <div style={{ fontSize:13, color:'rgba(255,255,255,0.35)', marginBottom:48 }}>Last updated: March 2026</div>
+        <div style={{ display:'flex', flexDirection:'column', gap:40, fontSize:15, lineHeight:1.8, color:'rgba(255,255,255,0.7)' }}>
+          {children}
+        </div>
+      </div>
+      {/* Footer */}
+      <div style={{ borderTop:'1px solid rgba(255,255,255,0.06)', padding:'20px 5vw', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
+        <span style={{ fontSize:12, color:'rgba(255,255,255,0.2)' }}>© 2026 Whats-Order. All rights reserved.</span>
+        <span style={{ fontSize:12, color:'rgba(255,255,255,0.2)' }}>support@whats-order.com</span>
+      </div>
+    </div>
+  )
+}
+
+function Section({ title, children }) {
+  return (
+    <div>
+      <h2 style={{ fontSize:18, fontWeight:800, color:'white', marginBottom:12, letterSpacing:-0.3 }}>{title}</h2>
+      <div>{children}</div>
+    </div>
+  )
+}
+
+// ─── PRIVACY POLICY ────────────────────────────────────────────────────────────
+function PrivacyPage({ onBack }) {
+  return (
+    <LegalPage title="Privacy Policy" onBack={onBack}>
+      <Section title="1. Who we are">
+        Whats-Order ("we", "our", "us") is an order management platform for WhatsApp Business, operated by Akil Abi, Dharmapuri, Tamil Nadu, India. We are reachable at <strong style={{ color:'#10B981' }}>support@whats-order.com</strong>.
+      </Section>
+
+      <Section title="2. What data we collect">
+        <p style={{ marginBottom:12 }}>When you use Whats-Order, we collect:</p>
+        <ul style={{ paddingLeft:20, display:'flex', flexDirection:'column', gap:8 }}>
+          <li><strong style={{ color:'white' }}>Account data:</strong> Your name, email address, and password (stored as a secure hash — never in plain text).</li>
+          <li><strong style={{ color:'white' }}>Business data:</strong> Your business name, WhatsApp Business Account (WABA) ID, and WhatsApp phone number.</li>
+          <li><strong style={{ color:'white' }}>Customer data:</strong> Names and WhatsApp numbers of your customers, as captured from inbound WhatsApp messages.</li>
+          <li><strong style={{ color:'white' }}>Order data:</strong> Order items, quantities, prices, status updates, and payment status created within our platform.</li>
+          <li><strong style={{ color:'white' }}>Message data:</strong> WhatsApp messages sent to and from your business number, routed through the Meta WhatsApp Cloud API.</li>
+          <li><strong style={{ color:'white' }}>Usage data:</strong> Basic logs of API requests for debugging and security purposes.</li>
+        </ul>
+      </Section>
+
+      <Section title="3. How we use your data">
+        <ul style={{ paddingLeft:20, display:'flex', flexDirection:'column', gap:8 }}>
+          <li>To provide and operate the Whats-Order service</li>
+          <li>To display your WhatsApp conversations and orders in the dashboard</li>
+          <li>To send WhatsApp messages on your behalf via the Meta Cloud API</li>
+          <li>To generate invoices and order reports</li>
+          <li>To send you service-related notifications (e.g. password reset emails)</li>
+          <li>To improve our product based on aggregate, anonymised usage patterns</li>
+        </ul>
+        <p style={{ marginTop:12 }}>We <strong style={{ color:'white' }}>never</strong> sell your data or your customers' data to third parties. We do not use your data for advertising.</p>
+      </Section>
+
+      <Section title="4. WhatsApp & Meta">
+        Whats-Order uses the <strong style={{ color:'white' }}>Meta WhatsApp Cloud API</strong>. By connecting your WhatsApp Business Account, you agree that message data passes through Meta's infrastructure. Meta's own privacy policy applies to this data. We act as a data processor on your behalf — you remain the data controller for your customers' information.
+      </Section>
+
+      <Section title="5. Data storage & security">
+        <ul style={{ paddingLeft:20, display:'flex', flexDirection:'column', gap:8 }}>
+          <li>All data is stored on secure servers hosted on Railway (cloud infrastructure in the US/EU).</li>
+          <li>Passwords are hashed using bcrypt and never stored in plain text.</li>
+          <li>All communication between your browser and our servers is encrypted via HTTPS/TLS.</li>
+          <li>Access tokens for WhatsApp API are stored encrypted and never exposed to the frontend.</li>
+        </ul>
+      </Section>
+
+      <Section title="6. Data retention">
+        We retain your account data for as long as your account is active. Order and message data is retained for 12 months after creation. You may request deletion of your data at any time (see Section 8).
+      </Section>
+
+      <Section title="7. Third-party services">
+        <p>We use the following third-party services:</p>
+        <ul style={{ paddingLeft:20, display:'flex', flexDirection:'column', gap:8, marginTop:8 }}>
+          <li><strong style={{ color:'white' }}>Meta WhatsApp Cloud API</strong> — for sending and receiving WhatsApp messages</li>
+          <li><strong style={{ color:'white' }}>Railway</strong> — cloud hosting provider for our servers and database</li>
+        </ul>
+      </Section>
+
+      <Section title="8. Your rights & data deletion">
+        <p style={{ marginBottom:12 }}>You have the right to:</p>
+        <ul style={{ paddingLeft:20, display:'flex', flexDirection:'column', gap:8 }}>
+          <li>Access the personal data we hold about you</li>
+          <li>Correct inaccurate data</li>
+          <li>Request deletion of your account and all associated data</li>
+          <li>Export your order data (via the CSV/Excel export feature)</li>
+        </ul>
+        <p style={{ marginTop:12 }}>To request data deletion, email us at <strong style={{ color:'#10B981' }}>support@whats-order.com</strong> with the subject "Data Deletion Request". We will delete your data within 30 days.</p>
+      </Section>
+
+      <Section title="9. Cookies">
+        Whats-Order uses browser localStorage to store your login session token. We do not use tracking cookies or third-party analytics cookies.
+      </Section>
+
+      <Section title="10. Changes to this policy">
+        We may update this Privacy Policy from time to time. We will notify you of significant changes by email. Continued use of the service after changes constitutes acceptance.
+      </Section>
+
+      <Section title="11. Contact">
+        For any privacy-related questions or requests, contact us at <strong style={{ color:'#10B981' }}>support@whats-order.com</strong>.
+      </Section>
+    </LegalPage>
+  )
+}
+
+// ─── TERMS OF SERVICE ──────────────────────────────────────────────────────────
+function TermsPage({ onBack }) {
+  return (
+    <LegalPage title="Terms of Service" onBack={onBack}>
+      <Section title="1. Acceptance of terms">
+        By creating an account on Whats-Order ("Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service. These terms apply to all users of Whats-Order, operated by Akil Abi, Dharmapuri, Tamil Nadu, India.
+      </Section>
+
+      <Section title="2. Description of service">
+        Whats-Order is a SaaS (Software as a Service) platform that allows businesses to manage orders received via WhatsApp. The Service connects to your WhatsApp Business Account via the Meta WhatsApp Cloud API and provides an order management dashboard.
+      </Section>
+
+      <Section title="3. Account registration">
+        <ul style={{ paddingLeft:20, display:'flex', flexDirection:'column', gap:8 }}>
+          <li>You must provide accurate and complete information when creating an account.</li>
+          <li>You are responsible for maintaining the security of your account credentials.</li>
+          <li>You must notify us immediately of any unauthorised access to your account.</li>
+          <li>One account per business. You may not share your account with multiple businesses.</li>
+        </ul>
+      </Section>
+
+      <Section title="4. Plans & billing">
+        <p style={{ marginBottom:12 }}><strong style={{ color:'white' }}>Free Plan:</strong> Allows up to 50 orders per month at no charge. Free forever with no credit card required.</p>
+        <p style={{ marginBottom:12 }}><strong style={{ color:'white' }}>Pro Plan:</strong> ₹299 per month. Provides unlimited orders and priority support. Billed monthly.</p>
+        <ul style={{ paddingLeft:20, display:'flex', flexDirection:'column', gap:8 }}>
+          <li>Pro plan payments are processed manually — contact us at support@whats-order.com to upgrade.</li>
+          <li>We reserve the right to change pricing with 30 days notice.</li>
+          <li>No refunds are provided for partial months of Pro service.</li>
+          <li>Free plan limits (50 orders/month) are enforced automatically. Cancelled orders do not count toward the limit.</li>
+        </ul>
+      </Section>
+
+      <Section title="5. Acceptable use">
+        <p style={{ marginBottom:12 }}>You agree NOT to use Whats-Order to:</p>
+        <ul style={{ paddingLeft:20, display:'flex', flexDirection:'column', gap:8 }}>
+          <li>Send spam, unsolicited messages, or marketing messages to WhatsApp users who have not contacted you first</li>
+          <li>Violate Meta's WhatsApp Business Policy or Commerce Policy</li>
+          <li>Sell or promote prohibited products (alcohol, tobacco, weapons, adult content, gambling, etc.)</li>
+          <li>Engage in any fraudulent, misleading, or deceptive activity</li>
+          <li>Attempt to reverse engineer, hack, or disrupt the Service</li>
+        </ul>
+        <p style={{ marginTop:12 }}>Violation of these terms may result in immediate account suspension without refund.</p>
+      </Section>
+
+      <Section title="6. WhatsApp & Meta compliance">
+        By using Whats-Order you agree to comply with Meta's <strong style={{ color:'white' }}>WhatsApp Business Policy</strong> and <strong style={{ color:'white' }}>Commerce Policy</strong>. You are solely responsible for the content of messages sent through our platform. We are not liable for any account suspension by Meta due to policy violations on your part.
+      </Section>
+
+      <Section title="7. Data & privacy">
+        Our collection and use of personal data is governed by our <strong style={{ color:'#10B981', cursor:'pointer' }} onClick={() => { window.history.pushState({}, '', '/privacy'); window.location.reload() }}>Privacy Policy</strong>, which is incorporated into these Terms by reference. You are the data controller for your customers' data. We act as a data processor.
+      </Section>
+
+      <Section title="8. Service availability">
+        <ul style={{ paddingLeft:20, display:'flex', flexDirection:'column', gap:8 }}>
+          <li>We aim for high availability but do not guarantee 100% uptime.</li>
+          <li>We are not liable for downtime caused by Meta's WhatsApp API, Railway infrastructure, or internet disruptions beyond our control.</li>
+          <li>We may perform scheduled maintenance with advance notice where possible.</li>
+        </ul>
+      </Section>
+
+      <Section title="9. Limitation of liability">
+        To the maximum extent permitted by applicable law, Whats-Order shall not be liable for any indirect, incidental, special, or consequential damages, including loss of revenue, loss of data, or business interruption, arising from your use of the Service. Our total liability to you shall not exceed the amount you paid us in the 3 months preceding the claim.
+      </Section>
+
+      <Section title="10. Account termination">
+        <ul style={{ paddingLeft:20, display:'flex', flexDirection:'column', gap:8 }}>
+          <li>You may delete your account at any time by contacting us at support@whats-order.com.</li>
+          <li>We may suspend or terminate accounts that violate these Terms, with or without notice.</li>
+          <li>Upon termination, your data will be deleted within 30 days per our Privacy Policy.</li>
+        </ul>
+      </Section>
+
+      <Section title="11. Changes to terms">
+        We may update these Terms at any time. We will notify you by email for material changes. Continued use of the Service after changes constitutes acceptance of the new Terms.
+      </Section>
+
+      <Section title="12. Governing law">
+        These Terms are governed by the laws of India. Any disputes shall be subject to the jurisdiction of courts in Dharmapuri, Tamil Nadu, India.
+      </Section>
+
+      <Section title="13. Contact">
+        For any questions about these Terms, contact us at <strong style={{ color:'#10B981' }}>support@whats-order.com</strong>.
+      </Section>
+    </LegalPage>
+  )
+}
 
 // ─── ABOUT PAGE ───────────────────────────────────────────────────────────────
 function AboutPage({ onBack }) {
@@ -2112,6 +2323,8 @@ export default function App() {
   const initialScreen = () => {
     const params = new URLSearchParams(window.location.search)
     if (params.get('token')) return 'reset-password'
+    if (window.location.pathname === '/privacy') return 'privacy'
+    if (window.location.pathname === '/terms') return 'terms'
     if (api.isLoggedIn()) return 'dashboard'
     return 'landing'
   }
@@ -2145,6 +2358,8 @@ export default function App() {
   return (
     <div className="app">
       {screen==='landing'       && <LandingPage onLogin={() => setScreen('login')} onSignup={() => setScreen('signup')} />}
+      {screen==='privacy'        && <PrivacyPage onBack={() => setScreen('landing')} />}
+      {screen==='terms'          && <TermsPage onBack={() => setScreen('landing')} />}
       {screen==='about'         && <AboutPage onBack={() => setScreen('landing')} />}
       {screen==='login'          && <LoginScreen onDone={afterAuth} onSignup={() => setScreen('signup')} onForgot={() => setScreen('forgot')} onAbout={() => setScreen('about')} onBack={() => setScreen('landing')} />}
       {screen==='signup'         && <SignupScreen onDone={afterAuth} onLogin={() => setScreen('login')} onBack={() => setScreen('landing')} />}
