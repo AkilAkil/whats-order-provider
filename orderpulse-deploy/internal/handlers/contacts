@@ -1,0 +1,34 @@
+package handlers
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+type ContactHandler struct{ db *pgxpool.Pool }
+
+func NewContactHandler(db *pgxpool.Pool) *ContactHandler { return &ContactHandler{db: db} }
+
+func (h *ContactHandler) UpdateName(w http.ResponseWriter, r *http.Request) {
+	tenantID := r.Context().Value(TenantIDKey).(string)
+	contactID := chi.URLParam(r, "contactId")
+	var req struct {
+		Name string `json:"name"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid body", "bad_request")
+		return
+	}
+	_, err := h.db.Exec(r.Context(),
+		`UPDATE contacts SET name = $1 WHERE id = $2::uuid AND tenant_id = $3`,
+		req.Name, contactID, tenantID)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to update name", "server_error")
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
