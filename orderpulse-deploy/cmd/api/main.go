@@ -59,6 +59,8 @@ func main() {
 	onboardingHandler := handlers.NewOnboardingHandler(pool, cfg.JWTSecret, cfg.JWTExpiryHours, cfg.MetaAppID, cfg.MetaAppSecret)
 	inboxHandler      := handlers.NewInboxHandler(pool)
 	orderHandler      := handlers.NewOrderHandler(pool)
+	contactHandler    := handlers.NewContactHandler(pool)
+	changePwHandler   := handlers.NewChangePasswordHandler(pool)
 	statsHandler      := handlers.NewStatsHandler(pool)
 	webhookHandler    := whatsapp.NewWebhookHandler(pool, cfg.WAWebhookVerifyToken)
 
@@ -164,6 +166,9 @@ func main() {
 		r.Post("/orders/{id}/cancel", orderHandler.Cancel)
 		r.Post("/orders/{id}/upi-link", orderHandler.SendUPILink)
 		r.Patch("/orders/{id}/payment", orderHandler.ConfirmPayment)
+		r.Patch("/orders/{id}/items", orderHandler.UpdateItems)
+		r.Patch("/inbox/{contactId}/name", contactHandler.UpdateName)
+		r.Post("/auth/change-password", changePwHandler.Change)
 	})
 
 	// ── React SPA (catch-all — must be LAST) ──────────────────────────────────
