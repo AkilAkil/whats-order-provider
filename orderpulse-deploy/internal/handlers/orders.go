@@ -521,3 +521,45 @@ func (h *OrderHandler) fetchItems(ctx context.Context, orderID uuid.UUID) []mode
 	}
 	return items
 }
+
+// ─── PATCH /api/orders/{id}/items ─────────────────────────────────────────────
+func (h *OrderHandler) UpdateItems(w http.ResponseWriter, r *http.Request) {
+	tenantID := r.Context().Value(TenantIDKey).(string)
+	orderID := chi.URLParam(r, "id")
+	var req struct {
+		Items []struct {
+			Name  string  `json:"name"`
+			Qty   float64 `json:"qty"`
+			Unit  string  `json:"unit"`
+			Price float64 `json:"price"`
+		} `json:"items"`
+		Notes string `json:"notes"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid body", "bad_request")
+		return
+	}
+	ctx := r.Context()
+	tx, err := h.db.Begin(ctx)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "tx failed", "server_error")
+		return
+	}
+	defer tx.Rollback(ctx)
+	// Recalculate total
+	var total float64
+	for _, it := range req.Items {
+		total += it.Qty * it.Price
+	}
+	// Delete old items and update order
+	tx.Exec(ctx, `DELETE FROM order_items WHERE order_id = $1`, orderID)
+	tx.Exec(ctx, `UPDATE orders SET total_amount=$1, notes=$2, updated_at=NOW() WHERE id=$3::uuid AND tenant_id=$4`,
+		total, req.Notes, orderID, tenantID)
+	for _, it := range req.Items {
+		tx.Exec(ctx, `INSERT INTO order_items (order_id, name, qty, unit_price) VALUES ($1::uuid,$2,$3,$4)`,
+			orderID, it.Name, it.Qty, it.Price)
+	}
+	tx.Commit(ctx)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
