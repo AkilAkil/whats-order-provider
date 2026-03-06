@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"orderpulse/internal/middleware"
 )
 
 type ContactHandler struct{ db *pgxpool.Pool }
@@ -13,7 +14,7 @@ type ContactHandler struct{ db *pgxpool.Pool }
 func NewContactHandler(db *pgxpool.Pool) *ContactHandler { return &ContactHandler{db: db} }
 
 func (h *ContactHandler) UpdateName(w http.ResponseWriter, r *http.Request) {
-	tenantID := r.Context().Value(TenantIDKey).(string)
+	tenantID := middleware.TenantIDFromCtx(r.Context())
 	contactID := chi.URLParam(r, "contactId")
 	var req struct {
 		Name string `json:"name"`
