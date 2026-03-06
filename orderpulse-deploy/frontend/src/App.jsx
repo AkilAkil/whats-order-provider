@@ -12,6 +12,45 @@ const CSS = `
 }
 body{font-family:var(--f);background:var(--cr);color:var(--tx);overflow:hidden;}
 body.scrollable{overflow:auto;height:auto;}
+body.dark{
+  --cr:#0F1812;--dk:#E8F0EA;--tx:#C8D8CC;--mt:#6B8070;--bd:#1E2E22;
+  --sb-bg:#090F0B;
+}
+body.dark .auth-card{background:#132018;border:1px solid #1E2E22;}
+body.dark .auth-title{color:#E8F0EA;}
+body.dark .inp{background:#1A2820;border-color:#2A3A2E;color:#E8F0EA;}
+body.dark .inp:focus{background:#1E3025;border-color:var(--g);}
+body.dark .btn{background:var(--g);}
+body.dark .inbox-p{background:#132018;border-color:#1E2E22;}
+body.dark .ph{border-color:#1E2E22;}
+body.dark .thread{border-color:#1A2820;}
+body.dark .thread:hover{background:#1A2820;}
+body.dark .thread.on{background:#1E3025;border-left-color:var(--g);}
+body.dark .chat-p{background:#0F1812;}
+body.dark .chat-h{background:#132018;border-color:#1E2E22;}
+body.dark .msgs{background:#0F1812;}
+body.dark .msg.in .mb{background:#1A2820;color:#C8D8CC;box-shadow:none;}
+body.dark .msg.out .mb{background:#1A3828;color:#C8D8CC;}
+body.dark .cinput-bar{background:#132018;border-color:#1E2E22;}
+body.dark .cinput{background:#1A2820;border-color:#2A3A2E;color:#C8D8CC;}
+body.dark .cinput:focus{background:#1E3025;border-color:var(--g);}
+body.dark .abtn{background:#1A2820;border-color:#2A3A2E;color:#C8D8CC;}
+body.dark .abtn:hover{background:#1E3025;border-color:var(--g);color:#10B981;}
+body.dark .abtn.pr{background:var(--g);color:white;}
+body.dark .ord-view{background:#0F1812;}
+body.dark .ord-hdr{background:#0F1812;border-color:#1E2E22;}
+body.dark .stat{background:#132018;border-color:#1E2E22;}
+body.dark .ocard{background:#132018;border-color:#1E2E22;}
+body.dark .ocard:hover{border-color:#2A4030;}
+body.dark .modal{background:#132018;border:1px solid #1E2E22;}
+body.dark .mt{color:#E8F0EA;}
+body.dark .ms2{color:#6B8070;}
+body.dark .inp{background:#1A2820;}
+body.dark .ov{background:rgba(0,0,0,.7);}
+body.dark .toast{background:#132018;border-color:#1E2E22;}
+body.dark .tsn{color:#E8F0EA;}
+body.dark .tmsg{color:#C8D8CC;}
+body.dark .loading{color:#6B8070;}
 .app{height:100vh;display:flex;flex-direction:column;}
 .app.scrollable{height:auto;min-height:100vh;overflow:visible;}
 
@@ -168,6 +207,52 @@ body.scrollable{overflow:auto;height:auto;}
 @keyframes popIn{from{transform:scale(.92);opacity:0}to{transform:scale(1);opacity:1}}
 .pulse{animation:pulse 1.5s ease infinite;}
 .pop-in{animation:popIn .3s ease;}
+/* ── MOBILE ── */
+@media (max-width: 768px) {
+  :root{ --sb-w:100%; }
+  .layout{ flex-direction:column; }
+  .sidebar{ width:100%; flex-direction:row; padding:0; height:56px; flex-shrink:0; border-right:none; border-bottom:1px solid rgba(255,255,255,.08); overflow:hidden; }
+  .sb-header{ padding:0 12px; border-bottom:none; margin-bottom:0; flex:1; min-width:0; }
+  .sb-brand{ display:none; }
+  .sb-nav{ flex-direction:row; padding:0 4px; gap:0; flex:none; align-items:stretch; }
+  .sb-item{ flex-direction:column; gap:2px; padding:6px 14px; border-radius:0; height:56px; justify-content:center; align-items:center; }
+  .sb-label{ font-size:10px; }
+  .sb-icon{ font-size:18px; width:auto; }
+  .sb-badge{ position:absolute; top:8px; right:8px; }
+  .sb-item{ position:relative; }
+  .sb-footer{ padding:0 6px; display:flex; align-items:center; border-top:none; border-left:1px solid rgba(255,255,255,.08); }
+  .sb-user{ padding:6px 10px; gap:8px; }
+  .sb-uname,.sb-uemail{ display:none; }
+  .sb-dark-label{ display:none; }
+  
+  /* Inbox mobile: stack panels */
+  .inbox-p{ width:100%; border-right:none; border-bottom:1px solid var(--bd); max-height:40vh; }
+  .chat-p{ min-height:0; flex:1; }
+  .inbox-p.chat-open{ display:none; }
+  .chat-p.no-chat{ display:none; }
+  
+  /* Orders mobile */
+  .ord-hdr{ flex-wrap:wrap; gap:10px; padding:14px 16px; }
+  .stats-row{ grid-template-columns:1fr 1fr; padding:12px 16px; gap:10px; }
+  .ords{ padding:0 12px 20px; }
+  .ocard .ocin{ flex-wrap:wrap; gap:10px; }
+  .oacts{ flex-wrap:wrap; gap:6px; }
+  
+  /* Profile mobile */
+  .profile-wrap{ padding:16px !important; }
+
+  /* Modals */
+  .modal{ width:calc(100vw - 32px) !important; margin:16px; }
+  .toast{ width:calc(100vw - 32px); right:16px; bottom:16px; }
+}
+
+@media (max-width: 480px) {
+  .stats-row{ grid-template-columns:1fr 1fr; gap:8px; }
+  .sv{ font-size:22px; }
+  .chat-h{ padding:10px 14px; gap:8px; }
+  .chat-acts .abtn span{ display:none; }
+  .msgs{ padding:12px; }
+}
 `
 
 function injectCSS() {
@@ -241,7 +326,7 @@ function StatusBar({ status }) {
   return <div className="sbar"><div className="sfill" style={{ width:pct+'%', background:STATUS_COLORS[status]||'#ccc' }} /></div>
 }
 
-function Toast({ msg, type, onDone }) {
+function Toast({ msg, type, onDone, action }) {
   useEffect(() => { const t = setTimeout(onDone, 5000); return () => clearTimeout(t) }, [])
   const isWA = type === 'wa'
   const isErr = type === 'error'
@@ -254,6 +339,7 @@ function Toast({ msg, type, onDone }) {
       </> : <>
         <div className="th2"><span style={{ fontSize:18 }}>{isErr ? '❌' : '✅'}</span><span style={{ fontSize:12, fontWeight:700, color:isErr?'#EF4444':'#0A6640' }}>{isErr ? 'Error' : 'Success'}</span></div>
         <div className="tmsg">{msg}</div>
+        {action && <button onClick={() => { action(); onDone() }} style={{ marginTop:8, background:'var(--g)', color:'white', border:'none', borderRadius:6, padding:'5px 12px', fontSize:12, fontWeight:700, cursor:'pointer', fontFamily:'var(--f)' }}>View Orders →</button>}
       </>}
     </div>
   )
@@ -807,8 +893,35 @@ function OnboardingScreen({ user, onDone, addToast }) {
   )
 }
 
+// ─── NOTIFICATION SOUND ──────────────────────────────────────────────────────
+function playNotifSound() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)()
+    const o = ctx.createOscillator()
+    const g = ctx.createGain()
+    o.connect(g); g.connect(ctx.destination)
+    o.frequency.setValueAtTime(880, ctx.currentTime)
+    o.frequency.setValueAtTime(1100, ctx.currentTime + 0.1)
+    g.gain.setValueAtTime(0.3, ctx.currentTime)
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4)
+    o.start(); o.stop(ctx.currentTime + 0.4)
+  } catch {}
+}
+
+let _tabFlash = null
+function flashTab(msg) {
+  clearInterval(_tabFlash)
+  const orig = document.title
+  let on = true
+  _tabFlash = setInterval(() => {
+    document.title = on ? `🔔 ${msg}` : orig
+    on = !on
+  }, 800)
+  setTimeout(() => { clearInterval(_tabFlash); document.title = orig }, 8000)
+}
+
 // ─── INBOX ────────────────────────────────────────────────────────────────────
-function InboxView({ addToast }) {
+function InboxView({ addToast, onNavOrders }) {
   const [threads, setThreads] = useState([])
   const [active, setActive] = useState(null)
   const activeRef = useRef(null)
@@ -830,9 +943,22 @@ function InboxView({ addToast }) {
   ])
   const [editingTemplates, setEditingTemplates] = useState(false)
   const chatEnd = useRef(null)
+  const [editingName, setEditingName] = useState(false)
+  const [nameInput, setNameInput] = useState('')
 
+  const prevUnreadRef = useRef(0)
   const loadInbox = useCallback(async () => {
-    try { const data = await api.getInbox(); setThreads(data); if (!activeRef.current && data.length) setActiveWithRef(data[0]) }
+    try {
+      const data = await api.getInbox()
+      setThreads(data)
+      if (!activeRef.current && data.length) setActiveWithRef(data[0])
+      const totalUnread = data.reduce((s, t) => s + (t.unread_count || 0), 0)
+      if (totalUnread > prevUnreadRef.current && prevUnreadRef.current >= 0 && document.hidden) {
+        playNotifSound()
+        flashTab('New WhatsApp message!')
+      }
+      prevUnreadRef.current = totalUnread
+    }
     catch { addToast('Failed to load inbox', 'error') }
     finally { setLoading(false) }
   }, [])
@@ -871,7 +997,7 @@ function InboxView({ addToast }) {
     try {
       const result = await api.createOrder(active.contact.id, items, notes)
       setCreateModal(null)
-      addToast(`Order ${result.order_number} created! Customer notified.`, 'success')
+      addToast(`Order ${result.order_number} created! Customer notified.`, 'success', onNavOrders)
     } catch (e) {
       if (e.code === 'plan_limit_exceeded') {
         addToast('Free plan limit reached (50 orders/month). Upgrade to Pro for unlimited orders.', 'error')
@@ -889,8 +1015,11 @@ function InboxView({ addToast }) {
 
   return (
     <>
-      <div className="inbox-p">
-        <div className="ph"><div className="ph-t">Inbox</div><div className="ph-s">{threads.length} conversations</div></div>
+      <div className={`inbox-p${active && window.innerWidth < 768 ? ' chat-open' : ''}`}>
+        <div className="ph">
+          <div className="ph-t">Inbox</div>
+          <div className="ph-s">{threads.length} conversations</div>
+        </div>
         <div style={{ padding:'8px 12px', borderBottom:'1px solid #E4EDE6' }}>
           <div style={{ position:'relative' }}>
             <svg style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'#9CA3AF' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
@@ -935,15 +1064,29 @@ function InboxView({ addToast }) {
         </div>
       </div>
 
-      <div className="chat-p">
+      <div className={`chat-p${!active && window.innerWidth < 768 ? ' no-chat' : ''}`}>
         {!active ? (
           <div className="loading">Select a conversation</div>
         ) : (
           <>
             <div className="chat-h">
+              {window.innerWidth < 768 && (
+                <button onClick={() => setActiveWithRef(null)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--mt)', fontSize:20, padding:'2px 8px 2px 0', flexShrink:0 }}>‹</button>
+              )}
               <div className="av" style={{ width:40, height:40, background:av.bg }}>{av.initials}</div>
-              <div>
-                <div style={{ fontWeight:700, fontSize:15 }}>{contact?.name || contact?.wa_number}</div>
+              <div style={{ flex:'none' }}>
+                {editingName ? (
+                  <form onSubmit={async e => { e.preventDefault(); if(nameInput.trim()){await api.updateContactName(contact.id, nameInput.trim()); setActiveWithRef({...active, contact:{...contact, name:nameInput.trim()}}); setThreads(ts=>ts.map(t=>t.contact?.id===contact.id?{...t,contact:{...t.contact,name:nameInput.trim()}}:t))}; setEditingName(false) }} style={{ display:'flex', gap:6, alignItems:'center' }}>
+                    <input autoFocus value={nameInput} onChange={e=>setNameInput(e.target.value)} style={{ border:'1.5px solid var(--g)', borderRadius:7, padding:'4px 8px', fontFamily:'var(--f)', fontSize:14, fontWeight:700, outline:'none', width:160 }} />
+                    <button type="submit" style={{ background:'var(--g)', color:'white', border:'none', borderRadius:6, padding:'4px 10px', fontSize:12, fontWeight:700, cursor:'pointer' }}>Save</button>
+                    <button type="button" onClick={()=>setEditingName(false)} style={{ background:'none', border:'1px solid var(--bd)', borderRadius:6, padding:'4px 8px', fontSize:12, cursor:'pointer', color:'var(--mt)' }}>✕</button>
+                  </form>
+                ) : (
+                  <div style={{ display:'flex', alignItems:'center', gap:6 }}>
+                    <div style={{ fontWeight:700, fontSize:15 }}>{contact?.name || contact?.wa_number}</div>
+                    <button onClick={()=>{setNameInput(contact?.name||'');setEditingName(true)}} title="Edit name" style={{ background:'none', border:'none', cursor:'pointer', color:'var(--mt)', fontSize:13, padding:'2px 4px', borderRadius:4, lineHeight:1 }}>✏️</button>
+                  </div>
+                )}
                 <div className="chat-online">● {contact?.wa_number}</div>
               </div>
               <div className="chat-acts">
@@ -1153,6 +1296,55 @@ function PrintInvoiceModal({ order, onClose }) {
 }
 
 // ─── ORDERS ───────────────────────────────────────────────────────────────────
+// ─── EDIT ORDER MODAL ────────────────────────────────────────────────────────
+function EditOrderModal({ order, onClose, onSaved }) {
+  const [items, setItems] = useState(() => (order.items || []).map(i => ({ name:i.name, qty:i.qty, unit:i.unit||'', price:i.unit_price||0 })))
+  const [notes, setNotes] = useState(order.notes || '')
+  const [loading, setLoading] = useState(false)
+  const total = items.reduce((s,i) => s + i.qty * i.price, 0)
+  const upd = (i,f,v) => { const n=[...items]; n[i]={...n[i],[f]:(f==='name'||f==='unit')?v:Number(v)}; setItems(n) }
+  const submit = async () => {
+    setLoading(true)
+    try { await api.updateOrderItems(order.id, items.filter(i=>i.name.trim()), notes); onSaved() }
+    catch { alert('Failed to update order') }
+    finally { setLoading(false) }
+  }
+  return (
+    <div className="ov" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:4 }}>
+          <div><div className="mt">Edit Order</div><div className="ms2">{order.order_number} · {order.contact?.name || order.contact?.wa_number}</div></div>
+          <button onClick={onClose} style={{ border:'none', background:'none', fontSize:22, cursor:'pointer', color:'#9CA3AF' }}>×</button>
+        </div>
+        <div style={{ fontSize:12, fontWeight:700, color:'#6B7080', textTransform:'uppercase', letterSpacing:.5, marginBottom:10 }}>Items</div>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 56px 80px 72px 32px', gap:8, marginBottom:4 }}>
+          {['Item','Qty','Unit','₹ Price',''].map((h,i) => (
+            <div key={i} style={{ fontSize:11, color:'#9CA3AF', fontWeight:600, textAlign:i>=1?'center':'left' }}>{h}</div>
+          ))}
+        </div>
+        {items.map((item,i) => (
+          <div key={i} style={{ display:'grid', gridTemplateColumns:'1fr 56px 80px 72px 32px', gap:8, marginBottom:8 }}>
+            <input className="inp" value={item.name} onChange={e=>upd(i,'name',e.target.value)} style={{ padding:'8px 10px' }} />
+            <input className="inp" type="number" min="1" value={item.qty} onChange={e=>upd(i,'qty',e.target.value)} style={{ padding:'8px 6px', textAlign:'center' }} />
+            <input className="inp" value={item.unit} onChange={e=>upd(i,'unit',e.target.value)} style={{ padding:'8px 6px', textAlign:'center' }} />
+            <input className="inp" type="number" min="0" value={item.price||''} onChange={e=>upd(i,'price',e.target.value)} style={{ padding:'8px 6px', textAlign:'right' }} />
+            <button onClick={() => setItems(items.filter((_,j)=>j!==i))} style={{ border:'none', background:'#FFF5F5', borderRadius:8, cursor:'pointer', color:'#EF4444', fontSize:16 }}>×</button>
+          </div>
+        ))}
+        <button onClick={() => setItems([...items,{name:'',qty:1,unit:'',price:0}])} style={{ fontSize:13, color:'#0A6640', background:'none', border:'none', cursor:'pointer', fontWeight:600, padding:'4px 0', marginBottom:12 }}>+ Add item</button>
+        <div className="fg">
+          <label className="lbl">Notes</label>
+          <input className="inp" value={notes} onChange={e=>setNotes(e.target.value)} style={{ padding:'8px 12px' }} />
+        </div>
+        <div style={{ fontSize:18, fontWeight:800, textAlign:'right', color:'var(--dk)', marginBottom:16 }}>Total: ₹{total.toLocaleString('en-IN')}</div>
+        <button className="btn" onClick={submit} disabled={loading || !items.some(i=>i.name.trim())}>
+          {loading ? <><Spinner /> Saving...</> : 'Save Changes'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function OrdersView({ addToast }) {
   const [orders, setOrders] = useState([])
   const [stats, setStats] = useState({})
@@ -1162,6 +1354,7 @@ function OrdersView({ addToast }) {
   const [payModal, setPayModal] = useState(null)
   const [exportOpen, setExportOpen] = useState(false)
   const [printModal, setPrintModal] = useState(null)
+  const [editModal, setEditModal] = useState(null)
   const [searchQ, setSearchQ] = useState('')
   const [showTopItems, setShowTopItems] = useState(true)
 
@@ -1187,8 +1380,14 @@ function OrdersView({ addToast }) {
     } catch (e) { addToast(e.error || 'Failed to update', 'error') }
   }
 
+  const [cancelTarget, setCancelTarget] = useState(null)
   const cancel = async (order) => {
-    if (!confirm(`Cancel ${order.order_number}?`)) return
+    setCancelTarget(order)
+  }
+  const confirmCancel = async () => {
+    const order = cancelTarget
+    setCancelTarget(null)
+    if (!order) return
     try {
       await api.cancelOrder(order.id)
       addToast(`Order ${order.order_number} cancelled. Customer notified.`, 'wa')
@@ -1323,7 +1522,7 @@ function OrdersView({ addToast }) {
         </div>
       </div>
       {/* Orders search bar */}
-      <div style={{ padding:'12px 24px 0', display:'flex' }}>
+      <div style={{ padding:'12px 24px 4px', display:'flex' }}>
         <div style={{ position:'relative', width:'100%', maxWidth:340 }}>
           <svg style={{ position:'absolute', left:10, top:'50%', transform:'translateY(-50%)', color:'#9CA3AF' }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
           <input value={searchQ} onChange={e => setSearchQ(e.target.value)} placeholder="Search orders, customers, items..."
@@ -1404,8 +1603,9 @@ function OrdersView({ addToast }) {
                     </>
                   )}
                   {['new','confirmed'].includes(order.status) && (
-                    <button className="abtn" style={{ fontSize:12, color:'#EF4444' }} onClick={() => cancel(order)}>Cancel</button>
+                    <button className="abtn" style={{ fontSize:12, color:'#EF4444' }} onClick={() => setCancelTarget(order)}>Cancel</button>
                   )}
+                  <button className="abtn" style={{ fontSize:12 }} onClick={() => setEditModal(order)} title="Edit Order">✏️</button>
                   <button className="abtn" style={{ fontSize:12 }} onClick={() => setPrintModal(order)} title="Print Invoice">🖨️</button>
                 </div>
               </div>
@@ -1417,10 +1617,72 @@ function OrdersView({ addToast }) {
       {upiModal && <UPIModal order={upiModal} onClose={() => setUpiModal(null)} onSent={sendUPI} />}
       {payModal && <PaymentModal order={payModal} onClose={() => setPayModal(null)} onConfirm={confirmPay} />}
       {printModal && <PrintInvoiceModal order={printModal} onClose={() => setPrintModal(null)} />}
+      {editModal && <EditOrderModal order={editModal} onClose={() => setEditModal(null)} onSaved={() => { setEditModal(null); load(); addToast('Order updated!', 'success') }} />}
+      {cancelTarget && (
+        <div className="ov" onClick={() => setCancelTarget(null)}>
+          <div className="modal" style={{ width:360 }} onClick={e=>e.stopPropagation()}>
+            <div style={{ fontSize:32, textAlign:'center', marginBottom:12 }}>⚠️</div>
+            <div style={{ fontSize:17, fontWeight:800, color:'var(--dk)', textAlign:'center', marginBottom:8 }}>Cancel Order?</div>
+            <div style={{ fontSize:14, color:'var(--mt)', textAlign:'center', marginBottom:24, lineHeight:1.6 }}>
+              Cancel <strong>{cancelTarget.order_number}</strong> for {cancelTarget.contact?.name || cancelTarget.contact?.wa_number}?<br/>Customer will be notified on WhatsApp.
+            </div>
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={()=>setCancelTarget(null)} style={{ flex:1, padding:'11px', background:'white', border:'1.5px solid var(--bd)', borderRadius:9, fontFamily:'var(--f)', fontSize:14, fontWeight:600, cursor:'pointer', color:'var(--mt)' }}>Keep Order</button>
+              <button onClick={confirmCancel} style={{ flex:1, padding:'11px', background:'#EF4444', border:'none', borderRadius:9, fontFamily:'var(--f)', fontSize:14, fontWeight:700, cursor:'pointer', color:'white' }}>Yes, Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
+
+// ─── CHANGE PASSWORD FORM ─────────────────────────────────────────────────────
+function ChangePasswordForm() {
+  const [cur, setCur] = useState('')
+  const [nw, setNw] = useState('')
+  const [conf, setConf] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [msg, setMsg] = useState(null)
+
+  const submit = async () => {
+    if (nw !== conf) { setMsg({ type:'err', text:'New passwords do not match' }); return }
+    if (nw.length < 8) { setMsg({ type:'err', text:'Password must be at least 8 characters' }); return }
+    setLoading(true); setMsg(null)
+    try {
+      await api.changePassword(cur, nw)
+      setMsg({ type:'ok', text:'Password changed successfully!' })
+      setCur(''); setNw(''); setConf('')
+    } catch(e) {
+      setMsg({ type:'err', text: e.error || 'Failed to change password' })
+    } finally { setLoading(false) }
+  }
+
+  return (
+    <div style={{ padding:'12px 0 16px' }}>
+      {msg && <div style={{ fontSize:13, padding:'8px 12px', borderRadius:8, marginBottom:12, background:msg.type==='ok'?'#ECFDF5':'#FFF5F5', color:msg.type==='ok'?'#059669':'#DC2626', border:`1px solid ${msg.type==='ok'?'#A7F3D0':'#FCA5A5'}` }}>{msg.text}</div>}
+      <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+        <div>
+          <label className="lbl" style={{ marginBottom:4 }}>Current Password</label>
+          <input className="inp" type="password" value={cur} onChange={e=>setCur(e.target.value)} placeholder="Enter current password" style={{ padding:'9px 12px' }} />
+        </div>
+        <div>
+          <label className="lbl" style={{ marginBottom:4 }}>New Password</label>
+          <input className="inp" type="password" value={nw} onChange={e=>setNw(e.target.value)} placeholder="At least 8 characters" style={{ padding:'9px 12px' }} />
+        </div>
+        <div>
+          <label className="lbl" style={{ marginBottom:4 }}>Confirm New Password</label>
+          <input className="inp" type="password" value={conf} onChange={e=>setConf(e.target.value)} placeholder="Repeat new password" style={{ padding:'9px 12px' }} />
+        </div>
+        <button onClick={submit} disabled={loading || !cur || !nw || !conf}
+          style={{ padding:'10px', background:'var(--g)', color:'white', border:'none', borderRadius:9, fontFamily:'var(--f)', fontSize:14, fontWeight:700, cursor:'pointer', opacity:(!cur||!nw||!conf)?0.5:1, marginTop:4 }}>
+          {loading ? 'Changing...' : 'Change Password'}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 // ─── PROFILE VIEW ─────────────────────────────────────────────────────────────
 function ProfileView({ user, onLogout }) {
@@ -1556,6 +1818,12 @@ function ProfileView({ user, onLogout }) {
               )}
             </div>
 
+            {/* Change Password */}
+            <div style={{ background:'white', borderRadius:16, padding:'4px 24px', marginBottom:20, border:'1px solid var(--bd)' }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'var(--mt)', textTransform:'uppercase', letterSpacing:.8, padding:'16px 0 4px' }}>Security</div>
+              <ChangePasswordForm />
+            </div>
+
             {/* Logout */}
             <button onClick={onLogout} style={{ width:'100%', padding:'13px', background:'white', color:'#DC2626', border:'1.5px solid #FCA5A5', borderRadius:10, fontFamily:'var(--f)', fontSize:15, fontWeight:700, cursor:'pointer', transition:'all .2s' }}
               onMouseOver={e => { e.target.style.background='#FFF5F5' }}
@@ -1664,17 +1932,38 @@ function HomeView({ user, onNav }) {
 // ─── DASHBOARD ────────────────────────────────────────────────────────────────
 function Dashboard({ user, onLogout }) {
   const [view, setView] = useState('home')
+  const [dark, setDark] = useState(() => localStorage.getItem('wo_dark') === '1')
+  useEffect(() => {
+    document.body.classList.toggle('dark', dark)
+    localStorage.setItem('wo_dark', dark ? '1' : '0')
+  }, [dark])
   const [toasts, setToasts] = useState([])
-  const addToast = useCallback((msg, type='success') => {
+  const addToast = useCallback((msg, type='success', action=null) => {
     const id = Date.now()
-    setToasts(t => [...t, { id, msg, type }])
+    setToasts(t => [...t, { id, msg, type, action }])
   }, [])
   const removeToast = id => setToasts(t => t.filter(x => x.id!==id))
   const av = avatarFor(user?.name || user?.email || 'U')
 
+  const [unreadCount, setUnreadCount] = useState(0)
+  const [pendingOrders, setPendingOrders] = useState(0)
+
+  useEffect(() => {
+    const refresh = async () => {
+      try {
+        const [inbox, stats] = await Promise.all([api.getInbox(), api.getStats()])
+        setUnreadCount(inbox.reduce((s, t) => s + (t.unread_count || 0), 0))
+        setPendingOrders(stats.new_orders || 0)
+      } catch {}
+    }
+    refresh()
+    const t = setInterval(refresh, 8000)
+    return () => clearInterval(t)
+  }, [])
+
   const NAV = [
-    { id:'inbox', icon:'💬', label:'Inbox' },
-    { id:'orders', icon:'📋', label:'Orders' },
+    { id:'inbox', icon:'💬', label:'Inbox', badge: unreadCount },
+    { id:'orders', icon:'📋', label:'Orders', badge: pendingOrders },
   ]
 
   return (
@@ -1692,13 +1981,20 @@ function Dashboard({ user, onLogout }) {
             <button key={n.id} className={`sb-item ${view===n.id?'on':''}`} onClick={() => setView(n.id)}>
               <span className="sb-icon">{n.icon}</span>
               <span className="sb-label">{n.label}</span>
-              {n.id === 'inbox' && <span className="sb-badge">●</span>}
+              {n.badge > 0 && <span className="sb-badge">{n.badge}</span>}
             </button>
           ))}
         </div>
 
         {/* Footer user */}
         <div className="sb-footer">
+          <button onClick={() => setDark(d => !d)} title={dark ? 'Light mode' : 'Dark mode'}
+            style={{ width:'100%', display:'flex', alignItems:'center', gap:10, padding:'9px 12px', borderRadius:10, border:'none', background:'transparent', cursor:'pointer', marginBottom:4, fontFamily:'var(--f)', transition:'background .15s' }}
+            onMouseOver={e=>e.currentTarget.style.background='rgba(255,255,255,.06)'}
+            onMouseOut={e=>e.currentTarget.style.background='transparent'}>
+            <span style={{ fontSize:16 }}>{dark ? '☀️' : '🌙'}</span>
+            <span className="sb-dark-label" style={{ fontSize:13, fontWeight:600, color:'rgba(255,255,255,.45)' }}>{dark ? 'Light mode' : 'Dark mode'}</span>
+          </button>
           <div className="sb-user" onClick={() => setView('profile')}>
             <div style={{ width:32, height:32, borderRadius:'50%', background:av.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, fontWeight:800, color:'#0F1A14', flexShrink:0, border: view==='profile' ? '2px solid #10B981' : '2px solid transparent' }}>{av.initials}</div>
             <div style={{ flex:1, minWidth:0 }}>
@@ -1711,10 +2007,10 @@ function Dashboard({ user, onLogout }) {
       </div>
 
       {view==='home'    && <HomeView user={user} onNav={setView} />}
-      {view==='inbox'   && <InboxView addToast={addToast} />}
+      {view==='inbox'   && <InboxView addToast={addToast} onNavOrders={() => setView('orders')} />}
       {view==='orders'  && <OrdersView addToast={addToast} />}
       {view==='profile' && <ProfileView user={user} onLogout={onLogout} />}
-      {toasts.map(t => <Toast key={t.id} msg={t.msg} type={t.type} onDone={() => removeToast(t.id)} />)}
+      {toasts.map(t => <Toast key={t.id} msg={t.msg} type={t.type} action={t.action} onDone={() => removeToast(t.id)} />)}
     </div>
   )
 }
