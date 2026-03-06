@@ -114,8 +114,8 @@ body.scrollable{overflow:auto;height:auto;}
 .spinner-sm{width:14px;height:14px;border:2px solid rgba(255,255,255,.5);border-top-color:white;border-radius:50%;animation:spin .8s linear infinite;display:inline-block;}
 .onb-screen{flex:1;display:flex;flex-direction:column;}
 .onb-top{padding:18px 28px;background:white;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:10px;}
-.onb-body{flex:1;display:flex;align-items:center;justify-content:center;background:var(--cr);}
-.onb-card{background:white;border-radius:24px;padding:48px;width:520px;box-shadow:0 4px 24px rgba(10,102,64,.10);border:1px solid var(--bd);animation:slideUp .4s ease;}
+.onb-body{flex:1;overflow-y:auto;display:flex;align-items:flex-start;justify-content:center;background:var(--cr);padding:32px 16px;}
+.onb-card{background:white;border-radius:24px;padding:40px;width:100%;max-width:520px;box-shadow:0 4px 24px rgba(10,102,64,.10);border:1px solid var(--bd);animation:slideUp .4s ease;}
 .steps-ind{display:flex;gap:8px;margin-bottom:32px;}
 .step-dot{height:4px;border-radius:2px;transition:all .4s;background:var(--bd);flex:1;}
 .step-dot.on{background:var(--g);}
