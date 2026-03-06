@@ -1553,7 +1553,7 @@ function Dashboard({ user, onLogout }) {
 }
 
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
-function LandingPage({ onLogin, onSignup }) {
+function LandingPage({ onLogin, onSignup, onBack }) {
   useEffect(() => {
     document.body.classList.add('scrollable')
     document.querySelector('.app')?.classList.add('scrollable')
@@ -1563,7 +1563,7 @@ function LandingPage({ onLogin, onSignup }) {
     }
   }, [])
   return (
-    <div style={{ minHeight:'100vh', background:'#060E09', fontFamily:"'Plus Jakarta Sans', sans-serif", overflowX:'hidden', color:'white' }}>
+    <div style={{ minHeight:'100vh', background:'#060E09', fontFamily:"'Plus Jakarta Sans', sans-serif", color:'white' }}>
 
       {/* ── Navbar ── */}
       <nav style={{ position:'fixed', top:0, left:0, right:0, zIndex:200, padding:'0 5vw', display:'flex', alignItems:'center', justifyContent:'space-between', height:68, background:'rgba(6,14,9,0.85)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
@@ -1586,7 +1586,7 @@ function LandingPage({ onLogin, onSignup }) {
       </nav>
 
       {/* ── Hero ── */}
-      <div style={{ paddingTop:68, minHeight:'100vh', display:'flex', alignItems:'center', position:'relative', overflow:'hidden' }}>
+      <div style={{ paddingTop:68, minHeight:'100vh', display:'flex', alignItems:'center', position:'relative' }}>
         {/* Background glows */}
         <div style={{ position:'absolute', top:'10%', left:'50%', transform:'translateX(-50%)', width:700, height:700, background:'radial-gradient(circle, rgba(10,102,64,0.25) 0%, transparent 70%)', pointerEvents:'none' }} />
         <div style={{ position:'absolute', top:'20%', right:'5%', width:300, height:300, background:'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)', pointerEvents:'none' }} />
@@ -2463,11 +2463,11 @@ export default function App() {
 
   return (
     <div className="app">
-      {screen==='landing'       && <LandingPage onLogin={() => setScreen('login')} onSignup={() => setScreen('signup')} />}
+      {screen==='landing'       && <LandingPage onLogin={() => setScreen('login')} onSignup={() => setScreen('signup')} onBack={screen === 'landing' ? null : () => setScreen('login')} />}
       {screen==='privacy'        && <PrivacyPage onBack={() => setScreen('landing')} />}
       {screen==='terms'          && <TermsPage onBack={() => setScreen('landing')} />}
       {screen==='about'         && <AboutPage onBack={() => setScreen('landing')} />}
-      {screen==='login'          && <LoginScreen onDone={afterAuth} onSignup={() => setScreen('signup')} onForgot={() => setScreen('forgot')} onAbout={() => setScreen('about')} onBack={() => setScreen('landing')} />}
+      {screen==='login'          && <LoginScreen onDone={afterAuth} onSignup={() => setScreen('signup')} onForgot={() => setScreen('forgot')} onAbout={() => setScreen('landing')} onBack={() => setScreen('landing')} />}
       {screen==='signup'         && <SignupScreen onDone={afterAuth} onLogin={() => setScreen('login')} onBack={() => setScreen('landing')} />}
       {screen==='forgot'         && <ForgotPasswordScreen onBack={() => setScreen('landing')} />}
       {screen==='reset-password' && <ResetPasswordScreen token={resetToken} onDone={goLogin} />}
