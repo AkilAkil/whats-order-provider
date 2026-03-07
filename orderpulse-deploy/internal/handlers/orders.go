@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
-	"encoding/json"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -253,15 +253,15 @@ func (h *OrderHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 
 	// Load current order details + WA credentials in one query
 	var currentStatus models.OrderStatus
-	var orderNumber, customerNumber, waPhoneID, waToken string
+	var orderNumber, customerNumber, waPhoneID, waToken, contactID string
 	err := h.db.QueryRow(r.Context(), `
-		SELECT o.status, o.order_number, c.wa_number, t.wa_phone_id, t.wa_access_token
+		SELECT o.status, o.order_number, c.wa_number, t.wa_phone_id, t.wa_access_token, c.id::text
 		FROM orders o
 		JOIN contacts c ON c.id = o.contact_id
 		JOIN tenants t ON t.id = o.tenant_id
 		WHERE o.id = $1::uuid AND o.tenant_id = $2
 	`, orderID, tenantID).Scan(
-		&currentStatus, &orderNumber, &customerNumber, &waPhoneID, &waToken,
+		&currentStatus, &orderNumber, &customerNumber, &waPhoneID, &waToken, &contactID,
 	)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "order not found", "not_found")
@@ -300,17 +300,21 @@ func (h *OrderHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 
 	// Notify customer on WhatsApp — async, non-blocking
 	go func() {
-		sent, err := whatsapp.OrderStatusNotification(
-			waPhoneID, waToken, customerNumber,
-			string(newStatus), orderNumber,
-		)
-		if err != nil {
+		msg := orderStatusMessage(string(newStatus), orderNumber)
+		if msg == "" {
+			return
+		}
+		if err := whatsapp.SendTextMessage(waPhoneID, waToken, customerNumber, msg); err != nil {
 			slog.Error("failed to send status notification",
 				"order", orderNumber, "status", newStatus, "err", err)
-		} else if sent {
-			slog.Info("status notification sent",
-				"order", orderNumber, "status", newStatus)
+			return
 		}
+		slog.Info("status notification sent", "order", orderNumber, "status", newStatus)
+		// Save to messages table so it appears in chat history
+		h.db.Exec(context.Background(), `
+			INSERT INTO messages (tenant_id, contact_id, direction, type, body)
+			VALUES ($1, $2::uuid, 'outbound', 'text', $3)
+		`, tenantID, contactID, msg)
 	}()
 
 	writeJSON(w, http.StatusOK, map[string]string{
@@ -330,14 +334,14 @@ func (h *OrderHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 	decodeJSON(w, r, &req)
 
 	var currentStatus models.OrderStatus
-	var orderNumber, customerNumber, waPhoneID, waToken string
+	var orderNumber, customerNumber, waPhoneID, waToken, contactID2 string
 	err := h.db.QueryRow(r.Context(), `
-		SELECT o.status, o.order_number, c.wa_number, t.wa_phone_id, t.wa_access_token
+		SELECT o.status, o.order_number, c.wa_number, t.wa_phone_id, t.wa_access_token, c.id::text
 		FROM orders o
 		JOIN contacts c ON c.id = o.contact_id
 		JOIN tenants t ON t.id = o.tenant_id
 		WHERE o.id = $1::uuid AND o.tenant_id = $2
-	`, orderID, tenantID).Scan(&currentStatus, &orderNumber, &customerNumber, &waPhoneID, &waToken)
+	`, orderID, tenantID).Scan(&currentStatus, &orderNumber, &customerNumber, &waPhoneID, &waToken, &contactID2)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "order not found", "not_found")
 		return
@@ -355,9 +359,20 @@ func (h *OrderHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 		WHERE id = $2::uuid AND tenant_id = $3
 	`, "\nCancellation reason: "+req.Reason, orderID, tenantID)
 
-	// Notify customer
+	// Notify customer with plain text + save to chat
 	go func() {
-		whatsapp.OrderStatusNotification(waPhoneID, waToken, customerNumber, "cancelled", orderNumber)
+		msg := orderStatusMessage("cancelled", orderNumber)
+		if req.Reason != "" {
+			msg += "\n\nReason: " + req.Reason
+		}
+		if err := whatsapp.SendTextMessage(waPhoneID, waToken, customerNumber, msg); err != nil {
+			slog.Error("failed to send cancel notification", "order", orderNumber, "err", err)
+			return
+		}
+		h.db.Exec(context.Background(), `
+			INSERT INTO messages (tenant_id, contact_id, direction, type, body)
+			VALUES ($1, $2::uuid, 'outbound', 'text', $3)
+		`, tenantID, contactID2, msg)
 	}()
 
 	writeJSON(w, http.StatusOK, map[string]string{
@@ -562,4 +577,25 @@ func (h *OrderHandler) UpdateItems(w http.ResponseWriter, r *http.Request) {
 	tx.Commit(ctx)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+}
+
+// ─── ORDER STATUS MESSAGES ────────────────────────────────────────────────────
+// Plain text WhatsApp messages sent to customers on each status change.
+// These work immediately without Meta template approval.
+
+func orderStatusMessage(status, orderNumber string) string {
+	switch status {
+	case "confirmed":
+		return "✅ *Order Confirmed!*\n\nHi! Your order *#" + orderNumber + "* has been confirmed and is being prepared. We'll update you as it progresses.\n\nThank you for your order! 🙏"
+	case "packed":
+		return "📦 *Order Packed!*\n\nGreat news! Your order *#" + orderNumber + "* is packed and ready. It will be picked up for delivery soon.\n\nWe'll notify you once it's on the way!"
+	case "dispatched":
+		return "🚚 *Order Dispatched!*\n\nYour order *#" + orderNumber + "* is on its way to you! Our delivery person is heading your direction.\n\nPlease be available to receive your order."
+	case "delivered":
+		return "🎉 *Order Delivered!*\n\nYour order *#" + orderNumber + "* has been delivered successfully. We hope you enjoy it!\n\nThank you for choosing us. Feel free to message us anytime 😊"
+	case "cancelled":
+		return "❌ *Order Cancelled*\n\nYour order *#" + orderNumber + "* has been cancelled."
+	default:
+		return ""
+	}
 }
