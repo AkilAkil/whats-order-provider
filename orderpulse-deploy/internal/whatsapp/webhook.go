@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -98,11 +99,18 @@ type WAStatus struct {
 type WebhookHandler struct {
 	db          *pgxpool.Pool
 	verifyToken string
+	llmAPIKey   string // read from LLM_API_KEY env; empty = regex-only mode
+	llmModel    string
 }
 
 // NewWebhookHandler returns a new WebhookHandler.
+// LLM_API_KEY is read from environment so main.go signature stays unchanged.
 func NewWebhookHandler(db *pgxpool.Pool, verifyToken string) *WebhookHandler {
-	return &WebhookHandler{db: db, verifyToken: verifyToken}
+	return &WebhookHandler{
+		db:          db,
+		verifyToken: verifyToken,
+		llmAPIKey:   os.Getenv("LLM_API_KEY"),
+	}
 }
 
 // Verify handles GET /webhook/whatsapp.
@@ -239,15 +247,28 @@ func (h *WebhookHandler) storeMessage(
 	// Extract body and media information per message type
 	msgType, body, mediaURL := extractContent(msg)
 
-	// Classify the message intent (lightweight heuristic; swap for GPT-4o in prod)
-	intent := ClassifyIntent(body)
+	// ── TWO-STAGE ORDER EXTRACTION ───────────────────────────────────────────
+	// Stage 1: Regex patterns  (instant, free — handles ~70% of messages)
+	// Stage 2: LLM fallback    (only when regex fails AND intent = new_order)
+	//
+	// Result stored as JSON in messages.extracted_order so the dashboard
+	// can pre-fill the Create Order modal automatically.
+	extraction := ExtractOrder(body, h.llmAPIKey, h.llmModel)
+	var extractedJSON *string
+	if len(extraction.Items) > 0 {
+		b, _ := json.Marshal(extraction)
+		s := string(b)
+		extractedJSON = &s
+	}
+
+	intent := extraction.Intent
 
 	// Insert message — ON CONFLICT DO NOTHING ensures idempotency
 	_, err = h.db.Exec(ctx, `
-		INSERT INTO messages (tenant_id, contact_id, wa_msg_id, direction, type, body, media_url)
-		VALUES ($1::uuid, $2::uuid, $3, 'inbound', $4, $5, $6)
+		INSERT INTO messages (tenant_id, contact_id, wa_msg_id, direction, type, body, media_url, extracted_order)
+		VALUES ($1::uuid, $2::uuid, $3, 'inbound', $4, $5, $6, $7)
 		ON CONFLICT (wa_msg_id) DO NOTHING
-	`, tenantID, contactID, msg.ID, msgType, body, mediaURL)
+	`, tenantID, contactID, msg.ID, msgType, body, mediaURL, extractedJSON)
 	if err != nil {
 		return fmt.Errorf("insert message: %w", err)
 	}
@@ -256,13 +277,16 @@ func (h *WebhookHandler) storeMessage(
 		"type", msgType,
 		"from", msg.From,
 		"intent", intent,
+		"items_extracted", len(extraction.Items),
+		"extraction_source", extraction.Source,
 		"tenant", tenantID,
-		"phone_id", waPhoneID,
 	)
 	return nil
 }
 
 // extractContent determines message type and extracts body/media from a WAMessage.
+// media_url stores the raw Meta media ID — the frontend fetches it via /api/media/:id
+// which proxies through our backend (Meta URLs expire in ~5 minutes).
 func extractContent(msg WAMessage) (msgType, body, mediaURL string) {
 	msgType = msg.Type
 
@@ -273,27 +297,35 @@ func extractContent(msg WAMessage) (msgType, body, mediaURL string) {
 		}
 	case "image":
 		if msg.Image != nil {
-			body = msg.Image.Caption
-			// TODO: Download from Meta using msg.Image.ID and upload to S3/R2.
-			// Meta media URLs expire in 5 minutes — download promptly.
-			mediaURL = fmt.Sprintf("[meta-media-id:%s]", msg.Image.ID)
+			body = msg.Image.Caption  // may be empty — caption is optional
+			mediaURL = msg.Image.ID   // raw Meta media ID; proxy via /api/media/:id
 		}
-	case "audio":
-		// TODO: Transcribe via Whisper API for voice order support.
-		body = "[voice message — transcription pending]"
+	case "audio", "voice":
+		if msg.Audio != nil {
+			mediaURL = msg.Audio.ID
+		}
+		body = "" // no text for audio
 	case "document":
 		if msg.Document != nil {
 			body = msg.Document.Caption
-			mediaURL = fmt.Sprintf("[meta-media-id:%s filename:%s]", msg.Document.ID, msg.Document.Filename)
+			// Store as "mediaID|filename" so frontend can display the filename
+			if msg.Document.Filename != "" {
+				mediaURL = msg.Document.ID + "|" + msg.Document.Filename
+			} else {
+				mediaURL = msg.Document.ID
+			}
 		}
 	case "sticker":
-		body = "[sticker]"
+		if msg.Sticker != nil {
+			mediaURL = msg.Sticker.ID
+		}
+		body = "🩹" // sticker placeholder
 	case "reaction":
 		if msg.Reaction != nil {
-			body = fmt.Sprintf("[reaction: %s to message %s]", msg.Reaction.Emoji, msg.Reaction.MessageID)
+			body = fmt.Sprintf("%s", msg.Reaction.Emoji)
 		}
 	default:
-		body = fmt.Sprintf("[unsupported message type: %s]", msg.Type)
+		body = fmt.Sprintf("[%s]", msg.Type)
 	}
 
 	return msgType, body, mediaURL
