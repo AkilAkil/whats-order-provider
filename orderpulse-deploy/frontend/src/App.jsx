@@ -2257,7 +2257,7 @@ function Dashboard({ user, onLogout }) {
 }
 
 // ─── LANDING PAGE ─────────────────────────────────────────────────────────────
-function LandingPage({ onLogin, onSignup, onBack }) {
+function LandingPage({ onLogin, onSignup, onBack, onSetupGuide }) {
   useEffect(() => {
     document.body.classList.add('scrollable')
     document.querySelector('.app')?.classList.add('scrollable')
@@ -2276,6 +2276,11 @@ function LandingPage({ onLogin, onSignup, onBack }) {
           <span style={{ fontWeight:900, fontSize:17, color:'white', letterSpacing:-0.5 }}>Whats<span style={{ color:'#10B981' }}>-</span>Order</span>
         </div>
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+          <button onClick={onSetupGuide} className='lp-nav-login' style={{ background:'transparent', border:'none', fontFamily:'inherit', fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.5)', cursor:'pointer', padding:'8px 14px', borderRadius:8, transition:'all .2s' }}
+            onMouseOver={e=>{e.currentTarget.style.color='white'}}
+            onMouseOut={e=>{e.currentTarget.style.color='rgba(255,255,255,0.5)'}}>
+            Setup Guide
+          </button>
           <button onClick={onLogin} className='lp-nav-login' style={{ background:'transparent', border:'1px solid rgba(255,255,255,0.12)', fontFamily:'inherit', fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.7)', cursor:'pointer', padding:'8px 18px', borderRadius:8, transition:'all .2s' }}
             onMouseOver={e=>{e.currentTarget.style.background='rgba(255,255,255,0.06)';e.currentTarget.style.color='white'}}
             onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='rgba(255,255,255,0.7)'}}>
@@ -2566,6 +2571,8 @@ function LandingPage({ onLogin, onSignup, onBack }) {
             onMouseOver={e=>e.currentTarget.style.color='white'} onMouseOut={e=>e.currentTarget.style.color='rgba(255,255,255,0.3)'}>Log In</button>
           <button onClick={onSignup} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.3)', fontFamily:'inherit', fontSize:12, cursor:'pointer', transition:'color .15s' }}
             onMouseOver={e=>e.currentTarget.style.color='white'} onMouseOut={e=>e.currentTarget.style.color='rgba(255,255,255,0.3)'}>Sign Up</button>
+          <button onClick={onSetupGuide} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.3)', fontFamily:'inherit', fontSize:12, cursor:'pointer', transition:'color .15s' }}
+            onMouseOver={e=>e.currentTarget.style.color='white'} onMouseOut={e=>e.currentTarget.style.color='rgba(255,255,255,0.3)'}>Setup Guide</button>
           <a href="/privacy" style={{ color:'rgba(255,255,255,0.3)', fontSize:12, textDecoration:'none', transition:'color .15s' }}
             onMouseOver={e=>e.currentTarget.style.color='white'} onMouseOut={e=>e.currentTarget.style.color='rgba(255,255,255,0.3)'}>Privacy Policy</a>
           <a href="/terms" style={{ color:'rgba(255,255,255,0.3)', fontSize:12, textDecoration:'none', transition:'color .15s' }}
@@ -3226,10 +3233,11 @@ export default function App() {
 
   return (
     <div className="app">
-      {screen==='landing'       && <LandingPage onLogin={() => setScreen('login')} onSignup={() => setScreen('signup')} onBack={screen === 'landing' ? null : () => setScreen('login')} />}
+      {screen==='landing'       && <LandingPage onLogin={() => setScreen('login')} onSignup={() => setScreen('signup')} onBack={screen === 'landing' ? null : () => setScreen('login')} onSetupGuide={() => setScreen('setup-guide')} />}
       {screen==='privacy'        && <PrivacyPage onBack={() => setScreen('landing')} />}
       {screen==='terms'          && <TermsPage onBack={() => setScreen('landing')} />}
       {screen==='about'         && <AboutPage onBack={() => setScreen('landing')} />}
+      {screen==='setup-guide'    && <SetupGuidePage onBack={() => setScreen('landing')} onSignup={() => setScreen('signup')} />}
       {screen==='login'          && <LoginScreen onDone={afterAuth} onSignup={() => setScreen('signup')} onForgot={() => setScreen('forgot')} onAbout={() => setScreen('landing')} onBack={() => setScreen('landing')} />}
       {screen==='signup'         && <SignupScreen onDone={afterAuth} onLogin={() => setScreen('login')} onBack={() => setScreen('landing')} />}
       {screen==='forgot'         && <ForgotPasswordScreen onBack={() => setScreen('landing')} />}
@@ -3263,6 +3271,869 @@ export default function App() {
           <button onClick={handleUpdate} style={{ background:'#10B981', color:'white', border:'none', borderRadius:8, padding:'7px 14px', fontFamily:'var(--f)', fontSize:13, fontWeight:700, cursor:'pointer' }}>Refresh</button>
         </div>
       )}
+    </div>
+  )
+}
+) {
+  useEffect(() => {
+    document.body.classList.add('scrollable')
+    document.querySelector('.app')?.classList.add('scrollable')
+    return () => {
+      document.body.classList.remove('scrollable')
+      document.querySelector('.app')?.classList.remove('scrollable')
+    }
+  }, [])
+
+  const [activeTab, setActiveTab] = useState('new') // 'new' | 'existing'
+  const [expandedFaq, setExpandedFaq] = useState(null)
+
+  const G = '#10B981'
+  const GD = '#0A6640'
+  const WARN = '#F59E0B'
+  const RED = '#EF4444'
+
+  return (
+    <div style={{ minHeight:'100vh', background:'#060E09', fontFamily:"'Plus Jakarta Sans', sans-serif", color:'white' }}>
+
+      {/* ── Nav ── */}
+      <nav style={{ position:'sticky', top:0, zIndex:100, background:'rgba(6,14,9,0.92)', backdropFilter:'blur(20px)', borderBottom:'1px solid rgba(255,255,255,0.06)', padding:'0 5vw', display:'flex', alignItems:'center', justifyContent:'space-between', height:64 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <div style={{ width:34,height:34,background:'linear-gradient(135deg,#0A6640,#10B981)',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontWeight:900,fontSize:18,boxShadow:'0 0 16px rgba(16,185,129,0.3)' }}>W</div>
+          <span style={{ fontWeight:900,fontSize:16,color:'white',letterSpacing:-0.4 }}>Whats<span style={{ color:G }}>-</span>Order</span>
+        </div>
+        <div style={{ display:'flex', gap:8 }}>
+          <button onClick={onBack} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.1)', color:'rgba(255,255,255,0.7)', fontFamily:'inherit', fontSize:13, fontWeight:600, cursor:'pointer', padding:'8px 16px', borderRadius:8 }}>← Back</button>
+          <button onClick={onSignup} style={{ background:'linear-gradient(135deg,#0A6640,#10B981)', color:'white', border:'none', borderRadius:8, padding:'8px 18px', fontFamily:'inherit', fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 0 16px rgba(10,102,64,0.4)' }}>Get Started →</button>
+        </div>
+      </nav>
+
+      {/* ── Hero ── */}
+      <div style={{ maxWidth:860, margin:'0 auto', padding:'56px 5vw 0', textAlign:'center', position:'relative' }}>
+        <div style={{ position:'absolute', top:0, left:'50%', transform:'translateX(-50%)', width:600, height:300, background:'radial-gradient(circle,rgba(10,102,64,0.2) 0%,transparent 70%)', pointerEvents:'none' }} />
+        <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(16,185,129,0.1)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:20, padding:'6px 16px', fontSize:12, fontWeight:700, color:G, marginBottom:20, letterSpacing:.5 }}>
+          <span style={{ width:6,height:6,background:G,borderRadius:'50%',display:'inline-block',boxShadow:`0 0 6px ${G}` }} />
+          SETUP GUIDE · 5 MINUTE READ
+        </div>
+        <h1 style={{ fontSize:'clamp(28px,4.5vw,48px)', fontWeight:900, letterSpacing:-1.5, margin:'0 0 16px', lineHeight:1.1 }}>
+          Before you connect<br/>
+          <span style={{ background:`linear-gradient(90deg,${G},#0D8A52)`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>WhatsApp to Whats-Order</span>
+        </h1>
+        <p style={{ fontSize:16, color:'rgba(255,255,255,0.5)', maxWidth:560, margin:'0 auto 40px', lineHeight:1.7 }}>
+          Everything you need to know about setting up your WhatsApp Business number — the right way, the first time.
+        </p>
+
+        {/* Quick stats */}
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:12, maxWidth:500, margin:'0 auto 56px' }}>
+          {[['5 min','Setup time'],['1','WhatsApp number needed'],['Free','To get started']].map(([v,l],i) => (
+            <div key={i} style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:12, padding:'14px 10px' }}>
+              <div style={{ fontSize:20, fontWeight:900, color:G, marginBottom:3 }}>{v}</div>
+              <div style={{ fontSize:11, color:'rgba(255,255,255,0.35)', fontWeight:500 }}>{l}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Tab selector ── */}
+      <div style={{ maxWidth:860, margin:'0 auto', padding:'0 5vw 40px' }}>
+        <div style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:14, padding:5, display:'flex', gap:4, marginBottom:32 }}>
+          {[
+            { id:'new', label:'✨ Use a New Number', sub:'Recommended' },
+            { id:'existing', label:'🔄 Migrate Existing Number', sub:'Already on WhatsApp Business' },
+          ].map(t => (
+            <button key={t.id} onClick={() => setActiveTab(t.id)}
+              style={{ flex:1, padding:'11px 16px', borderRadius:10, border:'none', fontFamily:'inherit', cursor:'pointer', transition:'all .2s',
+                background: activeTab===t.id ? `linear-gradient(135deg,${GD},${G})` : 'transparent',
+                color: activeTab===t.id ? 'white' : 'rgba(255,255,255,0.45)',
+                fontWeight: activeTab===t.id ? 800 : 600, fontSize:13 }}>
+              {t.label}
+              {activeTab===t.id && t.sub && <span style={{ display:'block', fontSize:10, opacity:.8, marginTop:2, letterSpacing:.3 }}>{t.sub}</span>}
+            </button>
+          ))}
+        </div>
+
+        {/* ── NEW NUMBER FLOW ── */}
+        {activeTab === 'new' && (
+          <div>
+            {/* Recommended badge */}
+            <div style={{ display:'flex', alignItems:'center', gap:10, background:'rgba(16,185,129,0.08)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:12, padding:'12px 18px', marginBottom:32 }}>
+              <span style={{ fontSize:20 }}>⭐</span>
+              <div>
+                <div style={{ fontSize:13, fontWeight:800, color:G }}>Recommended Approach</div>
+                <div style={{ fontSize:12, color:'rgba(255,255,255,0.45)', marginTop:2 }}>Fresh start, zero disruption, cleanest setup. Ideal for all new Whats-Order users.</div>
+              </div>
+            </div>
+
+            {/* Flow diagram */}
+            <div style={{ marginBottom:40 }}>
+              <div style={{ fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.35)', textTransform:'uppercase', letterSpacing:1.5, marginBottom:20 }}>Setup Flow</div>
+
+              {[
+                {
+                  n:'01', icon:'📱', color:G, title:'Get a dedicated phone number',
+                  desc:'Obtain a SIM card or landline number exclusively for your business WhatsApp. This number will be your customers\' point of contact.',
+                  tips:['A new SIM from any carrier works (Airtel, Jio, BSNL)', 'A landline that can receive OTP via voice call works too', 'Virtual numbers (Google Voice, TextLocal) are not supported by Meta'],
+                  tag:'One-time setup'
+                },
+                {
+                  n:'02', icon:'🏢', color:'#60A5FA', title:'Contact our team for WABA creation',
+                  desc:'Reach out to our support team. We will create a WhatsApp Business Account (WABA) for you under our platform — no technical knowledge needed.',
+                  tips:['Email us at whatsorder.help@gmail.com', 'Share your business name and the new phone number', 'We set up everything within 24 hours'],
+                  tag:'We handle this'
+                },
+                {
+                  n:'03', icon:'📲', color:'#A78BFA', title:'Verify your number via OTP',
+                  desc:'Meta sends a one-time code (OTP) to your number via SMS or voice call to confirm ownership. You simply share the code with us.',
+                  tips:['Have your phone ready and charged', 'OTP expires in 10 minutes — be available', 'Voice call OTP is available if SMS doesn\'t arrive'],
+                  tag:'~2 minutes'
+                },
+                {
+                  n:'04', icon:'⚙️', color:WARN, title:'We configure your WhatsApp connection',
+                  desc:'Our team enters your Phone Number ID and access token into the platform. Your WhatsApp Business number is now fully connected to Whats-Order.',
+                  tips:['We test with a message to confirm everything works', 'You get notified once setup is complete', 'The whole process typically takes under 24 hours'],
+                  tag:'We handle this'
+                },
+                {
+                  n:'05', icon:'🚀', color:G, title:'Start receiving orders',
+                  desc:'You\'re live. Share your new WhatsApp number with your customers. Every message lands in your Whats-Order inbox, ready to convert into tracked orders.',
+                  tips:['Set up quick reply templates for common responses', 'Create your first order from any incoming message', 'Orders from WhatsApp appear in real-time'],
+                  tag:'You\'re live!'
+                },
+              ].map((step, i, arr) => (
+                <div key={i} style={{ display:'flex', gap:0, position:'relative' }}>
+                  {/* Connector line */}
+                  {i < arr.length-1 && (
+                    <div style={{ position:'absolute', left:27, top:56, bottom:-16, width:2, background:`linear-gradient(to bottom, ${step.color}40, transparent)`, zIndex:0 }} />
+                  )}
+                  {/* Step circle */}
+                  <div style={{ flexShrink:0, width:56, display:'flex', flexDirection:'column', alignItems:'center', zIndex:1 }}>
+                    <div style={{ width:52, height:52, borderRadius:'50%', background:`${step.color}18`, border:`2px solid ${step.color}50`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, marginBottom:4, boxShadow:`0 0 20px ${step.color}20` }}>
+                      {step.icon}
+                    </div>
+                    <div style={{ fontSize:9, fontWeight:800, color:step.color, letterSpacing:.5, opacity:.7 }}>{step.n}</div>
+                  </div>
+
+                  {/* Content */}
+                  <div style={{ flex:1, paddingLeft:16, paddingBottom: i<arr.length-1 ? 32 : 8 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8, flexWrap:'wrap' }}>
+                      <span style={{ fontSize:15, fontWeight:800, color:'white' }}>{step.title}</span>
+                      <span style={{ fontSize:10, fontWeight:700, color:step.color, background:`${step.color}18`, padding:'2px 10px', borderRadius:20, letterSpacing:.3 }}>{step.tag}</span>
+                    </div>
+                    <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.5)', lineHeight:1.7, margin:'0 0 12px' }}>{step.desc}</p>
+                    <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                      {step.tips.map((tip,j) => (
+                        <div key={j} style={{ display:'flex', gap:8, alignItems:'flex-start', fontSize:12.5, color:'rgba(255,255,255,0.35)' }}>
+                          <span style={{ color:step.color, marginTop:1, flexShrink:0, fontWeight:700 }}>→</span>
+                          {tip}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <div style={{ background:'linear-gradient(135deg,rgba(10,102,64,0.3),rgba(16,185,129,0.1))', border:'1px solid rgba(16,185,129,0.25)', borderRadius:16, padding:24, textAlign:'center' }}>
+              <div style={{ fontSize:16, fontWeight:800, color:'white', marginBottom:6 }}>Ready to get started?</div>
+              <div style={{ fontSize:13, color:'rgba(255,255,255,0.45)', marginBottom:20 }}>Create your account first, then email us to set up your WhatsApp connection.</div>
+              <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+                <button onClick={onSignup} style={{ background:'linear-gradient(135deg,#0A6640,#10B981)', color:'white', border:'none', borderRadius:10, padding:'11px 24px', fontFamily:'inherit', fontSize:14, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 20px rgba(10,102,64,0.4)' }}>Create Free Account →</button>
+                <a href="mailto:whatsorder.help@gmail.com?subject=WABA Setup Request&body=Hi, I would like to set up WhatsApp Business for Whats-Order. My business name is: " style={{ background:'rgba(255,255,255,0.07)', color:'rgba(255,255,255,0.8)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:10, padding:'11px 24px', fontFamily:'inherit', fontSize:14, fontWeight:600, cursor:'pointer', textDecoration:'none', display:'inline-flex', alignItems:'center' }}>✉ Email Our Team</a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── EXISTING NUMBER FLOW ── */}
+        {activeTab === 'existing' && (
+          <div>
+            {/* Warning banner */}
+            <div style={{ background:'rgba(245,158,11,0.08)', border:'1px solid rgba(245,158,11,0.3)', borderRadius:12, padding:'16px 20px', marginBottom:32, display:'flex', gap:14, alignItems:'flex-start' }}>
+              <span style={{ fontSize:22, flexShrink:0, marginTop:2 }}>⚠️</span>
+              <div>
+                <div style={{ fontSize:14, fontWeight:800, color:WARN, marginBottom:6 }}>Important: Understand the trade-offs before migrating</div>
+                <div style={{ fontSize:13, color:'rgba(255,255,255,0.5)', lineHeight:1.7 }}>
+                  Migrating an existing number to WhatsApp Business API is a <strong style={{ color:'white' }}>one-way process</strong>. Once migrated, the WhatsApp Business App on your phone will stop working for that number. Read carefully before proceeding.
+                </div>
+              </div>
+            </div>
+
+            {/* What changes vs what stays */}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:32 }}>
+              <div style={{ background:'rgba(16,185,129,0.06)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:14, padding:20 }}>
+                <div style={{ fontSize:12, fontWeight:800, color:G, textTransform:'uppercase', letterSpacing:.8, marginBottom:14, display:'flex', alignItems:'center', gap:6 }}>
+                  <span>✓</span> What stays the same
+                </div>
+                {['Your WhatsApp number is unchanged','Customers see the same number','All previous customer chat history on their phones','Business profile and display name'].map((t,i) => (
+                  <div key={i} style={{ display:'flex', gap:8, fontSize:12.5, color:'rgba(255,255,255,0.55)', marginBottom:8, lineHeight:1.5 }}>
+                    <span style={{ color:G, flexShrink:0, fontWeight:700 }}>✓</span>{t}
+                  </div>
+                ))}
+              </div>
+              <div style={{ background:'rgba(239,68,68,0.06)', border:'1px solid rgba(239,68,68,0.2)', borderRadius:14, padding:20 }}>
+                <div style={{ fontSize:12, fontWeight:800, color:RED, textTransform:'uppercase', letterSpacing:.8, marginBottom:14, display:'flex', alignItems:'center', gap:6 }}>
+                  <span>✕</span> What changes
+                </div>
+                {['WhatsApp Business App stops working on your phone','Cannot send/receive from the mobile app anymore','Your own chat history disappears from the app','Cannot revert without going through migration again'].map((t,i) => (
+                  <div key={i} style={{ display:'flex', gap:8, fontSize:12.5, color:'rgba(255,255,255,0.55)', marginBottom:8, lineHeight:1.5 }}>
+                    <span style={{ color:RED, flexShrink:0, fontWeight:700 }}>✕</span>{t}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Migration flow */}
+            <div style={{ fontSize:11, fontWeight:700, color:'rgba(255,255,255,0.35)', textTransform:'uppercase', letterSpacing:1.5, marginBottom:20 }}>Migration Flow</div>
+
+            {[
+              {
+                n:'01', icon:'💾', color:'#60A5FA', title:'Back up your chat history',
+                desc:'Optional but recommended. Export your existing WhatsApp Business chats before migration for your own records.',
+                tips:['Open WhatsApp Business App → Settings → Chats → Chat Backup', 'Back up to Google Drive or locally', 'This is for your personal records — backups cannot be restored into Whats-Order'],
+                tag:'Before you start', warn: false
+              },
+              {
+                n:'02', icon:'🔓', color:WARN, title:'Disable Two-Step Verification',
+                desc:'This is mandatory. If 2-step verification is active on your number, Meta will block the migration with a PIN prompt.',
+                tips:['WhatsApp Business App → Settings → Account → Two-step verification → Turn Off', 'Wait 7 days after disabling if recently enabled', 'Do NOT skip this step — migration will fail'],
+                tag:'Critical step', warn: true
+              },
+              {
+                n:'03', icon:'🏢', color:'#A78BFA', title:'Contact our team with your number',
+                desc:'Email us your business number. We will initiate the migration process on Meta\'s end and guide you through the OTP step.',
+                tips:['Email: whatsorder.help@gmail.com', 'Include your country code (e.g. +91 98765 43210)', 'Be available for ~30 minutes during this step'],
+                tag:'We take over', warn: false
+              },
+              {
+                n:'04', icon:'📲', color:G, title:'Approve the OTP verification',
+                desc:'Meta sends an OTP to your existing number. Enter it to confirm ownership and complete the migration.',
+                tips:['Keep your phone in hand — OTP expires in 10 minutes', 'Choose SMS or voice call (voice call is more reliable)', 'The moment you enter the OTP, the WhatsApp Business App stops receiving messages'],
+                tag:'~2 minutes', warn: false
+              },
+              {
+                n:'05', icon:'⚙️', color:G, title:'We complete your connection',
+                desc:'Our team connects your migrated number to your Whats-Order account. A test message confirms everything is working.',
+                tips:['We add the Phone Number ID and token to your account', 'You receive a confirmation message on the number', 'Any incoming WhatsApp messages now appear in your Whats-Order inbox'],
+                tag:'We handle this', warn: false
+              },
+            ].map((step, i, arr) => (
+              <div key={i} style={{ display:'flex', gap:0, position:'relative' }}>
+                {i < arr.length-1 && (
+                  <div style={{ position:'absolute', left:27, top:56, bottom:-16, width:2, background:`linear-gradient(to bottom, ${step.color}40, transparent)`, zIndex:0 }} />
+                )}
+                <div style={{ flexShrink:0, width:56, display:'flex', flexDirection:'column', alignItems:'center', zIndex:1 }}>
+                  <div style={{ width:52, height:52, borderRadius:'50%', background:`${step.color}18`, border:`2px solid ${step.warn ? WARN+'80' : step.color+'50'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, marginBottom:4, boxShadow:`0 0 20px ${step.color}20`, position:'relative' }}>
+                    {step.icon}
+                    {step.warn && <div style={{ position:'absolute', top:-4, right:-4, width:16, height:16, background:WARN, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:900, color:'#000' }}>!</div>}
+                  </div>
+                  <div style={{ fontSize:9, fontWeight:800, color:step.color, letterSpacing:.5, opacity:.7 }}>{step.n}</div>
+                </div>
+                <div style={{ flex:1, paddingLeft:16, paddingBottom: i<arr.length-1 ? 32 : 8 }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8, flexWrap:'wrap' }}>
+                    <span style={{ fontSize:15, fontWeight:800, color:'white' }}>{step.title}</span>
+                    <span style={{ fontSize:10, fontWeight:700, color:step.warn?WARN:step.color, background:`${step.warn?WARN:step.color}18`, padding:'2px 10px', borderRadius:20, letterSpacing:.3 }}>{step.tag}</span>
+                  </div>
+                  <p style={{ fontSize:13.5, color:'rgba(255,255,255,0.5)', lineHeight:1.7, margin:'0 0 12px' }}>{step.desc}</p>
+                  <div style={{ display:'flex', flexDirection:'column', gap:5 }}>
+                    {step.tips.map((tip,j) => (
+                      <div key={j} style={{ display:'flex', gap:8, alignItems:'flex-start', fontSize:12.5, color:'rgba(255,255,255,0.35)' }}>
+                        <span style={{ color:step.warn&&j===2?RED:step.color, marginTop:1, flexShrink:0, fontWeight:700 }}>→</span>
+                        {tip}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            {/* Recommendation box */}
+            <div style={{ background:'rgba(245,158,11,0.07)', border:'1px solid rgba(245,158,11,0.2)', borderRadius:14, padding:20, marginTop:32, display:'flex', gap:14 }}>
+              <span style={{ fontSize:24, flexShrink:0 }}>💡</span>
+              <div>
+                <div style={{ fontSize:13, fontWeight:800, color:WARN, marginBottom:6 }}>Our recommendation</div>
+                <div style={{ fontSize:13, color:'rgba(255,255,255,0.5)', lineHeight:1.7 }}>
+                  If your existing number receives active orders from real customers, we strongly recommend getting a <strong style={{ color:'white' }}>new SIM</strong> instead and sharing the new number with customers gradually. This ensures <strong style={{ color:'white' }}>zero downtime</strong> during migration and no risk to your current customer communications.
+                </div>
+                <button onClick={() => setActiveTab('new')} style={{ marginTop:12, background:'transparent', border:`1px solid ${WARN}50`, color:WARN, fontFamily:'inherit', fontSize:12, fontWeight:700, cursor:'pointer', padding:'6px 14px', borderRadius:8 }}>
+                  View New Number Guide →
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── FAQ ── */}
+        <div style={{ marginTop:56 }}>
+          <div style={{ textAlign:'center', marginBottom:32 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:G, textTransform:'uppercase', letterSpacing:2, marginBottom:10 }}>FAQ</div>
+            <h2 style={{ fontSize:'clamp(20px,3vw,30px)', fontWeight:900, color:'white', margin:0, letterSpacing:-0.8 }}>Common questions</h2>
+          </div>
+
+          {[
+            { q:'Can I use my personal WhatsApp number?', a:'No. Meta requires a dedicated business number. Personal WhatsApp accounts use a different infrastructure and cannot be connected to the WhatsApp Business API. You need a number that is either fresh (never registered on WhatsApp) or currently on the WhatsApp Business App.' },
+            { q:'What is a WABA and why do I need one?', a:'WABA stands for WhatsApp Business Account — it\'s the Meta-issued account that holds your registered business phone number, display name, and business profile. Think of it as the business entity that owns your WhatsApp presence. Whats-Order connects to your WABA to send and receive messages on your behalf.' },
+            { q:'How long does the setup take?', a:'For a new number, typically under 24 hours. For an existing number migration, it depends on when you\'re available for the OTP step — the migration itself takes under 30 minutes once started. Our team handles everything technical.' },
+            { q:'Will my customers know I switched systems?', a:'No. Customers continue to message the same number. They see no difference — they just notice that responses may be faster and more consistent now that you\'re using Whats-Order.' },
+            { q:'What happens if my number isn\'t verified by Meta?', a:'Meta requires phone numbers to pass a quality rating check. Numbers that have received spam complaints or policy violations may face messaging restrictions. Fresh numbers automatically start clean. If you\'re migrating an existing number, our team will check its quality status beforehand.' },
+            { q:'Is there any cost from Meta to set up WhatsApp Business API?', a:'No. Setting up the API itself is free. Meta charges for conversations above 1,000 per month per number (approximately ₹0.50–₹0.83 per conversation beyond the free tier). At typical small business volumes, most users stay within the free limit entirely.' },
+          ].map((faq, i) => (
+            <div key={i} style={{ borderBottom:'1px solid rgba(255,255,255,0.06)', overflow:'hidden' }}>
+              <button onClick={() => setExpandedFaq(expandedFaq===i ? null : i)}
+                style={{ width:'100%', padding:'18px 0', background:'none', border:'none', cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center', gap:16, fontFamily:'inherit', textAlign:'left' }}>
+                <span style={{ fontSize:14, fontWeight:700, color: expandedFaq===i ? G : 'rgba(255,255,255,0.8)', lineHeight:1.4 }}>{faq.q}</span>
+                <span style={{ fontSize:18, color: expandedFaq===i ? G : 'rgba(255,255,255,0.3)', flexShrink:0, transition:'transform .2s', transform: expandedFaq===i ? 'rotate(45deg)' : 'none' }}>+</span>
+              </button>
+              {expandedFaq===i && (
+                <div style={{ fontSize:13.5, color:'rgba(255,255,255,0.45)', lineHeight:1.75, paddingBottom:18 }}>{faq.a}</div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* ── Final CTA ── */}
+        <div style={{ textAlign:'center', padding:'56px 0 80px', position:'relative' }}>
+          <div style={{ position:'absolute', top:'50%', left:'50%', transform:'translate(-50%,-50%)', width:400, height:200, background:'radial-gradient(circle,rgba(10,102,64,0.15) 0%,transparent 70%)', pointerEvents:'none' }} />
+          <h2 style={{ fontSize:'clamp(20px,3vw,32px)', fontWeight:900, color:'white', margin:'0 0 10px', letterSpacing:-1 }}>Still have questions?</h2>
+          <p style={{ fontSize:14, color:'rgba(255,255,255,0.35)', margin:'0 0 28px' }}>Our team is happy to walk you through the entire setup over email.</p>
+          <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+            <button onClick={onSignup} style={{ background:'linear-gradient(135deg,#0A6640,#10B981)', color:'white', border:'none', borderRadius:11, padding:'13px 28px', fontFamily:'inherit', fontSize:14, fontWeight:800, cursor:'pointer', boxShadow:'0 6px 28px rgba(10,102,64,0.45)', letterSpacing:-.2 }}>Create Free Account →</button>
+            <a href="mailto:whatsorder.help@gmail.com?subject=Setup Help&body=Hi, I need help setting up WhatsApp for Whats-Order." style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.7)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:11, padding:'13px 24px', fontFamily:'inherit', fontSize:14, fontWeight:600, cursor:'pointer', textDecoration:'none', display:'inline-flex', alignItems:'center' }}>✉ Contact Support</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─── SETUP GUIDE PAGE ──────────────────────────────────────────────────────────
+function SetupGuidePage({ onBack, onSignup }) {
+  const [tab, setTab] = useState('new')
+  const [openFaq, setOpenFaq] = useState(null)
+
+  useEffect(() => {
+    document.body.classList.add('scrollable')
+    document.querySelector('.app')?.classList.add('scrollable')
+    window.scrollTo(0,0)
+    return () => {
+      document.body.classList.remove('scrollable')
+      document.querySelector('.app')?.classList.remove('scrollable')
+    }
+  }, [])
+
+  const C = { g:'#10B981', gd:'#0A6640', amber:'#F59E0B', red:'#EF4444', blue:'#60A5FA', purple:'#A78BFA', bg:'#060E09', card:'rgba(255,255,255,0.04)', border:'rgba(255,255,255,0.08)' }
+  const ff = "'Plus Jakarta Sans', sans-serif"
+
+  /* ── SVG Flow Diagram – New Number ── */
+  const NewNumberDiagram = () => (
+    <svg viewBox="0 0 780 340" style={{ width:'100%', maxWidth:780, display:'block', margin:'0 auto', overflow:'visible' }}>
+      <defs>
+        <linearGradient id="arrowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stopColor="#10B981" stopOpacity="0.6"/>
+          <stop offset="100%" stopColor="#10B981" stopOpacity="0.2"/>
+        </linearGradient>
+        <linearGradient id="gGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#0A6640"/>
+          <stop offset="100%" stopColor="#10B981"/>
+        </linearGradient>
+        <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#1D4ED8"/>
+          <stop offset="100%" stopColor="#60A5FA"/>
+        </linearGradient>
+        <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#7C3AED"/>
+          <stop offset="100%" stopColor="#A78BFA"/>
+        </linearGradient>
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+          <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <marker id="arrowHead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#10B981" opacity="0.5"/>
+        </marker>
+      </defs>
+
+      {/* Connecting lines */}
+      <line x1="136" y1="170" x2="196" y2="170" stroke="url(#arrowGrad)" strokeWidth="2" markerEnd="url(#arrowHead)" strokeDasharray="4 3"/>
+      <line x1="292" y1="170" x2="352" y2="170" stroke="url(#arrowGrad)" strokeWidth="2" markerEnd="url(#arrowHead)" strokeDasharray="4 3"/>
+      <line x1="448" y1="170" x2="508" y2="170" stroke="url(#arrowGrad)" strokeWidth="2" markerEnd="url(#arrowHead)" strokeDasharray="4 3"/>
+      <line x1="604" y1="170" x2="654" y2="170" stroke="url(#arrowGrad)" strokeWidth="2" markerEnd="url(#arrowHead)" strokeDasharray="4 3"/>
+
+      {/* Step 1 – Get Number */}
+      <rect x="8" y="130" width="128" height="80" rx="14" fill="url(#gGrad)" opacity="0.15" stroke="#10B981" strokeWidth="1.5" strokeOpacity="0.4"/>
+      <text x="72" y="158" textAnchor="middle" fill="#10B981" fontSize="22">📱</text>
+      <text x="72" y="178" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily={ff}>Get a New</text>
+      <text x="72" y="192" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily={ff}>SIM / Number</text>
+      <rect x="28" y="108" width="88" height="18" rx="9" fill="#10B981" opacity="0.2"/>
+      <text x="72" y="121" textAnchor="middle" fill="#10B981" fontSize="9" fontWeight="800" fontFamily={ff} letterSpacing="1">STEP 01</text>
+
+      {/* Step 2 – Contact Team */}
+      <rect x="196" y="130" width="128" height="80" rx="14" fill="url(#blueGrad)" opacity="0.15" stroke="#60A5FA" strokeWidth="1.5" strokeOpacity="0.4"/>
+      <text x="260" y="158" textAnchor="middle" fill="#60A5FA" fontSize="22">✉️</text>
+      <text x="260" y="178" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily={ff}>Contact Our</text>
+      <text x="260" y="192" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily={ff}>Team</text>
+      <rect x="208" y="108" width="102" height="18" rx="9" fill="#60A5FA" opacity="0.2"/>
+      <text x="260" y="121" textAnchor="middle" fill="#60A5FA" fontSize="9" fontWeight="800" fontFamily={ff} letterSpacing="1">STEP 02</text>
+      <rect x="212" y="218" width="96" height="16" rx="8" fill="#60A5FA" opacity="0.15"/>
+      <text x="260" y="230" textAnchor="middle" fill="#60A5FA" fontSize="9" fontFamily={ff} fontWeight="700">We handle this</text>
+
+      {/* Step 3 – OTP */}
+      <rect x="352" y="130" width="128" height="80" rx="14" fill="url(#purpleGrad)" opacity="0.15" stroke="#A78BFA" strokeWidth="1.5" strokeOpacity="0.4"/>
+      <text x="416" y="158" textAnchor="middle" fill="#A78BFA" fontSize="22">🔐</text>
+      <text x="416" y="178" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily={ff}>OTP</text>
+      <text x="416" y="192" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily={ff}>Verification</text>
+      <rect x="368" y="108" width="96" height="18" rx="9" fill="#A78BFA" opacity="0.2"/>
+      <text x="416" y="121" textAnchor="middle" fill="#A78BFA" fontSize="9" fontWeight="800" fontFamily={ff} letterSpacing="1">STEP 03</text>
+      <rect x="368" y="218" width="96" height="16" rx="8" fill="#A78BFA" opacity="0.15"/>
+      <text x="416" y="230" textAnchor="middle" fill="#A78BFA" fontSize="9" fontFamily={ff} fontWeight="700">~2 minutes</text>
+
+      {/* Step 4 – We Configure */}
+      <rect x="508" y="130" width="128" height="80" rx="14" fill="rgba(245,158,11,0.08)" stroke="#F59E0B" strokeWidth="1.5" strokeOpacity="0.4"/>
+      <text x="572" y="158" textAnchor="middle" fill="#F59E0B" fontSize="22">⚙️</text>
+      <text x="572" y="178" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily={ff}>Platform</text>
+      <text x="572" y="192" textAnchor="middle" fill="white" fontSize="11" fontWeight="700" fontFamily={ff}>Configuration</text>
+      <rect x="524" y="108" width="96" height="18" rx="9" fill="#F59E0B" opacity="0.2"/>
+      <text x="572" y="121" textAnchor="middle" fill="#F59E0B" fontSize="9" fontWeight="800" fontFamily={ff} letterSpacing="1">STEP 04</text>
+      <rect x="524" y="218" width="96" height="16" rx="8" fill="#F59E0B" opacity="0.15"/>
+      <text x="572" y="230" textAnchor="middle" fill="#F59E0B" fontSize="9" fontFamily={ff} fontWeight="700">We handle this</text>
+
+      {/* Step 5 – Live */}
+      <rect x="654" y="120" width="118" height="100" rx="14" fill="url(#gGrad)" opacity="0.25" stroke="#10B981" strokeWidth="2" filter="url(#glow)"/>
+      <text x="713" y="152" textAnchor="middle" fill="#10B981" fontSize="26">🚀</text>
+      <text x="713" y="174" textAnchor="middle" fill="white" fontSize="12" fontWeight="800" fontFamily={ff}>You're</text>
+      <text x="713" y="190" textAnchor="middle" fill="white" fontSize="12" fontWeight="800" fontFamily={ff}>Live!</text>
+      <rect x="670" y="100" width="86" height="18" rx="9" fill="#10B981" opacity="0.3"/>
+      <text x="713" y="113" textAnchor="middle" fill="#10B981" fontSize="9" fontWeight="800" fontFamily={ff} letterSpacing="1">STEP 05</text>
+
+      {/* Timeline bar at bottom */}
+      <text x="390" y="290" textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="11" fontFamily={ff}>Total setup time: under 24 hours · Most of it handled by our team</text>
+    </svg>
+  )
+
+  /* ── SVG Flow Diagram – Existing Number ── */
+  const ExistingNumberDiagram = () => (
+    <svg viewBox="0 0 780 380" style={{ width:'100%', maxWidth:780, display:'block', margin:'0 auto', overflow:'visible' }}>
+      <defs>
+        <linearGradient id="warnGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stopColor="#92400E"/>
+          <stop offset="100%" stopColor="#F59E0B"/>
+        </linearGradient>
+        <marker id="arrowHead2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#F59E0B" opacity="0.5"/>
+        </marker>
+        <marker id="arrowHead3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#10B981" opacity="0.5"/>
+        </marker>
+      </defs>
+
+      {/* Warning banner at top */}
+      <rect x="8" y="8" width="764" height="40" rx="10" fill="rgba(245,158,11,0.08)" stroke="#F59E0B" strokeWidth="1" strokeOpacity="0.3"/>
+      <text x="390" y="23" textAnchor="middle" fill="#F59E0B" fontSize="10" fontFamily={ff} fontWeight="700">⚠ ONE-WAY PROCESS</text>
+      <text x="390" y="39" textAnchor="middle" fill="rgba(255,255,255,0.35)" fontSize="9.5" fontFamily={ff}>Once migrated, the WhatsApp Business App on your phone will no longer work for this number</text>
+
+      {/* Steps */}
+      {/* Step 1 */}
+      <rect x="8" y="72" width="138" height="90" rx="14" fill="rgba(96,165,250,0.08)" stroke="#60A5FA" strokeWidth="1.5" strokeOpacity="0.4"/>
+      <text x="77" y="100" textAnchor="middle" fill="#60A5FA" fontSize="22">💾</text>
+      <text x="77" y="120" textAnchor="middle" fill="white" fontSize="10.5" fontWeight="700" fontFamily={ff}>Back Up</text>
+      <text x="77" y="134" textAnchor="middle" fill="white" fontSize="10.5" fontWeight="700" fontFamily={ff}>Chat History</text>
+      <rect x="24" y="54" width="106" height="16" rx="8" fill="#60A5FA" opacity="0.15"/>
+      <text x="77" y="66" textAnchor="middle" fill="#60A5FA" fontSize="8.5" fontWeight="800" fontFamily={ff} letterSpacing="1">STEP 01 · OPTIONAL</text>
+
+      <line x1="146" y1="117" x2="166" y2="117" stroke="#F59E0B" strokeOpacity="0.4" strokeWidth="2" markerEnd="url(#arrowHead2)" strokeDasharray="4 3"/>
+
+      {/* Step 2 – CRITICAL */}
+      <rect x="166" y="62" width="138" height="110" rx="14" fill="rgba(239,68,68,0.1)" stroke="#EF4444" strokeWidth="2"/>
+      <text x="235" y="92" textAnchor="middle" fill="#EF4444" fontSize="22">🔓</text>
+      <text x="235" y="114" textAnchor="middle" fill="white" fontSize="10.5" fontWeight="800" fontFamily={ff}>Disable 2-Step</text>
+      <text x="235" y="128" textAnchor="middle" fill="white" fontSize="10.5" fontWeight="800" fontFamily={ff}>Verification</text>
+      <rect x="178" y="44" width="114" height="16" rx="8" fill="#EF4444" opacity="0.25"/>
+      <text x="235" y="56" textAnchor="middle" fill="#EF4444" fontSize="8.5" fontWeight="800" fontFamily={ff} letterSpacing="1">STEP 02 · CRITICAL</text>
+      <rect x="182" y="178" width="106" height="16" rx="8" fill="#EF4444" opacity="0.15"/>
+      <text x="235" y="190" textAnchor="middle" fill="#EF4444" fontSize="8.5" fontFamily={ff} fontWeight="700">Do not skip!</text>
+
+      <line x1="304" y1="117" x2="324" y2="117" stroke="#F59E0B" strokeOpacity="0.4" strokeWidth="2" markerEnd="url(#arrowHead2)" strokeDasharray="4 3"/>
+
+      {/* Step 3 */}
+      <rect x="324" y="72" width="138" height="90" rx="14" fill="rgba(167,139,250,0.08)" stroke="#A78BFA" strokeWidth="1.5" strokeOpacity="0.4"/>
+      <text x="393" y="100" textAnchor="middle" fill="#A78BFA" fontSize="22">✉️</text>
+      <text x="393" y="120" textAnchor="middle" fill="white" fontSize="10.5" fontWeight="700" fontFamily={ff}>Contact</text>
+      <text x="393" y="134" textAnchor="middle" fill="white" fontSize="10.5" fontWeight="700" fontFamily={ff}>Our Team</text>
+      <rect x="340" y="54" width="106" height="16" rx="8" fill="#A78BFA" opacity="0.15"/>
+      <text x="393" y="66" textAnchor="middle" fill="#A78BFA" fontSize="8.5" fontWeight="800" fontFamily={ff} letterSpacing="1">STEP 03</text>
+      <rect x="344" y="168" width="98" height="16" rx="8" fill="#A78BFA" opacity="0.15"/>
+      <text x="393" y="180" textAnchor="middle" fill="#A78BFA" fontSize="8.5" fontFamily={ff} fontWeight="700">We take over</text>
+
+      <line x1="462" y1="117" x2="482" y2="117" stroke="#F59E0B" strokeOpacity="0.4" strokeWidth="2" markerEnd="url(#arrowHead2)" strokeDasharray="4 3"/>
+
+      {/* Step 4 */}
+      <rect x="482" y="72" width="138" height="90" rx="14" fill="rgba(16,185,129,0.08)" stroke="#10B981" strokeWidth="1.5" strokeOpacity="0.4"/>
+      <text x="551" y="100" textAnchor="middle" fill="#10B981" fontSize="22">📲</text>
+      <text x="551" y="120" textAnchor="middle" fill="white" fontSize="10.5" fontWeight="700" fontFamily={ff}>Approve</text>
+      <text x="551" y="134" textAnchor="middle" fill="white" fontSize="10.5" fontWeight="700" fontFamily={ff}>OTP</text>
+      <rect x="498" y="54" width="106" height="16" rx="8" fill="#10B981" opacity="0.15"/>
+      <text x="551" y="66" textAnchor="middle" fill="#10B981" fontSize="8.5" fontWeight="800" fontFamily={ff} letterSpacing="1">STEP 04</text>
+      <rect x="502" y="168" width="98" height="16" rx="8" fill="#10B981" opacity="0.15"/>
+      <text x="551" y="180" textAnchor="middle" fill="#10B981" fontSize="8.5" fontFamily={ff} fontWeight="700">~2 minutes</text>
+
+      <line x1="620" y1="117" x2="640" y2="117" stroke="#10B981" strokeOpacity="0.4" strokeWidth="2" markerEnd="url(#arrowHead3)" strokeDasharray="4 3"/>
+
+      {/* Step 5 – Live */}
+      <rect x="640" y="62" width="132" height="110" rx="14" fill="rgba(10,102,64,0.3)" stroke="#10B981" strokeWidth="2"/>
+      <text x="706" y="98" textAnchor="middle" fill="#10B981" fontSize="26">🚀</text>
+      <text x="706" y="122" textAnchor="middle" fill="white" fontSize="12" fontWeight="800" fontFamily={ff}>Connected</text>
+      <text x="706" y="138" textAnchor="middle" fill="white" fontSize="12" fontWeight="800" fontFamily={ff}>& Live</text>
+      <rect x="656" y="44" width="100" height="16" rx="8" fill="#10B981" opacity="0.3"/>
+      <text x="706" y="56" textAnchor="middle" fill="#10B981" fontSize="8.5" fontWeight="800" fontFamily={ff} letterSpacing="1">STEP 05</text>
+
+      {/* What stops working note */}
+      <rect x="166" y="210" width="138" height="58" rx="10" fill="rgba(239,68,68,0.06)" stroke="#EF4444" strokeWidth="1" strokeOpacity="0.3" strokeDasharray="4 3"/>
+      <text x="235" y="228" textAnchor="middle" fill="#EF4444" fontSize="9.5" fontFamily={ff} fontWeight="700">After OTP approval:</text>
+      <text x="235" y="244" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9" fontFamily={ff}>WA Business App stops</text>
+      <text x="235" y="258" textAnchor="middle" fill="rgba(255,255,255,0.4)" fontSize="9" fontFamily={ff}>receiving messages</text>
+
+      {/* Timeline */}
+      <text x="390" y="320" textAnchor="middle" fill="rgba(255,255,255,0.2)" fontSize="11" fontFamily={ff}>Migration typically takes under 30 minutes once started — availability during OTP step required</text>
+    </svg>
+  )
+
+  const newSteps = [
+    { icon:'📱', color:C.g, tag:'You do this', title:'Obtain a dedicated business number',
+      body:'Secure a phone number used exclusively for your business WhatsApp. This is the number your customers will message.',
+      points:[
+        'A new SIM from any carrier (Airtel, Jio, VI, BSNL) works perfectly',
+        'A landline that can receive voice OTP is also supported',
+        'Virtual / internet numbers (Google Voice, TextLocal) are not accepted by Meta',
+        'The number must not be currently registered on any WhatsApp account',
+      ]},
+    { icon:'✉️', color:C.blue, tag:'We handle this', title:'Request WABA creation from our team',
+      body:'Email our support team with your business name and the new number. We create a WhatsApp Business Account (WABA) on Meta\'s platform under our registered partner setup — no technical involvement needed from your side.',
+      points:[
+        'Email: whatsorder.help@gmail.com with subject "WABA Setup Request"',
+        'Include your legal business name and the phone number (with country code)',
+        'We provision the WABA and assign your number to it',
+        'Turnaround: typically same business day',
+      ]},
+    { icon:'🔐', color:C.purple, tag:'~2 minutes', title:'Complete OTP verification with Meta',
+      body:'Meta sends a one-time code to your number to confirm legal ownership. You share this with us or enter it directly — verifying that the number belongs to your business.',
+      points:[
+        'OTP arrives via SMS; voice call backup is available if SMS fails',
+        'Code is valid for 10 minutes — have your phone ready',
+        'This step happens in real time with our team on standby',
+      ]},
+    { icon:'⚙️', color:C.amber, tag:'We handle this', title:'Platform configuration & testing',
+      body:'Our team connects your verified number to your Whats-Order tenant account. We enter the Phone Number ID and access credentials, then send a test message to confirm the full pipeline is working.',
+      points:[
+        'We configure your WhatsApp credentials inside the platform',
+        'A test message is sent from your number to confirm delivery',
+        'You are notified once your account is live',
+      ]},
+    { icon:'🚀', color:C.g, tag:'You\'re live', title:'Start receiving and managing orders',
+      body:'Your WhatsApp number is fully connected. Share it with customers — every incoming message appears in your Whats-Order inbox in real time, ready to be converted into a tracked order.',
+      points:[
+        'Set up quick reply templates to respond faster',
+        'Create orders directly from incoming messages in one click',
+        'All order statuses automatically notify customers via WhatsApp',
+      ]},
+  ]
+
+  const existingSteps = [
+    { icon:'💾', color:C.blue, tag:'Recommended first', warn:false, title:'Export your existing chat history',
+      body:'Before beginning, export your WhatsApp Business chats for your records. This data cannot be imported into Whats-Order, but serves as a personal archive.',
+      points:[
+        'Open WhatsApp Business App → Settings → Chats → Chat Backup',
+        'Back up to Google Drive or save a local copy',
+        'This is purely for your records — not a technical requirement',
+      ]},
+    { icon:'🔓', color:C.red, tag:'CRITICAL — Do not skip', warn:true, title:'Disable Two-Step Verification on the number',
+      body:'Meta mandates that Two-Step Verification (2SV) is off before initiating a Business API migration. If 2SV is active, the migration is blocked at the OTP stage.',
+      points:[
+        'Open WhatsApp Business App → Settings → Account → Two-step verification → Disable',
+        'If you recently enabled 2SV, Meta enforces a 7-day cooldown before it can be disabled',
+        'Do not re-enable 2SV during the migration window — wait until we confirm completion',
+      ]},
+    { icon:'✉️', color:C.purple, tag:'We take over', warn:false, title:'Contact our team to initiate migration',
+      body:'Email us your business number. We initiate the migration request on Meta\'s infrastructure through our partner credentials. Be available for approximately 30 minutes during this window.',
+      points:[
+        'Email: whatsorder.help@gmail.com with subject "Number Migration Request"',
+        'Include the full number with country code and confirm 2SV is disabled',
+        'We handle the Meta Business Manager steps entirely',
+      ]},
+    { icon:'📲', color:C.g, tag:'~2 minutes', warn:false, title:'Approve the OTP on your existing device',
+      body:'Meta sends an OTP to your number — via the device that currently has the WhatsApp Business App installed. Entering this code confirms ownership and triggers the migration.',
+      points:[
+        'Keep the device with your WhatsApp Business App unlocked and nearby',
+        'The moment the OTP is submitted, the WhatsApp Business App ceases to function for this number',
+        'Voice call OTP is available as a fallback if SMS is not received',
+      ]},
+    { icon:'✅', color:C.g, tag:'We handle this', warn:false, title:'We complete connection and verify delivery',
+      body:'Our team connects the migrated number to your Whats-Order account, runs a test message through the full pipeline, and confirms everything is functioning before handing over.',
+      points:[
+        'Phone Number ID and access token are entered into your tenant account',
+        'Test message sent and received to confirm end-to-end delivery',
+        'You receive a confirmation — your Whats-Order inbox is now live',
+      ]},
+  ]
+
+  const faqs = [
+    { q:'Can I use my personal WhatsApp number?',
+      a:'No. Meta\'s WhatsApp Business API requires a dedicated business number. Personal WhatsApp accounts run on a different protocol and cannot be connected. The number must either be unused (no WhatsApp account), or currently active on the WhatsApp Business App (eligible for migration).' },
+    { q:'What exactly is a WABA and why do I need one?',
+      a:'WABA stands for WhatsApp Business Account — the Meta-issued entity that holds your registered phone number, display name, and business profile. Think of it as the business licence that authorises your number to use the WhatsApp Business API. Whats-Order communicates through your WABA to send and receive messages on your behalf.' },
+    { q:'How long does the entire setup take?',
+      a:'For a new number: the WABA creation and OTP verification typically completes within a few hours of your request; our team targets same-day turnaround. For number migration: the migration itself takes under 30 minutes once you are available for the OTP step. The prerequisite (disabling 2SV) may add up to 7 days if recently enabled.' },
+    { q:'Will my customers notice anything different?',
+      a:'Nothing changes from their perspective. They message the same number and receive responses as normal. The only difference is that your end is now managed through Whats-Order\'s inbox rather than a phone app — which typically means faster, more organised responses.' },
+    { q:'Is there any cost from Meta to set this up?',
+      a:'No. The API setup itself is free. Meta charges for messaging conversations beyond 1,000 per month per number (approximately ₹0.50–₹0.83 per conversation). At typical small business volumes — especially in the early stages — most businesses remain within the free tier entirely.' },
+    { q:'What happens if the migration fails or something goes wrong?',
+      a:'Our team monitors the migration process and will immediately diagnose any failure. Common issues are either 2SV not being fully disabled or OTP expiry. Both are recoverable. We will restart the process and walk you through it step by step. You are not alone in this — we handle the technical side entirely.' },
+  ]
+
+  return (
+    <div style={{ minHeight:'100vh', background:C.bg, fontFamily:ff, color:'white' }}>
+
+      {/* ── Sticky Nav ── */}
+      <nav style={{ position:'sticky', top:0, zIndex:200, background:'rgba(6,14,9,0.94)', backdropFilter:'blur(24px)', borderBottom:'1px solid rgba(255,255,255,0.07)', padding:'0 clamp(16px,5vw,60px)', display:'flex', alignItems:'center', justifyContent:'space-between', height:64 }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10, cursor:'pointer' }} onClick={onBack}>
+          <div style={{ width:34,height:34,background:'linear-gradient(135deg,#0A6640,#10B981)',borderRadius:9,display:'flex',alignItems:'center',justifyContent:'center',color:'white',fontWeight:900,fontSize:18,letterSpacing:-1 }}>W</div>
+          <span style={{ fontWeight:900,fontSize:16,letterSpacing:-0.5 }}>Whats<span style={{ color:C.g }}>-</span>Order</span>
+        </div>
+        <div style={{ display:'flex', gap:8, alignItems:'center' }}>
+          <button onClick={onBack} style={{ background:'rgba(255,255,255,0.05)', border:'1px solid rgba(255,255,255,0.09)', color:'rgba(255,255,255,0.6)', fontFamily:ff, fontSize:13, fontWeight:600, cursor:'pointer', padding:'8px 16px', borderRadius:9, letterSpacing:-.2 }}>← Back</button>
+          <button onClick={onSignup} style={{ background:'linear-gradient(135deg,#0A6640,#10B981)', color:'white', border:'none', borderRadius:9, padding:'8px 18px', fontFamily:ff, fontSize:13, fontWeight:700, cursor:'pointer', boxShadow:'0 4px 20px rgba(10,102,64,0.4)' }}>Get Started Free →</button>
+        </div>
+      </nav>
+
+      {/* ── Hero ── */}
+      <div style={{ position:'relative', overflow:'hidden', padding:'72px clamp(16px,5vw,60px) 0', textAlign:'center' }}>
+        <div style={{ position:'absolute', top:0, left:'50%', transform:'translateX(-50%)', width:'70vw', height:'60vh', background:'radial-gradient(ellipse,rgba(10,102,64,0.18) 0%,transparent 65%)', pointerEvents:'none' }}/>
+        {/* Floating dots texture */}
+        {[...Array(24)].map((_,i) => (
+          <div key={i} style={{ position:'absolute', width:2, height:2, background:'rgba(16,185,129,0.2)', borderRadius:'50%',
+            left:`${5 + (i*37)%92}%`, top:`${10 + (i*53)%80}%`, pointerEvents:'none' }}/>
+        ))}
+        <div style={{ position:'relative', zIndex:1, maxWidth:700, margin:'0 auto' }}>
+          <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(16,185,129,0.1)', border:'1px solid rgba(16,185,129,0.25)', borderRadius:24, padding:'6px 18px', fontSize:11, fontWeight:800, color:C.g, marginBottom:24, letterSpacing:1.2, textTransform:'uppercase' }}>
+            <span style={{ width:6,height:6,background:C.g,borderRadius:'50%',display:'inline-block',animation:'none' }}/>
+            Prerequisites &amp; Setup Guide
+          </div>
+          <h1 style={{ fontSize:'clamp(30px,5vw,52px)', fontWeight:900, letterSpacing:-2, margin:'0 0 20px', lineHeight:1.08 }}>
+            Connect WhatsApp<br/>
+            <span style={{ background:`linear-gradient(100deg,${C.g},#34D399,${C.g})`, WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>the right way, once.</span>
+          </h1>
+          <p style={{ fontSize:'clamp(14px,1.8vw,17px)', color:'rgba(255,255,255,0.45)', lineHeight:1.75, margin:'0 auto 48px', maxWidth:520 }}>
+            Everything you need to know before connecting your WhatsApp Business number to Whats-Order — including what to expect, what to avoid, and how our team supports you through the process.
+          </p>
+          {/* Stats strip */}
+          <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap', marginBottom:56 }}>
+            {[['Under 24 hrs','Total setup time'],['Team-assisted','We handle the technical parts'],['Zero downtime','For new number setup']].map(([v,l],i) => (
+              <div key={i} style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:12, padding:'14px 22px', minWidth:140 }}>
+                <div style={{ fontSize:15, fontWeight:900, color:'white', marginBottom:3 }}>{v}</div>
+                <div style={{ fontSize:11, color:'rgba(255,255,255,0.3)', fontWeight:500 }}>{l}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main content ── */}
+      <div style={{ maxWidth:860, margin:'0 auto', padding:'0 clamp(16px,5vw,40px) 80px' }}>
+
+        {/* ── Tab Switcher ── */}
+        <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:16, padding:5, display:'flex', gap:4, marginBottom:40 }}>
+          {[
+            { id:'new', icon:'✨', label:'New Business Number', note:'Recommended' },
+            { id:'existing', icon:'🔄', label:'Migrate Existing Number', note:'Currently on WhatsApp Business' },
+          ].map(t => (
+            <button key={t.id} onClick={() => setTab(t.id)} style={{ flex:1, padding:'13px 16px', borderRadius:12, border:'none', fontFamily:ff, cursor:'pointer', transition:'all .25s',
+              background: tab===t.id ? `linear-gradient(135deg,${C.gd},${C.g})` : 'transparent',
+              color: tab===t.id ? 'white' : 'rgba(255,255,255,0.4)',
+              fontWeight: tab===t.id ? 800 : 600, fontSize:13, letterSpacing:-.2 }}>
+              <span style={{ marginRight:6 }}>{t.icon}</span>{t.label}
+              {tab===t.id && <span style={{ display:'block', fontSize:10, opacity:.75, marginTop:2, fontWeight:600, letterSpacing:.2 }}>{t.note}</span>}
+            </button>
+          ))}
+        </div>
+
+        {/* ── NEW NUMBER SECTION ── */}
+        {tab === 'new' && <>
+
+          {/* Recommendation callout */}
+          <div style={{ display:'flex', gap:14, background:'rgba(16,185,129,0.07)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:14, padding:'16px 20px', marginBottom:36 }}>
+            <div style={{ fontSize:22, flexShrink:0, marginTop:1 }}>⭐</div>
+            <div>
+              <div style={{ fontSize:13, fontWeight:800, color:C.g, marginBottom:5 }}>Why this is the recommended path</div>
+              <div style={{ fontSize:13, color:'rgba(255,255,255,0.45)', lineHeight:1.7 }}>Starting with a fresh number means zero risk to any existing customer conversations, a clean WhatsApp reputation score, and no migration complexity. For most businesses, especially those setting up WhatsApp ordering for the first time, this is the fastest and safest option.</div>
+            </div>
+          </div>
+
+          {/* Flow diagram */}
+          <div style={{ background:'rgba(255,255,255,0.025)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:16, padding:'28px 16px 20px', marginBottom:40 }}>
+            <div style={{ fontSize:10, fontWeight:800, color:'rgba(255,255,255,0.25)', textTransform:'uppercase', letterSpacing:2, marginBottom:20, textAlign:'center' }}>End-to-End Setup Flow</div>
+            <NewNumberDiagram/>
+          </div>
+
+          {/* Step-by-step detail */}
+          <div style={{ marginBottom:40 }}>
+            {newSteps.map((s, i) => (
+              <div key={i} style={{ display:'flex', gap:0, position:'relative', marginBottom: i<newSteps.length-1 ? 0 : 0 }}>
+                {/* Connector */}
+                {i < newSteps.length-1 && <div style={{ position:'absolute', left:23, top:52, bottom:-4, width:2, background:`linear-gradient(to bottom,${s.color}50,transparent)`, zIndex:0 }}/>}
+                {/* Node */}
+                <div style={{ flexShrink:0, width:48, paddingTop:4, zIndex:1 }}>
+                  <div style={{ width:46, height:46, borderRadius:'50%', background:`${s.color}14`, border:`2px solid ${s.color}40`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, boxShadow:`0 0 18px ${s.color}18` }}>
+                    {s.icon}
+                  </div>
+                </div>
+                {/* Card */}
+                <div style={{ flex:1, marginLeft:14, marginBottom:i<newSteps.length-1?28:0, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:'16px 20px' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8, flexWrap:'wrap' }}>
+                    <span style={{ fontSize:10, fontWeight:800, color:'rgba(255,255,255,0.25)', letterSpacing:.5 }}>0{i+1}</span>
+                    <span style={{ fontSize:14, fontWeight:800, color:'white' }}>{s.title}</span>
+                    <span style={{ fontSize:10, fontWeight:700, color:s.color, background:`${s.color}18`, padding:'2px 10px', borderRadius:20, letterSpacing:.3 }}>{s.tag}</span>
+                  </div>
+                  <p style={{ fontSize:13, color:'rgba(255,255,255,0.45)', lineHeight:1.7, margin:'0 0 12px' }}>{s.body}</p>
+                  <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                    {s.points.map((p,j) => (
+                      <div key={j} style={{ display:'flex', gap:9, fontSize:12.5, color:'rgba(255,255,255,0.3)', lineHeight:1.5 }}>
+                        <span style={{ color:s.color, flexShrink:0, fontWeight:800, marginTop:1 }}>›</span>{p}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div style={{ background:'linear-gradient(135deg,rgba(10,102,64,0.25),rgba(16,185,129,0.1))', border:'1px solid rgba(16,185,129,0.25)', borderRadius:16, padding:'28px 24px', textAlign:'center' }}>
+            <div style={{ fontSize:17, fontWeight:800, color:'white', marginBottom:8 }}>Ready to connect your WhatsApp?</div>
+            <div style={{ fontSize:13, color:'rgba(255,255,255,0.4)', marginBottom:24, lineHeight:1.6 }}>Create your free account first, then email our team to handle the WABA setup.<br/>Most accounts are live within the same business day.</div>
+            <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+              <button onClick={onSignup} style={{ background:'linear-gradient(135deg,#0A6640,#10B981)', color:'white', border:'none', borderRadius:11, padding:'12px 28px', fontFamily:ff, fontSize:14, fontWeight:800, cursor:'pointer', boxShadow:'0 6px 24px rgba(10,102,64,0.4)' }}>Create Free Account →</button>
+              <a href="mailto:whatsorder.help@gmail.com?subject=WABA Setup Request&body=Hi, I'd like to set up WhatsApp Business for Whats-Order.%0A%0ABusiness name: %0APhone number (with country code): " style={{ background:'rgba(255,255,255,0.06)', color:'rgba(255,255,255,0.75)', border:'1px solid rgba(255,255,255,0.12)', borderRadius:11, padding:'12px 22px', fontFamily:ff, fontSize:14, fontWeight:600, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:6 }}>✉ Email Our Team</a>
+            </div>
+          </div>
+        </>}
+
+        {/* ── EXISTING NUMBER SECTION ── */}
+        {tab === 'existing' && <>
+
+          {/* Trade-off cards */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:12, marginBottom:36 }}>
+            {/* What stays */}
+            <div style={{ background:'rgba(16,185,129,0.05)', border:'1px solid rgba(16,185,129,0.18)', borderRadius:14, padding:20 }}>
+              <div style={{ fontSize:11, fontWeight:800, color:C.g, textTransform:'uppercase', letterSpacing:.8, marginBottom:14, display:'flex', alignItems:'center', gap:6 }}><span>✓</span> What remains unchanged</div>
+              {['Your WhatsApp number stays the same','Customers continue messaging the same contact','Business profile, display name, and verified status','Customer-side chat history on their devices'].map((t,i)=>(
+                <div key={i} style={{ display:'flex', gap:8, fontSize:12.5, color:'rgba(255,255,255,0.5)', marginBottom:8, lineHeight:1.5 }}><span style={{ color:C.g, flexShrink:0, fontWeight:800 }}>✓</span>{t}</div>
+              ))}
+            </div>
+            {/* What changes */}
+            <div style={{ background:'rgba(239,68,68,0.05)', border:'1px solid rgba(239,68,68,0.18)', borderRadius:14, padding:20 }}>
+              <div style={{ fontSize:11, fontWeight:800, color:C.red, textTransform:'uppercase', letterSpacing:.8, marginBottom:14, display:'flex', alignItems:'center', gap:6 }}><span>✕</span> What changes permanently</div>
+              {['WhatsApp Business App becomes non-functional for this number','All existing chats disappear from the phone app','Cannot send or receive messages via the mobile app','Reverting requires going through migration again'].map((t,i)=>(
+                <div key={i} style={{ display:'flex', gap:8, fontSize:12.5, color:'rgba(255,255,255,0.5)', marginBottom:8, lineHeight:1.5 }}><span style={{ color:C.red, flexShrink:0, fontWeight:800 }}>✕</span>{t}</div>
+              ))}
+            </div>
+          </div>
+
+          {/* Migration flow diagram */}
+          <div style={{ background:'rgba(255,255,255,0.025)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:16, padding:'24px 16px 20px', marginBottom:40 }}>
+            <div style={{ fontSize:10, fontWeight:800, color:'rgba(255,255,255,0.25)', textTransform:'uppercase', letterSpacing:2, marginBottom:20, textAlign:'center' }}>Migration Flow</div>
+            <ExistingNumberDiagram/>
+          </div>
+
+          {/* Step-by-step */}
+          <div style={{ marginBottom:36 }}>
+            {existingSteps.map((s, i) => (
+              <div key={i} style={{ display:'flex', gap:0, position:'relative' }}>
+                {i < existingSteps.length-1 && <div style={{ position:'absolute', left:23, top:52, bottom:-4, width:2, background:`linear-gradient(to bottom,${s.color}50,transparent)`, zIndex:0 }}/>}
+                <div style={{ flexShrink:0, width:48, paddingTop:4, zIndex:1, position:'relative' }}>
+                  <div style={{ width:46, height:46, borderRadius:'50%', background:`${s.color}14`, border:`2px solid ${s.warn ? C.red+'70' : s.color+'40'}`, display:'flex', alignItems:'center', justifyContent:'center', fontSize:20, boxShadow:`0 0 18px ${s.color}18` }}>
+                    {s.icon}
+                  </div>
+                  {s.warn && <div style={{ position:'absolute', top:-4, right:-2, width:16, height:16, background:C.red, borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:900, color:'white' }}>!</div>}
+                </div>
+                <div style={{ flex:1, marginLeft:14, marginBottom:i<existingSteps.length-1?28:0, background: s.warn ? 'rgba(239,68,68,0.05)' : 'rgba(255,255,255,0.03)', border:`1px solid ${s.warn ? 'rgba(239,68,68,0.2)' : 'rgba(255,255,255,0.07)'}`, borderRadius:14, padding:'16px 20px' }}>
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:8, flexWrap:'wrap' }}>
+                    <span style={{ fontSize:10, fontWeight:800, color:'rgba(255,255,255,0.25)', letterSpacing:.5 }}>0{i+1}</span>
+                    <span style={{ fontSize:14, fontWeight:800, color:'white' }}>{s.title}</span>
+                    <span style={{ fontSize:10, fontWeight:700, color:s.warn?C.red:s.color, background:`${s.warn?C.red:s.color}18`, padding:'2px 10px', borderRadius:20, letterSpacing:.3 }}>{s.tag}</span>
+                  </div>
+                  <p style={{ fontSize:13, color:'rgba(255,255,255,0.45)', lineHeight:1.7, margin:'0 0 12px' }}>{s.body}</p>
+                  <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                    {s.points.map((p,j) => (
+                      <div key={j} style={{ display:'flex', gap:9, fontSize:12.5, color:'rgba(255,255,255,0.3)', lineHeight:1.5 }}>
+                        <span style={{ color:s.warn && j===2 ? C.red : s.color, flexShrink:0, fontWeight:800, marginTop:1 }}>›</span>{p}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Recommendation nudge */}
+          <div style={{ background:'rgba(245,158,11,0.07)', border:'1px solid rgba(245,158,11,0.2)', borderRadius:14, padding:'18px 22px', display:'flex', gap:14, marginBottom:28 }}>
+            <span style={{ fontSize:22, flexShrink:0 }}>💡</span>
+            <div>
+              <div style={{ fontSize:13, fontWeight:800, color:C.amber, marginBottom:6 }}>Our recommendation before you decide</div>
+              <div style={{ fontSize:13, color:'rgba(255,255,255,0.45)', lineHeight:1.75 }}>
+                If your existing number is actively handling customer conversations, consider obtaining a <strong style={{ color:'white' }}>new dedicated SIM</strong> and migrating customers to it gradually. This eliminates migration risk entirely and gives you a clean, high-reputation number from day one. You can even run both numbers simultaneously during the transition period.
+              </div>
+              <button onClick={() => setTab('new')} style={{ marginTop:12, background:'transparent', border:`1px solid ${C.amber}40`, color:C.amber, fontFamily:ff, fontSize:12, fontWeight:700, cursor:'pointer', padding:'7px 16px', borderRadius:8 }}>
+                View the New Number Guide instead →
+              </button>
+            </div>
+          </div>
+
+          <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:14, padding:'20px 24px', textAlign:'center' }}>
+            <div style={{ fontSize:14, fontWeight:800, color:'white', marginBottom:6 }}>Ready to migrate your number?</div>
+            <div style={{ fontSize:13, color:'rgba(255,255,255,0.4)', marginBottom:20 }}>Create your account first, then contact our team to begin the migration process with full support.</div>
+            <div style={{ display:'flex', gap:10, justifyContent:'center', flexWrap:'wrap' }}>
+              <button onClick={onSignup} style={{ background:'linear-gradient(135deg,#0A6640,#10B981)', color:'white', border:'none', borderRadius:10, padding:'11px 24px', fontFamily:ff, fontSize:13, fontWeight:800, cursor:'pointer', boxShadow:'0 4px 20px rgba(10,102,64,0.35)' }}>Create Free Account →</button>
+              <a href="mailto:whatsorder.help@gmail.com?subject=Number Migration Request&body=Hi, I'd like to migrate my existing WhatsApp Business number to Whats-Order.%0A%0ANumber (with country code): %0ABusiness name: %0A2-Step Verification disabled: Yes / No" style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.7)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:10, padding:'11px 20px', fontFamily:ff, fontSize:13, fontWeight:600, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:6 }}>✉ Request Migration</a>
+            </div>
+          </div>
+        </>}
+
+        {/* ── FAQ ── */}
+        <div style={{ marginTop:64 }}>
+          <div style={{ textAlign:'center', marginBottom:36 }}>
+            <div style={{ fontSize:10, fontWeight:800, color:C.g, textTransform:'uppercase', letterSpacing:2, marginBottom:10 }}>FAQ</div>
+            <h2 style={{ fontSize:'clamp(22px,3.5vw,34px)', fontWeight:900, color:'white', margin:0, letterSpacing:-1 }}>Frequently asked questions</h2>
+          </div>
+          <div style={{ borderTop:'1px solid rgba(255,255,255,0.07)' }}>
+            {faqs.map((f, i) => (
+              <div key={i} style={{ borderBottom:'1px solid rgba(255,255,255,0.06)' }}>
+                <button onClick={() => setOpenFaq(openFaq===i ? null : i)} style={{ width:'100%', padding:'18px 0', background:'none', border:'none', cursor:'pointer', display:'flex', justifyContent:'space-between', alignItems:'center', gap:16, fontFamily:ff, textAlign:'left' }}>
+                  <span style={{ fontSize:14, fontWeight:700, color: openFaq===i ? C.g : 'rgba(255,255,255,0.75)', lineHeight:1.4, letterSpacing:-.2 }}>{f.q}</span>
+                  <div style={{ width:26, height:26, borderRadius:'50%', background: openFaq===i ? `${C.g}20` : 'rgba(255,255,255,0.05)', border:`1px solid ${openFaq===i ? C.g+'40' : 'rgba(255,255,255,0.08)'}`, display:'flex', alignItems:'center', justifyContent:'center', flexShrink:0, transition:'all .2s' }}>
+                    <span style={{ fontSize:14, color: openFaq===i ? C.g : 'rgba(255,255,255,0.3)', transform: openFaq===i ? 'rotate(45deg)' : 'none', display:'block', transition:'transform .2s', lineHeight:1 }}>+</span>
+                  </div>
+                </button>
+                {openFaq===i && (
+                  <div style={{ fontSize:13.5, color:'rgba(255,255,255,0.4)', lineHeight:1.8, paddingBottom:20, paddingRight:40 }}>{f.a}</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Final CTA ── */}
+        <div style={{ textAlign:'center', padding:'64px 0 40px', position:'relative' }}>
+          <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse at 50% 60%,rgba(10,102,64,0.14) 0%,transparent 65%)', pointerEvents:'none' }}/>
+          <div style={{ position:'relative', zIndex:1 }}>
+            <div style={{ fontSize:11, fontWeight:800, color:'rgba(255,255,255,0.25)', textTransform:'uppercase', letterSpacing:2, marginBottom:14 }}>Still have questions?</div>
+            <h2 style={{ fontSize:'clamp(22px,3.5vw,36px)', fontWeight:900, letterSpacing:-1.2, margin:'0 0 12px' }}>Our team is here to help.</h2>
+            <p style={{ fontSize:14, color:'rgba(255,255,255,0.35)', margin:'0 0 32px', lineHeight:1.7 }}>We support every customer through the WhatsApp setup process personally.<br/>No tickets, no bots — just email us.</p>
+            <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+              <button onClick={onSignup} style={{ background:'linear-gradient(135deg,#0A6640,#10B981)', color:'white', border:'none', borderRadius:12, padding:'14px 32px', fontFamily:ff, fontSize:15, fontWeight:800, cursor:'pointer', boxShadow:'0 8px 32px rgba(10,102,64,0.45)', letterSpacing:-.3 }}>Start Free — No Credit Card →</button>
+              <a href="mailto:whatsorder.help@gmail.com?subject=Setup Question" style={{ background:'rgba(255,255,255,0.05)', color:'rgba(255,255,255,0.65)', border:'1px solid rgba(255,255,255,0.1)', borderRadius:12, padding:'14px 26px', fontFamily:ff, fontSize:15, fontWeight:600, textDecoration:'none', display:'inline-flex', alignItems:'center', gap:8 }}>✉ whatsorder.help@gmail.com</a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
