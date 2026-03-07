@@ -409,3 +409,164 @@ func metaGet(url string) ([]byte, error) {
 	}
 	return body, nil
 }
+
+// ─── MEDIA ────────────────────────────────────────────────────────────────────
+
+// MediaURLResponse is returned by Meta's media info endpoint.
+type MediaURLResponse struct {
+	URL      string `json:"url"`       // Temporary download URL (expires ~5 min)
+	MimeType string `json:"mime_type"`
+	FileSize int    `json:"file_size"`
+	ID       string `json:"id"`
+}
+
+// GetMediaURL fetches the temporary download URL for a given Meta media ID.
+// The returned URL is only valid for ~5 minutes — proxy immediately; do not store.
+func GetMediaURL(mediaID, accessToken string) (*MediaURLResponse, error) {
+	body, err := metaGetWithAuth(
+		fmt.Sprintf("%s/%s", graphBase, mediaID),
+		accessToken,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("get media URL: %w", err)
+	}
+	var m MediaURLResponse
+	if err := json.Unmarshal(body, &m); err != nil {
+		return nil, fmt.Errorf("parse media URL: %w", err)
+	}
+	return &m, nil
+}
+
+// DownloadMedia downloads the actual media bytes from Meta's temporary URL.
+// Must be called with the access token in the Authorization header.
+func DownloadMedia(downloadURL, accessToken string) ([]byte, string, error) {
+	req, err := http.NewRequest(http.MethodGet, downloadURL, nil)
+	if err != nil {
+		return nil, "", fmt.Errorf("build download request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+
+	// Use longer timeout for media downloads
+	client := &http.Client{Timeout: 30 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, "", fmt.Errorf("download media: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		b, _ := io.ReadAll(resp.Body)
+		return nil, "", fmt.Errorf("download failed (%d): %s", resp.StatusCode, b)
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, "", fmt.Errorf("read media body: %w", err)
+	}
+	return data, resp.Header.Get("Content-Type"), nil
+}
+
+// UploadMedia uploads a media file to Meta's servers and returns the media ID.
+// This media ID can then be referenced in outbound image/audio/document messages.
+// mimeType examples: "image/jpeg", "image/png", "audio/ogg; codecs=opus", "application/pdf"
+func UploadMedia(phoneNumberID, accessToken, mimeType, filename string, data []byte) (string, error) {
+	body := &bytes.Buffer{}
+	// Meta requires multipart/form-data with fields: file + type + messaging_product
+	boundary := "----MetaBoundary"
+	body.WriteString("--" + boundary + "\r\n")
+	body.WriteString(fmt.Sprintf(`Content-Disposition: form-data; name="file"; filename="%s"`+"\r\n", filename))
+	body.WriteString("Content-Type: " + mimeType + "\r\n\r\n")
+	body.Write(data)
+	body.WriteString("\r\n--" + boundary + "\r\n")
+	body.WriteString(`Content-Disposition: form-data; name="type"` + "\r\n\r\n")
+	body.WriteString(mimeType)
+	body.WriteString("\r\n--" + boundary + "\r\n")
+	body.WriteString(`Content-Disposition: form-data; name="messaging_product"` + "\r\n\r\n")
+	body.WriteString("whatsapp")
+	body.WriteString("\r\n--" + boundary + "--\r\n")
+
+	req, err := http.NewRequest(http.MethodPost,
+		fmt.Sprintf("%s/%s/media", graphBase, phoneNumberID),
+		body,
+	)
+	if err != nil {
+		return "", fmt.Errorf("build upload request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	req.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
+
+	client := &http.Client{Timeout: 60 * time.Second}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("upload request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	respBody, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode >= 400 {
+		return "", fmt.Errorf("upload failed (%d): %s", resp.StatusCode, respBody)
+	}
+
+	var result struct {
+		ID string `json:"id"`
+	}
+	if err := json.Unmarshal(respBody, &result); err != nil || result.ID == "" {
+		return "", fmt.Errorf("parse upload response: %s", respBody)
+	}
+	return result.ID, nil
+}
+
+// SendImageMessage sends an image to a customer by Meta media ID.
+func SendImageMessage(phoneNumberID, accessToken, toNumber, mediaID, caption string) error {
+	payload := map[string]interface{}{
+		"messaging_product": "whatsapp",
+		"recipient_type":    "individual",
+		"to":                toNumber,
+		"type":              "image",
+		"image":             map[string]interface{}{"id": mediaID, "caption": caption},
+	}
+	return sendMessage(phoneNumberID, accessToken, payload)
+}
+
+// SendDocumentMessage sends a document to a customer by Meta media ID.
+func SendDocumentMessage(phoneNumberID, accessToken, toNumber, mediaID, filename, caption string) error {
+	payload := map[string]interface{}{
+		"messaging_product": "whatsapp",
+		"recipient_type":    "individual",
+		"to":                toNumber,
+		"type":              "document",
+		"document":          map[string]interface{}{"id": mediaID, "filename": filename, "caption": caption},
+	}
+	return sendMessage(phoneNumberID, accessToken, payload)
+}
+
+// SendAudioMessage sends an audio file to a customer by Meta media ID.
+func SendAudioMessage(phoneNumberID, accessToken, toNumber, mediaID string) error {
+	payload := map[string]interface{}{
+		"messaging_product": "whatsapp",
+		"recipient_type":    "individual",
+		"to":                toNumber,
+		"type":              "audio",
+		"audio":             map[string]interface{}{"id": mediaID},
+	}
+	return sendMessage(phoneNumberID, accessToken, payload)
+}
+
+// metaGetWithAuth is like metaGet but sends Authorization header (required for media).
+func metaGetWithAuth(url, accessToken string) ([]byte, error) {
+	req, err := http.NewRequest(http.MethodGet, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("build request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+accessToken)
+	resp, err := metaHTTP.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("GET %s: %w", url, err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("GET %s failed (%d): %s", url, resp.StatusCode, body)
+	}
+	return body, nil
+}
