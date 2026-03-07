@@ -1786,7 +1786,7 @@ function OrdersView({ addToast }) {
 
 
 // ─── CHANGE PASSWORD FORM ─────────────────────────────────────────────────────
-function ChangePasswordForm() {
+function ChangePasswordForm({ onDone }) {
   const [cur, setCur] = useState('')
   const [nw, setNw] = useState('')
   const [conf, setConf] = useState('')
@@ -1801,6 +1801,7 @@ function ChangePasswordForm() {
       await api.changePassword(cur, nw)
       setMsg({ type:'ok', text:'Password changed successfully!' })
       setCur(''); setNw(''); setConf('')
+      setTimeout(() => onDone?.(), 1200)
     } catch(e) {
       setMsg({ type:'err', text: e.error || 'Failed to change password' })
     } finally { setLoading(false) }
@@ -1827,6 +1828,36 @@ function ChangePasswordForm() {
           {loading ? 'Changing...' : 'Change Password'}
         </button>
       </div>
+    </div>
+  )
+}
+
+// ─── SECURITY SECTION ────────────────────────────────────────────────────────
+function SecuritySection() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <div style={{ background:'white', borderRadius:16, marginBottom:16, border:'1px solid #E4EDE6', overflow:'hidden' }}>
+      {/* Header row — always visible */}
+      <div style={{ padding:'16px 20px', display:'flex', alignItems:'center', justifyContent:'space-between', cursor:'pointer' }} onClick={() => setOpen(o => !o)}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <span style={{ fontSize:15 }}>🔒</span>
+          <div>
+            <div style={{ fontSize:13, fontWeight:700, color:'#0F1A14' }}>Password</div>
+            <div style={{ fontSize:12, color:'#9CA3AF', marginTop:1 }}>Last changed: unknown</div>
+          </div>
+        </div>
+        <button style={{ background: open ? '#F0F4F1' : '#F7F8F6', border:'1px solid #E4EDE6', borderRadius:8, padding:'6px 14px', fontFamily:'var(--f)', fontSize:12, fontWeight:700, color:'#374151', cursor:'pointer', transition:'all .15s', whiteSpace:'nowrap' }}>
+          {open ? 'Cancel' : 'Change Password'}
+        </button>
+      </div>
+
+      {/* Collapsible form */}
+      {open && (
+        <div style={{ borderTop:'1px solid #F0F4F1', padding:'4px 20px 16px' }}>
+          <ChangePasswordForm onDone={() => setOpen(false)} />
+        </div>
+      )}
     </div>
   )
 }
@@ -2004,11 +2035,7 @@ function ProfileView({ user, onLogout }) {
             </div>
 
             {/* Security */}
-            <Section title="Security" icon="🔒">
-              <div style={{ padding:'4px 20px 16px' }}>
-                <ChangePasswordForm />
-              </div>
-            </Section>
+            <SecuritySection />
 
             {/* Sign out */}
             <button onClick={onLogout}
