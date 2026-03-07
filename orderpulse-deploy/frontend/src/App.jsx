@@ -959,7 +959,10 @@ function InboxView({ addToast, onNavOrders, onThreadsChange }) {
       )
       setThreads(normalized)
       onThreadsChange?.(normalized)
-      if (!activeRef.current && data.length) setActiveWithRef(data[0])
+      if (!activeRef.current && data.length) {
+        setActiveWithRef(data[0])
+        api.markRead(data[0].contact?.id).catch(() => {})
+      }
       const totalUnread = normalized.reduce((s, t) => s + (t.unread_count || 0), 0)
       if (totalUnread > prevUnreadRef.current && prevUnreadRef.current >= 0 && document.hidden) {
         playNotifSound()
@@ -1063,6 +1066,8 @@ function InboxView({ addToast, onNavOrders, onThreadsChange }) {
                   onThreadsChange?.(updated)
                   return updated
                 })
+                // Mark as read in DB so count stays 0 after refresh
+                api.markRead(t.contact?.id).catch(() => {})
               }}>
                 <div className="av" style={{ width:42, height:42, background:a.bg }}>{a.initials}</div>
                 <div className="ti">
