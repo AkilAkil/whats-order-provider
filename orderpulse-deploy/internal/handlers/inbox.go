@@ -35,8 +35,7 @@ func (h *InboxHandler) ListThreads(w http.ResponseWriter, r *http.Request) {
 				WHERE m2.contact_id = c.id
 				  AND m2.direction  = 'inbound'
 				  AND m2.created_at > COALESCE(
-					(SELECT MAX(m3.created_at) FROM messages m3
-					 WHERE m3.contact_id = c.id AND m3.direction = 'outbound'),
+					c.last_read_at,
 					'1970-01-01'::timestamptz)
 			) AS unread_count
 		FROM contacts c
@@ -142,6 +141,20 @@ func (h *InboxHandler) Reply(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"status": "sent"})
 }
 
+
+// ─── POST /api/inbox/{contactId}/read ────────────────────────────────────────
+// Marks all messages in a thread as read by updating last_read_at on the contact.
+func (h *InboxHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
+	tenantID := middleware.TenantIDFromCtx(r.Context())
+	contactID := chi.URLParam(r, "contactId")
+
+	h.db.Exec(r.Context(), `
+		UPDATE contacts SET last_read_at = NOW()
+		WHERE id = $1::uuid AND tenant_id = $2
+	`, contactID, tenantID)
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
 // ─── PATCH /api/inbox/{contactId}/tag ────────────────────────────────────────
 // Tags all recent inbound messages from a contact as order-related.
 // Used when the business owner marks a conversation as an order conversation.
