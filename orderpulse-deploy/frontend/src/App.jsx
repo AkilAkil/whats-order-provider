@@ -463,17 +463,17 @@ function CreateOrderModal({ contact, msgs, onClose, onCreated }) {
     }
 
     // Fallback: parse the last inbound message body directly in the browser
-    // Handles common formats: "2 butter chicken", "1kg rice", "3 naan, 2 lassi"
+    // Handles common formats: "2 brownies", "1 red velvet cake", "3 cupcakes, 2 cookie boxes"
     const parseBody = (body) => {
       if (!body) return []
       const items = []
       const lines = body.split(/[,\n+&]/).map(s => s.trim()).filter(Boolean)
       for (const line of lines) {
-        // "2 butter chicken" or "2kg rice" or "rice 2"
+        // "2 brownies" or "2 red velvet cake" or "brownie 2"
         const unitRe = /kg|kgs|kilo|gms?|grams?|ml|ltr|litres?|pcs?|pieces?|packets?|pack|nos?|dozen/i
         const m1 = line.match(/^(\d+(?:\.\d+)?)\s*(kg|kgs?|kilo|gms?|grams?|ml|ltr|litres?|pcs?|pieces?|packets?|pack|nos?|dozen)?\s+(?:of\s+)?([a-zA-Z].{1,40})$/i)
         if (m1) { items.push({ name: m1[3].trim(), qty: parseFloat(m1[1]) || 1, unit: m1[2] || '', price: 0 }); continue }
-        // "butter chicken 2" or "rice 1kg"
+        // "chocolate brownie 2" or "cupcake 1box"
         const m2 = line.match(/^([a-zA-Z][^0-9]{1,40}?)\s+(\d+(?:\.\d+)?)\s*(kg|kgs?|gms?|grams?|ml|ltr|pcs?|pieces?|packets?)?$/i)
         if (m2) { items.push({ name: m2[1].trim(), qty: parseFloat(m2[2]) || 1, unit: m2[3] || '', price: 0 }); continue }
         // Single word/phrase with no qty — treat as qty 1
@@ -2349,9 +2349,9 @@ function LandingPage({ onLogin, onSignup, onBack, onSetupGuide }) {
               {/* Mock order rows */}
               <div style={{ padding:16, display:'flex', flexDirection:'column', gap:10 }}>
                 {[
-                  { name:'Priya S.', item:'Idli × 10, Sambar × 2', status:'Confirmed', color:'#10B981', amt:'₹180' },
-                  { name:'Ravi K.', item:'Chicken Biryani × 3', status:'Packed', color:'#F59E0B', amt:'₹450' },
-                  { name:'Meena T.', item:'Veg Meals × 5', status:'Delivered', color:'#6366F1', amt:'₹375' },
+                  { name:'Priya S.', item:'Red Velvet Cake × 1, Brownie × 4', status:'Confirmed', color:'#10B981', amt:'₹780' },
+                  { name:'Ravi K.', item:'Cupcake × 6, Cookie Box × 2', status:'Packed', color:'#F59E0B', amt:'₹540' },
+                  { name:'Meena T.', item:'Chocolate Brownie × 8', status:'Delivered', color:'#6366F1', amt:'₹480' },
                 ].map((o,i)=>(
                   <div key={i} style={{ background:'rgba(255,255,255,0.04)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:12, padding:'12px 14px', display:'flex', alignItems:'center', gap:12 }}>
                     <div style={{ width:34,height:34,borderRadius:'50%',background:`hsl(${i*80+120},50%,25%)`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:12,fontWeight:800,color:'white',flexShrink:0 }}>{o.name[0]}</div>
