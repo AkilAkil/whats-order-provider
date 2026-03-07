@@ -1154,6 +1154,7 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
   const isMobile = () => window.innerWidth < 768
 
   return (
+    <>
     <div className="inbox-wrap">
       <div className={`inbox-p${active && isMobile() ? ' chat-open' : ''}`}>
         <div className="ph">
@@ -1302,8 +1303,8 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
 
     </div>
 
-      {createModal && <CreateOrderModal contact={createModal.contact} msgs={createModal.msgs} onClose={() => setCreateModal(null)} onCreated={handleCreateOrder} />}
-    </>
+    {createModal && <CreateOrderModal contact={createModal.contact} msgs={createModal.msgs} onClose={() => setCreateModal(null)} onCreated={handleCreateOrder} />}
+  </>
   )
 }
 
