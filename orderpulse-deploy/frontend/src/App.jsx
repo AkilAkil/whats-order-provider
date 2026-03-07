@@ -1145,7 +1145,7 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
       addToast(`Order ${result.order_number} created! Customer notified.`, 'success', onNavOrders)
     } catch (e) {
       if (e.code === 'plan_limit_exceeded') {
-        addToast('Free plan limit reached (50 orders/month). Upgrade to Pro for unlimited orders.', 'error')
+        addToast('You\'ve reached 50 orders this month. Upgrade to Pro (₹299 / 3 months) for unlimited orders.', 'error', () => window.open('mailto:whatsorder.help@gmail.com?subject=Upgrade to Pro&body=I want to upgrade to Pro plan (₹299 for 3 months).', '_blank'))
       } else {
         addToast(e.error || 'Failed to create order', 'error')
       }
