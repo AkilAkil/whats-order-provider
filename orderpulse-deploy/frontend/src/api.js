@@ -159,3 +159,7 @@ export async function changePassword(currentPassword, newPassword) {
 export async function updateOrderItems(id, items, notes) {
   return request('PATCH', `/api/orders/${id}/items`, { items, notes })
 }
+
+export async function markRead(contactId) {
+  return request('POST', `/api/inbox/${contactId}/read`, {})
+}
