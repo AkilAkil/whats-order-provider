@@ -185,3 +185,6 @@ DO $$ BEGIN
             FOR EACH ROW EXECUTE FUNCTION set_updated_at();
     END IF;
 END; $$;
+
+-- Add last_read_at to contacts so we can track when the user last read each thread
+ALTER TABLE contacts ADD COLUMN IF NOT EXISTS last_read_at TIMESTAMPTZ;
