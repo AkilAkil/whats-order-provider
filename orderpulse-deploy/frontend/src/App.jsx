@@ -921,7 +921,7 @@ function flashTab(msg) {
 }
 
 // ─── INBOX ────────────────────────────────────────────────────────────────────
-function InboxView({ addToast, onNavOrders }) {
+function InboxView({ addToast, onNavOrders, onThreadsChange }) {
   const [threads, setThreads] = useState([])
   const [active, setActive] = useState(null)
   const activeRef = useRef(null)
@@ -950,9 +950,17 @@ function InboxView({ addToast, onNavOrders }) {
   const loadInbox = useCallback(async () => {
     try {
       const data = await api.getInbox()
-      setThreads(data)
+      // Zero out unread for the currently active thread (already read)
+      const active = activeRef.current
+      const normalized = data.map(t =>
+        active && t.contact?.id === active.contact?.id
+          ? { ...t, unread_count: 0 }
+          : t
+      )
+      setThreads(normalized)
+      onThreadsChange?.(normalized)
       if (!activeRef.current && data.length) setActiveWithRef(data[0])
-      const totalUnread = data.reduce((s, t) => s + (t.unread_count || 0), 0)
+      const totalUnread = normalized.reduce((s, t) => s + (t.unread_count || 0), 0)
       if (totalUnread > prevUnreadRef.current && prevUnreadRef.current >= 0 && document.hidden) {
         playNotifSound()
         flashTab('New WhatsApp message!')
@@ -1047,7 +1055,15 @@ function InboxView({ addToast, onNavOrders }) {
             const a = avatarFor(t.contact?.name || t.contact?.wa_number)
             const intent = intentOf(t.last_message?.body)
             return (
-              <div key={t.contact?.id} className={`thread ${active?.contact?.id===t.contact?.id?'on':''}`} onClick={() => setActiveWithRef(t)}>
+              <div key={t.contact?.id} className={`thread ${active?.contact?.id===t.contact?.id?'on':''}`} onClick={() => {
+                const cleared = { ...t, unread_count: 0 }
+                setActiveWithRef(cleared)
+                setThreads(prev => {
+                  const updated = prev.map(x => x.contact?.id === t.contact?.id ? cleared : x)
+                  onThreadsChange?.(updated)
+                  return updated
+                })
+              }}>
                 <div className="av" style={{ width:42, height:42, background:a.bg }}>{a.initials}</div>
                 <div className="ti">
                   <div style={{ display:'flex', justifyContent:'space-between' }}>
@@ -1948,22 +1964,24 @@ function Dashboard({ user, onLogout }) {
   const [unreadCount, setUnreadCount] = useState(0)
   const [pendingOrders, setPendingOrders] = useState(0)
 
+  // Orders badge: poll stats independently (lightweight)
   useEffect(() => {
     const refresh = async () => {
-      try {
-        const [inbox, stats] = await Promise.all([api.getInbox(), api.getStats()])
-        setUnreadCount(inbox.reduce((s, t) => s + (t.unread_count || 0), 0))
-        setPendingOrders(stats.new_orders || 0)
-      } catch {}
+      try { const s = await api.getStats(); setPendingOrders(s.new_orders || 0) } catch {}
     }
     refresh()
-    const t = setInterval(refresh, 8000)
+    const t = setInterval(refresh, 10000)
     return () => clearInterval(t)
   }, [])
 
+  // Inbox badge: driven by InboxView thread state (so opening a thread clears it instantly)
+  const handleThreadsChange = (threads) => {
+    setUnreadCount(threads.reduce((s, t) => s + (t.unread_count || 0), 0))
+  }
+
   const NAV = [
     { id:'inbox', icon:'💬', label:'Inbox', badge: unreadCount },
-    { id:'orders', icon:'📋', label:'Orders', badge: pendingOrders },
+    { id:'orders', icon:'📋', label:'Orders', badge: view === 'orders' ? 0 : pendingOrders },
   ]
 
   return (
@@ -2007,7 +2025,7 @@ function Dashboard({ user, onLogout }) {
       </div>
 
       {view==='home'    && <HomeView user={user} onNav={setView} />}
-      {view==='inbox'   && <InboxView addToast={addToast} onNavOrders={() => setView('orders')} />}
+      {view==='inbox'   && <InboxView addToast={addToast} onNavOrders={() => setView('orders')} onThreadsChange={handleThreadsChange} />}
       {view==='orders'  && <OrdersView addToast={addToast} />}
       {view==='profile' && <ProfileView user={user} onLogout={onLogout} />}
       {toasts.map(t => <Toast key={t.id} msg={t.msg} type={t.type} action={t.action} onDone={() => removeToast(t.id)} />)}
