@@ -1229,6 +1229,39 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
     finally { setSending(false) }
   }
 
+  const fileInputRef = useRef()
+  const [mediaPreview, setMediaPreview] = useState(null) // {file, url, type}
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    const url = URL.createObjectURL(file)
+    const type = file.type.startsWith('image/') ? 'image' : file.type.startsWith('audio/') ? 'audio' : 'document'
+    setMediaPreview({ file, url, type, name: file.name })
+    e.target.value = ''
+  }
+
+  const sendMedia = async () => {
+    if (!mediaPreview || !active?.contact) return
+    setSending(true)
+    try {
+      const form = new FormData()
+      form.append('file', mediaPreview.file)
+      form.append('type', mediaPreview.type)
+      if (reply.trim()) form.append('caption', reply.trim())
+      const res = await fetch(`/api/inbox/${active.contact.id}/send-media`, {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + localStorage.getItem('op_token') },
+        body: form,
+      })
+      if (!res.ok) { const e = await res.json(); throw e }
+      setMediaPreview(null)
+      setReply('')
+      await loadMsgs(active.contact)
+    } catch (e) { addToast(e.error || 'Failed to send media', 'error') }
+    finally { setSending(false) }
+  }
+
   const handleCreateOrder = async (items, total, notes) => {
     try {
       const result = await api.createOrder(active.contact.id, items, notes)
@@ -1340,11 +1373,52 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
                 <div key={i}
                   className={`msg ${m.direction==='inbound'?'in':'out'}`}
                   style={{ position:'relative' }}
-                  onMouseEnter={() => m.direction==='inbound' && m.body && setHoveredMsg(i)}
+                  onMouseEnter={() => m.direction==='inbound' && (m.body||m.media_url) && setHoveredMsg(i)}
                   onMouseLeave={() => setHoveredMsg(null)}
                 >
                   {m.direction==='inbound' && <div className="ms">{contact?.name || contact?.wa_number}</div>}
-                  <div className="mb">{m.body || '[media message]'}</div>
+
+                  {/* ── Media bubble renderer ── */}
+                  {m.type === 'image' && m.media_url ? (
+                    <div style={{ marginBottom: m.body ? 6 : 0 }}>
+                      <img
+                        src={`/api/media/${m.media_url}`}
+                        alt="photo"
+                        style={{ maxWidth:240, maxHeight:240, borderRadius:10, display:'block', cursor:'pointer', objectFit:'cover' }}
+                        onClick={() => window.open(`/api/media/${m.media_url}`, '_blank')}
+                        onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }}
+                      />
+                      <div style={{ display:'none', alignItems:'center', gap:6, padding:'8px 10px', background:'rgba(0,0,0,0.06)', borderRadius:8, fontSize:12, color:'#6B7F72' }}>
+                        🖼 Photo — <a href={`/api/media/${m.media_url}`} target="_blank" style={{ color:'#0A6640', fontWeight:600 }}>Open</a>
+                      </div>
+                      {m.body ? <div className="mb" style={{ marginTop:4 }}>{m.body}</div> : null}
+                    </div>
+                  ) : m.type === 'audio' || m.type === 'voice' ? (
+                    <div style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 4px' }}>
+                      <span style={{ fontSize:18 }}>🎤</span>
+                      <audio controls src={`/api/media/${m.media_url}`} style={{ height:32, maxWidth:200 }} />
+                    </div>
+                  ) : m.type === 'document' && m.media_url ? (
+                    <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 10px', background:'rgba(0,0,0,0.04)', borderRadius:10, border:'1px solid rgba(0,0,0,0.08)' }}>
+                      <span style={{ fontSize:22, flexShrink:0 }}>📄</span>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:12.5, fontWeight:600, color:'#1A2E22', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
+                          {m.media_url.includes('|') ? m.media_url.split('|')[1] : 'Document'}
+                        </div>
+                        {m.body && <div style={{ fontSize:11, color:'#6B7F72', marginTop:1 }}>{m.body}</div>}
+                      </div>
+                      <a href={`/api/media/${m.media_url.split('|')[0]}`} target="_blank" download
+                        style={{ fontSize:11, fontWeight:700, color:'#0A6640', textDecoration:'none', background:'#E8F5E9', padding:'3px 8px', borderRadius:6, flexShrink:0 }}>
+                        ↓ Save
+                      </a>
+                    </div>
+                  ) : m.type === 'sticker' && m.media_url ? (
+                    <img src={`/api/media/${m.media_url}`} alt="sticker" style={{ width:80, height:80, objectFit:'contain' }}
+                      onError={e => { e.target.outerHTML = '<span style="font-size:24px">🩹</span>' }} />
+                  ) : (
+                    <div className="mb">{m.body || <span style={{ opacity:.5, fontStyle:'italic' }}>[{m.type || 'message'}]</span>}</div>
+                  )}
+
                   <div className="mt2">{fmtTime(m.created_at)}{m.direction==='outbound'&&' ✓✓'}</div>
                   {hoveredMsg === i && m.direction === 'inbound' && m.body && (
                     <button
@@ -1386,14 +1460,50 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
                 </div>
               </div>
             )}
+            {/* Media preview strip */}
+            {mediaPreview && (
+              <div style={{ padding:'10px 14px 0', background:'white', borderTop:'1px solid #E4EDE6' }}>
+                <div style={{ display:'flex', alignItems:'center', gap:10, padding:'10px 12px', background:'#F0FAF5', borderRadius:10, border:'1.5px solid #BBE0CC', position:'relative' }}>
+                  {mediaPreview.type === 'image' ? (
+                    <img src={mediaPreview.url} alt="preview" style={{ width:56, height:56, objectFit:'cover', borderRadius:8, flexShrink:0 }} />
+                  ) : mediaPreview.type === 'audio' ? (
+                    <div style={{ fontSize:28, flexShrink:0 }}>🎵</div>
+                  ) : (
+                    <div style={{ fontSize:28, flexShrink:0 }}>📄</div>
+                  )}
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ fontSize:12.5, fontWeight:700, color:'#0F1A14', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{mediaPreview.name}</div>
+                    <div style={{ fontSize:11, color:'#6B7F72', marginTop:2, textTransform:'capitalize' }}>{mediaPreview.type} · ready to send</div>
+                  </div>
+                  <button onClick={() => { setMediaPreview(null); URL.revokeObjectURL(mediaPreview.url) }}
+                    style={{ background:'none', border:'none', cursor:'pointer', color:'#9CA3AF', fontSize:18, padding:'2px 4px', flexShrink:0, lineHeight:1 }}>×</button>
+                </div>
+              </div>
+            )}
             <div className="cinput-bar" style={{ alignItems:'flex-end' }}>
+              {/* Hidden file input */}
+              <input ref={fileInputRef} type="file" accept="image/*,audio/*,.pdf,.doc,.docx,.xlsx,.csv" style={{ display:'none' }} onChange={handleFileSelect} />
+              {/* Attach button */}
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                title="Attach photo or file"
+                style={{ background:'none', border:'none', cursor:'pointer', padding:'8px 6px', color: mediaPreview ? '#0A6640' : '#9CA3AF', fontSize:18, flexShrink:0 }}
+              >📎</button>
               <button
                 onClick={() => setShowTemplates(v => !v)}
                 title="Quick replies"
                 style={{ background:'none', border:'none', cursor:'pointer', padding:'8px 6px', color: showTemplates ? '#0A6640' : '#9CA3AF', fontSize:18, flexShrink:0 }}
               >⚡</button>
-              <textarea className="cinput" rows={1} placeholder={`Reply to ${contact?.name || contact?.wa_number}...`} value={reply} onChange={e => setReply(e.target.value)} onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); send() } }} />
-              <button className="sbtn" onClick={send} disabled={sending}>{sending ? <Spinner /> : '▶'}</button>
+              <textarea className="cinput"
+                rows={1}
+                placeholder={mediaPreview ? `Add a caption (optional)…` : `Reply to ${contact?.name || contact?.wa_number}...`}
+                value={reply}
+                onChange={e => setReply(e.target.value)}
+                onKeyDown={e => { if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); mediaPreview ? sendMedia() : send() } }}
+              />
+              <button className="sbtn" onClick={mediaPreview ? sendMedia : send} disabled={sending || (!reply.trim() && !mediaPreview)}>
+                {sending ? <Spinner /> : '▶'}
+              </button>
             </div>
           </>
         )}
