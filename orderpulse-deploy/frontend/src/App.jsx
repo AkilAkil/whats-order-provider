@@ -921,7 +921,7 @@ function flashTab(msg) {
 }
 
 // ─── INBOX ────────────────────────────────────────────────────────────────────
-function InboxView({ addToast, onNavOrders, onThreadsChange, onMarkRead }) {
+function InboxView({ addToast, onNavOrders, onThreadsChange, onMarkRead, onMarkAllRead }) {
   const [threads, setThreads] = useState([])
   const [active, setActive] = useState(null)
   const activeRef = useRef(null)
@@ -959,6 +959,7 @@ function InboxView({ addToast, onNavOrders, onThreadsChange, onMarkRead }) {
       )
       setThreads(normalized)
       onThreadsChange?.(normalized)
+      onMarkAllRead?.(normalized)   // mark all as read in localStorage on every load
       if (!activeRef.current && data.length) {
         setActiveWithRef(data[0])
         onMarkRead?.(data[0].contact?.id)
@@ -1995,17 +1996,30 @@ function Dashboard({ user, onLogout }) {
     return () => clearInterval(t)
   }, [])
 
-  // Track contacts opened this session — always show 0 for them regardless of server count
-  const readContacts = useRef(new Set())
-
+  // localStorage-based read tracking — persists across page refreshes
+  const getReadTimes = () => {
+    try { return JSON.parse(localStorage.getItem('wo_read_times') || '{}') } catch { return {} }
+  }
   const markContactRead = (contactId) => {
     if (!contactId) return
-    readContacts.current.add(contactId)
+    const times = getReadTimes()
+    times[contactId] = Date.now()
+    localStorage.setItem('wo_read_times', JSON.stringify(times))
+  }
+  const markAllRead = (threads) => {
+    if (!threads?.length) return
+    const times = getReadTimes()
+    threads.forEach(t => { if (t.contact?.id) times[t.contact.id] = Date.now() })
+    localStorage.setItem('wo_read_times', JSON.stringify(times))
   }
 
   const handleThreadsChange = (threads) => {
+    const readTimes = getReadTimes()
     const total = threads.reduce((s, t) => {
-      if (readContacts.current.has(t.contact?.id)) return s
+      const lastRead = readTimes[t.contact?.id] || 0
+      const lastMsgTime = t.last_message?.created_at
+        ? new Date(t.last_message.created_at).getTime() : 0
+      if (lastMsgTime <= lastRead) return s   // already read
       return s + (t.unread_count || 0)
     }, 0)
     setUnreadCount(total)
@@ -2057,7 +2071,7 @@ function Dashboard({ user, onLogout }) {
       </div>
 
       {view==='home'    && <HomeView user={user} onNav={setView} />}
-      {view==='inbox'   && <InboxView addToast={addToast} onNavOrders={() => setView('orders')} onThreadsChange={handleThreadsChange} onMarkRead={markContactRead} />}
+      {view==='inbox'   && <InboxView addToast={addToast} onNavOrders={() => setView('orders')} onThreadsChange={handleThreadsChange} onMarkRead={markContactRead} onMarkAllRead={markAllRead} />}
       {view==='orders'  && <OrdersView addToast={addToast} />}
       {view==='profile' && <ProfileView user={user} onLogout={onLogout} />}
       {toasts.map(t => <Toast key={t.id} msg={t.msg} type={t.type} action={t.action} onDone={() => removeToast(t.id)} />)}
