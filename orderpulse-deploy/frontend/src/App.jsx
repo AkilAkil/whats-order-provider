@@ -57,7 +57,7 @@ body.dark .loading{color:#6B8070;}
 /* ── AUTH ── */
 .auth-screen{flex:1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#0A6640 0%,#051409 100%);position:relative;overflow:hidden;}
 .auth-bg{position:absolute;inset:0;opacity:.04;background-image:radial-gradient(circle at 2px 2px,white 1px,transparent 0);background-size:28px 28px;}
-.auth-card{background:white;border-radius:20px;padding:44px 40px;width:420px;position:relative;z-index:1;box-shadow:0 40px 100px rgba(0,0,0,0.4);animation:slideUp .4s ease;}
+.auth-card{background:white;border-radius:20px;padding:44px 40px;width:min(420px,calc(100vw - 32px));position:relative;z-index:1;box-shadow:0 40px 100px rgba(0,0,0,0.4);animation:slideUp .4s ease;}
 .logo{display:flex;align-items:center;gap:10px;margin-bottom:32px;}
 .logo-icon{width:38px;height:38px;background:var(--g);border-radius:9px;display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:18px;}
 .logo-text{font-size:19px;font-weight:900;color:var(--g);letter-spacing:-0.5px;}
@@ -209,49 +209,139 @@ body.dark .loading{color:#6B8070;}
 .pop-in{animation:popIn .3s ease;}
 /* ── MOBILE ── */
 @media (max-width: 768px) {
-  :root{ --sb-w:100%; }
-  .layout{ flex-direction:column; }
-  .sidebar{ width:100%; flex-direction:row; padding:0; height:56px; flex-shrink:0; border-right:none; border-bottom:1px solid rgba(255,255,255,.08); overflow:hidden; }
-  .sb-header{ padding:0 12px; border-bottom:none; margin-bottom:0; flex:1; min-width:0; }
-  .sb-brand{ display:none; }
-  .sb-nav{ flex-direction:row; padding:0 4px; gap:0; flex:none; align-items:stretch; }
-  .sb-item{ flex-direction:column; gap:2px; padding:6px 14px; border-radius:0; height:56px; justify-content:center; align-items:center; }
-  .sb-label{ font-size:10px; }
-  .sb-icon{ font-size:18px; width:auto; }
-  .sb-badge{ position:absolute; top:8px; right:8px; }
-  .sb-item{ position:relative; }
-  .sb-footer{ padding:0 6px; display:flex; align-items:center; border-top:none; border-left:1px solid rgba(255,255,255,.08); }
-  .sb-user{ padding:6px 10px; gap:8px; }
-  .sb-uname,.sb-uemail{ display:none; }
-  .sb-dark-label{ display:none; }
-  
-  /* Inbox mobile: stack panels */
-  .inbox-p{ width:100%; border-right:none; border-bottom:1px solid var(--bd); max-height:40vh; }
-  .chat-p{ min-height:0; flex:1; }
-  .inbox-p.chat-open{ display:none; }
-  .chat-p.no-chat{ display:none; }
-  
-  /* Orders mobile */
-  .ord-hdr{ flex-wrap:wrap; gap:10px; padding:14px 16px; }
-  .stats-row{ grid-template-columns:1fr 1fr; padding:12px 16px; gap:10px; }
-  .ords{ padding:0 12px 20px; }
-  .ocard .ocin{ flex-wrap:wrap; gap:10px; }
-  .oacts{ flex-wrap:wrap; gap:6px; }
-  
-  /* Profile mobile */
-  .profile-wrap{ padding:16px !important; }
+  /* ── Bottom nav bar ── */
+  .mob-nav{ display:flex; }
+  .sidebar{ display:none; }
 
-  /* Modals */
-  .modal{ width:calc(100vw - 32px) !important; margin:16px; }
-  .toast{ width:calc(100vw - 32px); right:16px; bottom:16px; }
+  /* Full viewport layout */
+  :root{ --mob-nav:60px; }
+  .layout{ flex-direction:column; padding-bottom:var(--mob-nav); }
+  .app{ padding-bottom:0; }
+
+  /* Each view fills screen */
+  .ord-view, .inbox-wrap{ height:calc(100vh - var(--mob-nav)); overflow:hidden; }
+
+  /* ── Inbox mobile ── */
+  .inbox-wrap{ display:flex; flex-direction:column; }
+  .inbox-p{ width:100%; border-right:none; flex:1; overflow:hidden; display:flex; flex-direction:column; }
+  .inbox-p.chat-open{ display:none; }
+  .chat-p{ flex:1; display:flex; flex-direction:column; height:100%; }
+  .chat-p.no-chat{ display:none; }
+  .ph{ padding:14px 16px 10px; display:flex; align-items:center; gap:10px; }
+  .ph-t{ font-size:17px; font-weight:800; }
+  .thread{ padding:14px 16px; gap:12px; }
+  .thread.on{ border-left-width:3px; }
+
+  /* Chat header on mobile */
+  .chat-h{ padding:10px 14px; gap:10px; min-height:56px; }
+  .mob-back{ display:flex !important; align-items:center; justify-content:center; width:36px; height:36px; background:none; border:none; cursor:pointer; color:var(--g); font-size:22px; padding:0; flex-shrink:0; border-radius:50%; transition:background .15s; }
+  .mob-back:active{ background:rgba(10,102,64,.1); }
+  .msgs{ padding:14px 14px 8px; gap:8px; }
+  .cinput-bar{ padding:10px 12px; padding-bottom:calc(10px + env(safe-area-inset-bottom,0px)); }
+  .cinput{ font-size:15px; }
+  .msg{ max-width:82%; }
+
+  /* ── Orders mobile ── */
+  .ord-hdr{ padding:14px 16px; flex-wrap:nowrap; }
+  .ord-title{ font-size:17px; }
+  .stats-row{ grid-template-columns:1fr 1fr; padding:12px 14px; gap:10px; }
+  .sv{ font-size:22px; }
+  .sl{ font-size:10px; }
+  .ords{ padding:0 12px 20px; }
+  .ocard .ocin{ flex-wrap:wrap; gap:8px; padding:12px 14px; }
+  .oi{ width:100%; flex:none; }
+  .oacts{ width:100%; justify-content:flex-start; flex-wrap:wrap; gap:6px; padding:0 14px 12px; border-top:1px solid var(--bd); }
+  .abtn{ padding:7px 12px; font-size:12px; }
+
+  /* Filters */
+  .ord-filters{ padding:0 14px 8px !important; gap:6px !important; flex-wrap:nowrap !important; overflow-x:auto !important; -webkit-overflow-scrolling:touch; }
+  .ord-filters::-webkit-scrollbar{ display:none; }
+
+  /* Profile mobile */
+  .profile-wrap{ padding:14px !important; }
+  .profile-wrap > div[style]{ padding:20px 18px !important; }
+
+  /* Modals — bottom sheet on mobile */
+  .ov{ align-items:flex-end !important; }
+  .modal{ width:100% !important; margin:0 !important; border-bottom-left-radius:0 !important; border-bottom-right-radius:0 !important; border-radius:20px 20px 0 0 !important; padding-bottom:calc(26px + env(safe-area-inset-bottom,0px)) !important; max-height:90vh !important; }
+
+  .toast{ width:calc(100vw - 32px); right:16px; bottom:calc(var(--mob-nav) + 10px); }
 }
 
+/* ── BOTTOM NAV BAR (mobile only) ── */
+.mob-nav{
+  display:none;
+  position:fixed;
+  bottom:0; left:0; right:0;
+  height:var(--mob-nav,60px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  background:var(--sb-bg);
+  border-top:1px solid rgba(255,255,255,.07);
+  z-index:100;
+  align-items:stretch;
+  box-shadow:0 -8px 30px rgba(0,0,0,.25);
+}
+.mob-nav-item{
+  flex:1;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:3px;
+  background:none;
+  border:none;
+  cursor:pointer;
+  color:rgba(255,255,255,.38);
+  font-family:var(--f);
+  font-size:10px;
+  font-weight:600;
+  position:relative;
+  transition:color .15s;
+  padding:0;
+  -webkit-tap-highlight-color:transparent;
+}
+.mob-nav-item.on{ color:#10B981; }
+.mob-nav-item:active{ color:rgba(255,255,255,.7); }
+.mob-nav-icon{ font-size:20px; line-height:1; }
+.mob-nav-badge{
+  position:absolute;
+  top:6px; right:calc(50% - 18px);
+  min-width:17px; height:17px;
+  padding:0 4px;
+  background:#25D366;
+  border-radius:9px;
+  font-size:10px; font-weight:800;
+  color:white;
+  display:flex; align-items:center; justify-content:center;
+}
+/* Mobile chat back button hidden on desktop */
+.mob-back{ display:none; }
+
 @media (max-width: 480px) {
-  .stats-row{ grid-template-columns:1fr 1fr; gap:8px; }
-  .sv{ font-size:22px; }
-  .chat-h{ padding:10px 14px; gap:8px; }
-  .chat-acts .abtn span{ display:none; }
-  .msgs{ padding:12px; }
+  .stats-row{ gap:8px; padding:10px 12px; }
+  .chat-h{ padding:8px 12px; }
+  .ph{ padding:12px 14px 8px; }
+}
+
+/* ── LANDING PAGE MOBILE ── */
+@media (max-width: 768px) {
+  .auth-card{ padding:32px 24px !important; }
+  .lp-nav-login{ display:none !important; }
+  .lp-hero-inner{ grid-template-columns:1fr !important; gap:32px !important; padding:32px 5vw 24px !important; }
+  .lp-mock-card{ display:none !important; }
+  .lp-h1{ font-size:32px !important; letter-spacing:-1px !important; }
+  .lp-hero-btns{ flex-direction:column !important; }
+  .lp-hero-btns > button{ width:100% !important; text-align:center !important; }
+  .lp-trust{ flex-direction:column !important; gap:8px !important; font-size:12px !important; }
+  .lp-section{ padding:56px 5vw !important; }
+  .lp-steps{ grid-template-columns:1fr 1fr !important; gap:28px !important; }
+  .lp-steps-line{ display:none !important; }
+  .lp-pricing{ grid-template-columns:1fr !important; }
+  .lp-stats-grid{ grid-template-columns:1fr 1fr !important; gap:12px !important; }
+  .lp-cta-btns{ flex-direction:column !important; align-items:stretch !important; }
+  .lp-cta-btns > button{ width:100% !important; }
+  .lp-footer{ flex-direction:column !important; align-items:center !important; text-align:center !important; }
+  .lp-footer-links{ flex-wrap:wrap !important; justify-content:center !important; gap:12px 16px !important; }
 }
 `
 
@@ -1061,9 +1151,11 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
   const lastMsg = active?.last_message
   const av = contact ? avatarFor(contact.name || contact.wa_number) : null
 
+  const isMobile = () => window.innerWidth < 768
+
   return (
-    <>
-      <div className={`inbox-p${active && window.innerWidth < 768 ? ' chat-open' : ''}`}>
+    <div className="inbox-wrap">
+      <div className={`inbox-p${active && isMobile() ? ' chat-open' : ''}`}>
         <div className="ph">
           <div className="ph-t">Inbox</div>
           <div className="ph-s">{threads.length} conversations</div>
@@ -1115,15 +1207,15 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
         </div>
       </div>
 
-      <div className={`chat-p${!active && window.innerWidth < 768 ? ' no-chat' : ''}`}>
+      <div className={`chat-p${!active && isMobile() ? ' no-chat' : ''}`}>
         {!active ? (
           <div className="loading">Select a conversation</div>
         ) : (
           <>
             <div className="chat-h">
-              {window.innerWidth < 768 && (
-                <button onClick={() => setActiveWithRef(null)} style={{ background:'none', border:'none', cursor:'pointer', color:'var(--mt)', fontSize:20, padding:'2px 8px 2px 0', flexShrink:0 }}>‹</button>
-              )}
+              <button className="mob-back" onClick={() => setActiveWithRef(null)} title="Back">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+              </button>
               <div className="av" style={{ width:40, height:40, background:av.bg }}>{av.initials}</div>
               <div style={{ flex:'none' }}>
                 {editingName ? (
@@ -1207,6 +1299,8 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
           </>
         )}
       </div>
+
+    </div>
 
       {createModal && <CreateOrderModal contact={createModal.contact} msgs={createModal.msgs} onClose={() => setCreateModal(null)} onCreated={handleCreateOrder} />}
     </>
@@ -1640,7 +1734,7 @@ function OrdersView({ addToast }) {
                     <span style={{ fontSize:11, color:'#9CA3AF' }}>{fmtTime(order.created_at)}</span>
                   </div>
                 </div>
-                <div style={{ textAlign:'right', marginRight:8 }}><div className="oa">₹{order.total_amount?.toLocaleString('en-IN')}</div></div>
+                <div style={{ marginLeft:'auto', paddingRight:4 }}><div className="oa">₹{order.total_amount?.toLocaleString('en-IN')}</div></div>
                 <div className="oacts">
                   {nextStatus && order.status!=='cancelled' && (
                     <button className="abtn pr" style={{ fontSize:12 }} onClick={() => advance(order)}>
@@ -2060,6 +2154,23 @@ function Dashboard({ user, onLogout }) {
       {view==='inbox'   && <InboxView addToast={addToast} onNavOrders={() => setView('orders')} onUnreadChange={handleUnreadChange} />}
       {view==='orders'  && <OrdersView addToast={addToast} />}
       {view==='profile' && <ProfileView user={user} onLogout={onLogout} />}
+
+      {/* ── Mobile bottom nav ── */}
+      <nav className="mob-nav">
+        {[
+          { id:'home',    icon:'🏠', label:'Home'    },
+          { id:'inbox',   icon:'💬', label:'Inbox',   badge: unreadCount },
+          { id:'orders',  icon:'📋', label:'Orders',  badge: view==='orders' ? 0 : pendingOrders },
+          { id:'profile', icon:'👤', label:'Profile'  },
+        ].map(n => (
+          <button key={n.id} className={`mob-nav-item${view===n.id?' on':''}`} onClick={() => setView(n.id)}>
+            {n.badge > 0 && <span className="mob-nav-badge">{n.badge}</span>}
+            <span className="mob-nav-icon">{n.icon}</span>
+            <span>{n.label}</span>
+          </button>
+        ))}
+      </nav>
+
       {toasts.map(t => <Toast key={t.id} msg={t.msg} type={t.type} action={t.action} onDone={() => removeToast(t.id)} />)}
     </div>
   )
@@ -2085,7 +2196,7 @@ function LandingPage({ onLogin, onSignup, onBack }) {
           <span style={{ fontWeight:900, fontSize:17, color:'white', letterSpacing:-0.5 }}>Whats<span style={{ color:'#10B981' }}>-</span>Order</span>
         </div>
         <div style={{ display:'flex', gap:8, alignItems:'center' }}>
-          <button onClick={onLogin} style={{ background:'transparent', border:'1px solid rgba(255,255,255,0.12)', fontFamily:'inherit', fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.7)', cursor:'pointer', padding:'8px 18px', borderRadius:8, transition:'all .2s' }}
+          <button onClick={onLogin} className='lp-nav-login' style={{ background:'transparent', border:'1px solid rgba(255,255,255,0.12)', fontFamily:'inherit', fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.7)', cursor:'pointer', padding:'8px 18px', borderRadius:8, transition:'all .2s' }}
             onMouseOver={e=>{e.currentTarget.style.background='rgba(255,255,255,0.06)';e.currentTarget.style.color='white'}}
             onMouseOut={e=>{e.currentTarget.style.background='transparent';e.currentTarget.style.color='rgba(255,255,255,0.7)'}}>
             Log in
@@ -2099,7 +2210,7 @@ function LandingPage({ onLogin, onSignup, onBack }) {
       </nav>
 
       {/* ── Hero ── */}
-      <div style={{ paddingTop:68, minHeight:'100vh', display:'flex', alignItems:'center', position:'relative' }}>
+      <div style={{ paddingTop:68, minHeight:'100vh', display:'flex', alignItems:'center', position:'relative', boxSizing:'border-box' }}>
         {/* Background glows */}
         <div style={{ position:'absolute', top:'10%', left:'50%', transform:'translateX(-50%)', width:700, height:700, background:'radial-gradient(circle, rgba(10,102,64,0.25) 0%, transparent 70%)', pointerEvents:'none' }} />
         <div style={{ position:'absolute', top:'20%', right:'5%', width:300, height:300, background:'radial-gradient(circle, rgba(16,185,129,0.12) 0%, transparent 70%)', pointerEvents:'none' }} />
@@ -2108,14 +2219,14 @@ function LandingPage({ onLogin, onSignup, onBack }) {
         {/* Grid pattern overlay */}
         <div style={{ position:'absolute', inset:0, backgroundImage:'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize:'60px 60px', pointerEvents:'none' }} />
 
-        <div style={{ maxWidth:1100, margin:'0 auto', padding:'80px 5vw', display:'grid', gridTemplateColumns:'1fr 1fr', gap:60, alignItems:'center', width:'100%' }}>
+        <div style={{ maxWidth:1100, margin:'0 auto', padding:'80px 5vw 60px', display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,460px),1fr))', gap:48, alignItems:'center', width:'100%' }} className='lp-hero-inner'>
           {/* Left */}
           <div>
             <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(16,185,129,0.1)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:20, padding:'6px 14px', fontSize:12, fontWeight:600, color:'#10B981', marginBottom:28, letterSpacing:.3 }}>
               <span style={{ width:7, height:7, background:'#10B981', borderRadius:'50%', display:'inline-block', boxShadow:'0 0 6px #10B981' }} />
               Built for WhatsApp Business · India
             </div>
-            <h1 style={{ fontSize:'clamp(36px,4.5vw,60px)', fontWeight:900, lineHeight:1.05, letterSpacing:-2, margin:'0 0 24px', color:'white' }}>
+            <h1 style={{ fontSize:'clamp(36px,4.5vw,60px)', fontWeight:900, lineHeight:1.05, letterSpacing:-2, margin:'0 0 24px', color:'white' }} className='lp-h1'>
               Your WhatsApp<br/>
               <span style={{ background:'linear-gradient(90deg,#10B981,#0D8A52)', WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent' }}>order manager</span><br/>
               is here.
@@ -2123,7 +2234,7 @@ function LandingPage({ onLogin, onSignup, onBack }) {
             <p style={{ fontSize:17, color:'rgba(255,255,255,0.55)', lineHeight:1.75, margin:'0 0 36px', maxWidth:460 }}>
               Stop copying orders from WhatsApp into notebooks. One platform to receive, track, and fulfill every order — with automatic customer updates.
             </p>
-            <div style={{ display:'flex', gap:12, flexWrap:'wrap', marginBottom:32 }}>
+            <div style={{ display:'flex', gap:12, flexWrap:'wrap', marginBottom:32 }} className='lp-hero-btns'>
               <button onClick={onSignup} style={{ background:'linear-gradient(135deg,#0A6640,#10B981)', color:'white', border:'none', borderRadius:10, padding:'14px 28px', fontFamily:'inherit', fontSize:15, fontWeight:800, cursor:'pointer', boxShadow:'0 8px 32px rgba(10,102,64,0.5)', letterSpacing:-.3, transition:'transform .15s, box-shadow .15s' }}
                 onMouseOver={e=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 12px 40px rgba(16,185,129,0.5)'}}
                 onMouseOut={e=>{e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='0 8px 32px rgba(10,102,64,0.5)'}}>
@@ -2135,7 +2246,7 @@ function LandingPage({ onLogin, onSignup, onBack }) {
                 Log in
               </button>
             </div>
-            <div style={{ display:'flex', gap:24, color:'rgba(255,255,255,0.35)', fontSize:13 }}>
+            <div style={{ display:'flex', gap:12, color:'rgba(255,255,255,0.35)', fontSize:12.5, flexWrap:'wrap' }} className='lp-trust'>
               {['No credit card required','Free forever up to 50 orders','Cancel anytime'].map((t,i)=>(
                 <span key={i} style={{ display:'flex', alignItems:'center', gap:5 }}><span style={{ color:'#10B981' }}>✓</span>{t}</span>
               ))}
@@ -2143,7 +2254,7 @@ function LandingPage({ onLogin, onSignup, onBack }) {
           </div>
 
           {/* Right — mock UI card */}
-          <div style={{ position:'relative' }}>
+          <div style={{ position:'relative' }} className='lp-mock-card'>
             <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:20, overflow:'hidden', boxShadow:'0 40px 100px rgba(0,0,0,0.6)', backdropFilter:'blur(20px)' }}>
               {/* Mock header */}
               <div style={{ background:'rgba(10,102,64,0.15)', borderBottom:'1px solid rgba(255,255,255,0.06)', padding:'14px 20px', display:'flex', alignItems:'center', gap:10 }}>
@@ -2184,8 +2295,8 @@ function LandingPage({ onLogin, onSignup, onBack }) {
               </div>
             </div>
             {/* Floating notification card */}
-            <div style={{ position:'absolute', bottom:-20, left:-24, background:'rgba(16,185,129,0.12)', border:'1px solid rgba(16,185,129,0.25)', borderRadius:14, padding:'10px 16px', backdropFilter:'blur(20px)', display:'flex', gap:10, alignItems:'center', boxShadow:'0 8px 32px rgba(0,0,0,0.4)' }}>
-              <div style={{ width:32,height:32,borderRadius:'50%',background:'linear-gradient(135deg,#0A6640,#10B981)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16 }}>🚀</div>
+            <div style={{ marginTop:16, background:'rgba(16,185,129,0.12)', border:'1px solid rgba(16,185,129,0.25)', borderRadius:14, padding:'10px 16px', display:'flex', gap:10, alignItems:'center' }}>
+              <div style={{ width:32,height:32,borderRadius:'50%',background:'linear-gradient(135deg,#0A6640,#10B981)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,flexShrink:0 }}>🚀</div>
               <div>
                 <div style={{ fontSize:12,fontWeight:700,color:'white' }}>Order dispatched!</div>
                 <div style={{ fontSize:11,color:'rgba(255,255,255,0.45)' }}>Customer notified on WhatsApp</div>
@@ -2205,13 +2316,12 @@ function LandingPage({ onLogin, onSignup, onBack }) {
       </div>
 
       {/* ── How it works ── */}
-      <div style={{ maxWidth:1000, margin:'0 auto', padding:'100px 5vw' }}>
+      <div style={{ maxWidth:1000, margin:'0 auto', padding:'100px 5vw' }} className='lp-section'>
         <div style={{ textAlign:'center', marginBottom:64 }}>
           <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:12 }}>How it works</div>
           <h2 style={{ fontSize:'clamp(26px,3.5vw,42px)', fontWeight:900, color:'white', margin:0, letterSpacing:-1 }}>From WhatsApp message to fulfilled order</h2>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:0, position:'relative' }}>
-          <div style={{ position:'absolute', top:28, left:'12.5%', right:'12.5%', height:1, background:'linear-gradient(90deg, transparent, rgba(16,185,129,0.3), transparent)', pointerEvents:'none' }} />
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:32, position:'relative' }} className='lp-steps'>
           {[
             { n:'01', icon:'📲', title:'Customer messages', desc:'They send order on WhatsApp as usual. Nothing changes for them.' },
             { n:'02', icon:'⚡', title:'Auto-detected', desc:'Whats-Order detects order intent and pre-fills items for you.' },
@@ -2231,7 +2341,7 @@ function LandingPage({ onLogin, onSignup, onBack }) {
       </div>
 
       {/* ── Features ── */}
-      <div style={{ background:'rgba(255,255,255,0.015)', borderTop:'1px solid rgba(255,255,255,0.05)', padding:'100px 5vw' }}>
+      <div style={{ background:'rgba(255,255,255,0.015)', borderTop:'1px solid rgba(255,255,255,0.05)', padding:'100px 5vw' }} className='lp-section'>
         <div style={{ maxWidth:1000, margin:'0 auto' }}>
           <div style={{ textAlign:'center', marginBottom:64 }}>
             <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:12 }}>Features</div>
@@ -2261,13 +2371,13 @@ function LandingPage({ onLogin, onSignup, onBack }) {
       </div>
 
       {/* ── Pricing ── */}
-      <div style={{ maxWidth:820, margin:'0 auto', padding:'100px 5vw' }}>
+      <div style={{ maxWidth:820, margin:'0 auto', padding:'100px 5vw' }} className='lp-section'>
         <div style={{ textAlign:'center', marginBottom:64 }}>
           <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:12 }}>Pricing</div>
           <h2 style={{ fontSize:'clamp(26px,3.5vw,42px)', fontWeight:900, color:'white', margin:'0 0 12px', letterSpacing:-1 }}>Simple, honest pricing</h2>
           <p style={{ fontSize:16, color:'rgba(255,255,255,0.4)', margin:0 }}>Start free. Upgrade when your business grows.</p>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:20 }}>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:20 }} className='lp-pricing'>
           {/* Free */}
           <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:24, padding:32 }}>
             <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Free Plan</div>
@@ -2320,7 +2430,7 @@ function LandingPage({ onLogin, onSignup, onBack }) {
           <p style={{ fontSize:17, color:'rgba(255,255,255,0.5)', lineHeight:1.8, marginBottom:56 }}>
             Whats-Order is purpose-built for these businesses — <strong style={{ color:'rgba(255,255,255,0.75)' }}>zero technical knowledge required</strong>, works with your existing WhatsApp Business number.
           </p>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4, 1fr)', gap:20 }}>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))', gap:16 }} className='lp-stats-grid'>
             {[['50+','Free orders/month'],['₹0','Setup cost'],['6','Order stages'],['1-click','Invoice printing']].map(([n,l],i)=>(
               <div key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'20px 16px' }}>
                 <div style={{ fontSize:28, fontWeight:900, color:'#10B981', marginBottom:4 }}>{n}</div>
@@ -2339,7 +2449,7 @@ function LandingPage({ onLogin, onSignup, onBack }) {
             Start managing orders<br/>smarter today.
           </h2>
           <p style={{ fontSize:16, color:'rgba(255,255,255,0.4)', margin:'0 0 40px', lineHeight:1.7 }}>Free forever for up to 50 orders/month. No credit card. No technical setup.</p>
-          <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }}>
+          <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }} className='lp-cta-btns'>
             <button onClick={onSignup} style={{ background:'linear-gradient(135deg,#0A6640,#10B981)', color:'white', border:'none', borderRadius:12, padding:'15px 36px', fontFamily:'inherit', fontSize:16, fontWeight:800, cursor:'pointer', boxShadow:'0 8px 40px rgba(10,102,64,0.5)', letterSpacing:-.3, transition:'all .15s' }}
               onMouseOver={e=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 16px 48px rgba(16,185,129,0.5)'}}
               onMouseOut={e=>{e.currentTarget.style.transform='translateY(0)';e.currentTarget.style.boxShadow='0 8px 40px rgba(10,102,64,0.5)'}}>
@@ -2355,13 +2465,13 @@ function LandingPage({ onLogin, onSignup, onBack }) {
       </div>
 
       {/* ── Footer ── */}
-      <div style={{ borderTop:'1px solid rgba(255,255,255,0.06)', padding:'24px 5vw', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12 }}>
+      <div style={{ borderTop:'1px solid rgba(255,255,255,0.06)', padding:'24px 5vw', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:12 }} className='lp-footer'>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           <div style={{ width:30, height:30, background:'linear-gradient(135deg,#0A6640,#10B981)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', color:'white', fontWeight:900, fontSize:15 }}>W</div>
           <span style={{ fontWeight:800, color:'white', fontSize:14 }}>Whats<span style={{ color:'#10B981' }}>-</span>Order</span>
         </div>
         <div style={{ fontSize:12, color:'rgba(255,255,255,0.2)' }}>© 2026 Whats-Order. All rights reserved.</div>
-        <div style={{ display:'flex', gap:20 }}>
+        <div style={{ display:'flex', gap:20 }} className='lp-footer-links'>
           <button onClick={onLogin} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.3)', fontFamily:'inherit', fontSize:12, cursor:'pointer', transition:'color .15s' }}
             onMouseOver={e=>e.currentTarget.style.color='white'} onMouseOut={e=>e.currentTarget.style.color='rgba(255,255,255,0.3)'}>Log In</button>
           <button onClick={onSignup} style={{ background:'none', border:'none', color:'rgba(255,255,255,0.3)', fontFamily:'inherit', fontSize:12, cursor:'pointer', transition:'color .15s' }}
@@ -2376,6 +2486,25 @@ function LandingPage({ onLogin, onSignup, onBack }) {
       <style>{`
         @keyframes scroll { from { transform: translateX(0) } to { transform: translateX(-50%) } }
         @keyframes pulse { 0%,100% { opacity:1; box-shadow:0 0 6px #10B981 } 50% { opacity:.5; box-shadow:0 0 12px #10B981 } }
+        @media (max-width: 768px) {
+          .lp-hero-grid { grid-template-columns: 1fr !important; padding: 40px 5vw 32px !important; }
+          .lp-mock { display: none !important; }
+          .lp-how { padding: 60px 5vw !important; }
+          .lp-features { padding: 60px 5vw !important; }
+          .lp-pricing { padding: 60px 5vw !important; }
+          .lp-stats { padding: 60px 5vw !important; }
+          .lp-cta { padding: 60px 5vw !important; }
+          .lp-cta h2 { font-size: 28px !important; }
+          .lp-cta-btns { flex-direction: column !important; align-items: stretch !important; }
+          .lp-cta-btns button { width: 100% !important; }
+          .lp-footer { flex-direction: column !important; gap: 16px !important; text-align: center !important; }
+          .lp-footer-links { flex-wrap: wrap !important; justify-content: center !important; gap: 12px !important; }
+          .lp-nav-btns .lp-login { display: none !important; }
+          .lp-hero-h1 { font-size: 34px !important; }
+          .lp-hero-btns { flex-direction: column !important; }
+          .lp-hero-btns button { width: 100% !important; text-align: center !important; }
+          .lp-pricing-grid { grid-template-columns: 1fr !important; }
+        }
       `}</style>
     </div>
   )
