@@ -954,23 +954,24 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
   const loadInbox = useCallback(async () => {
     try {
       const data = await api.getInbox()
-      setThreads(data)
 
-      // Mark ALL contacts read in DB every time inbox loads — this is the source of truth
-      // After this, server will return unread_count=0 for all contacts until new messages arrive
-      api.markAllRead().catch(() => {})
-
-      // Badge = count of contacts that still have unread (before markAllRead propagates)
+      // Sound/tab flash for genuinely new messages (tab was hidden)
       const totalUnread = data.reduce((s, t) => s + (t.unread_count || 0), 0)
-      // Report 0 immediately since user is looking at inbox right now
-      onUnreadChangeRef.current?.(0)
-
-      // Sound/tab flash for new messages when tab was hidden
       if (prevUnreadRef.current >= 0 && totalUnread > prevUnreadRef.current && document.hidden) {
         playNotifSound()
         flashTab('New WhatsApp message!')
       }
       prevUnreadRef.current = totalUnread
+
+      // Zero out all unread counts in local display — user is looking at inbox
+      const cleared = data.map(t => ({ ...t, unread_count: 0 }))
+      setThreads(cleared)
+
+      // Mark all read in DB so counts stay 0 after refresh
+      api.markAllRead().catch(() => {})
+
+      // Sidebar badge = 0 while on inbox
+      onUnreadChangeRef.current?.(0)
 
       // Auto-select first thread
       if (!activeRef.current && data.length) setActiveWithRef(data[0])
