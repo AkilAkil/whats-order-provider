@@ -1834,147 +1834,188 @@ function ChangePasswordForm() {
 // ─── PROFILE VIEW ─────────────────────────────────────────────────────────────
 function ProfileView({ user, onLogout }) {
   const [profile, setProfile] = useState(null)
+  const [stats, setStats]     = useState(null)
   const [loading, setLoading] = useState(true)
+  const [copied, setCopied]   = useState('')
 
   useEffect(() => {
-    api.getMe()
-      .then(d => setProfile(d))
+    Promise.all([api.getMe(), api.getStats()])
+      .then(([p, s]) => { setProfile(p); setStats(s) })
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
   const av = avatarFor(user?.name || user?.email || 'U')
   const fmtDate = d => d ? new Date(d).toLocaleDateString('en-IN', { day:'numeric', month:'long', year:'numeric' }) : '—'
+  const copy = (val, key) => {
+    navigator.clipboard.writeText(val).then(() => {
+      setCopied(key)
+      setTimeout(() => setCopied(''), 1500)
+    })
+  }
 
-  const Row = ({ label, value, mono }) => (
-    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'14px 0', borderBottom:'1px solid #E4EDE6' }}>
-      <span style={{ fontSize:13, color:'#6B7F72', fontWeight:500 }}>{label}</span>
-      <span style={{ fontSize:14, fontWeight:600, color:'#0F1A14', fontFamily: mono ? 'monospace' : 'inherit', fontSize: mono ? 12 : 14 }}>{value || '—'}</span>
+  const Section = ({ title, icon, children }) => (
+    <div style={{ background:'white', borderRadius:16, marginBottom:16, border:'1px solid #E4EDE6', overflow:'hidden' }}>
+      <div style={{ padding:'14px 20px 12px', borderBottom:'1px solid #F0F4F1', display:'flex', alignItems:'center', gap:8 }}>
+        <span style={{ fontSize:15 }}>{icon}</span>
+        <span style={{ fontSize:12, fontWeight:800, color:'#374151', textTransform:'uppercase', letterSpacing:.8 }}>{title}</span>
+      </div>
+      <div style={{ padding:'4px 0' }}>{children}</div>
     </div>
   )
 
+  const Row = ({ label, value, mono, copyKey }) => (
+    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', padding:'12px 20px', borderBottom:'1px solid #F7F8F6' }}>
+      <span style={{ fontSize:13, color:'#6B7F72', fontWeight:500, flexShrink:0 }}>{label}</span>
+      <div style={{ display:'flex', alignItems:'center', gap:8, minWidth:0 }}>
+        <span style={{ fontSize: mono?11.5:13.5, fontWeight:600, color:'#0F1A14', fontFamily: mono?'monospace':'inherit', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap', maxWidth:220 }}>{value || '—'}</span>
+        {copyKey && value && (
+          <button onClick={() => copy(value, copyKey)} title="Copy" style={{ background:'none', border:'none', cursor:'pointer', padding:'2px 4px', borderRadius:4, color: copied===copyKey ? '#0A6640' : '#9CA3AF', fontSize:12, flexShrink:0 }}>
+            {copied===copyKey ? '✓' : '⧉'}
+          </button>
+        )}
+      </div>
+    </div>
+  )
+
+  const isActive = profile?.onboarding_status === 'active'
+
   return (
-    <div style={{ flex:1, overflowY:'auto', background:'#F7F8F6' }}>
-      {/* Profile header */}
-      <div style={{ background:'linear-gradient(135deg,#0C1710 0%,#1A3A24 100%)', padding:'28px 32px 36px', position:'relative', overflow:'hidden' }}>
-        <div style={{ position:'absolute', inset:0, opacity:.04, backgroundImage:'radial-gradient(circle at 2px 2px,white 1px,transparent 0)', backgroundSize:'24px 24px' }} />
-        <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'center', gap:16 }}>
-          <div style={{ width:60, height:60, borderRadius:'50%', background:av.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, fontWeight:900, color:'#0F1A14', border:'3px solid rgba(255,255,255,.15)', flexShrink:0 }}>{av.initials}</div>
-          <div>
-            <div style={{ fontSize:20, fontWeight:900, color:'white', letterSpacing:-0.4, marginBottom:4 }}>{user?.name || user?.email?.split('@')[0]}</div>
-            <div style={{ display:'flex', gap:6 }}>
-              <span style={{ fontSize:11, padding:'3px 9px', borderRadius:20, background:'rgba(16,185,129,.2)', color:'#10B981', fontWeight:700, textTransform:'uppercase', letterSpacing:.3 }}>Admin</span>
-              <span style={{ fontSize:11, padding:'3px 9px', borderRadius:20, background:'rgba(255,255,255,.1)', color:'rgba(255,255,255,.7)', fontWeight:700, textTransform:'uppercase', letterSpacing:.3 }}>● Connected</span>
+    <div style={{ flex:1, overflowY:'auto', background:'#F7F8F6' }} className="profile-wrap">
+
+      {/* ── Hero banner ── */}
+      <div style={{ background:'linear-gradient(135deg,#0C1710 0%,#1A3A24 100%)', padding:'32px 28px 28px', position:'relative', overflow:'hidden' }}>
+        <div style={{ position:'absolute', inset:0, opacity:.035, backgroundImage:'radial-gradient(circle at 2px 2px,white 1px,transparent 0)', backgroundSize:'28px 28px' }} />
+        <div style={{ position:'absolute', top:-60, right:-60, width:200, height:200, background:'radial-gradient(circle,rgba(16,185,129,.15) 0%,transparent 70%)', pointerEvents:'none' }} />
+        <div style={{ position:'relative', zIndex:1, display:'flex', alignItems:'center', gap:18 }}>
+          <div style={{ width:68, height:68, borderRadius:'50%', background:av.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:24, fontWeight:900, color:'#0F1A14', border:'3px solid rgba(255,255,255,.12)', flexShrink:0, boxShadow:'0 8px 24px rgba(0,0,0,.3)' }}>{av.initials}</div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontSize:21, fontWeight:900, color:'white', letterSpacing:-0.4, marginBottom:6, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{profile?.name || user?.name || user?.email?.split('@')[0]}</div>
+            <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+              <span style={{ fontSize:11, padding:'3px 10px', borderRadius:20, background:'rgba(16,185,129,.18)', color:'#10B981', fontWeight:700, textTransform:'uppercase', letterSpacing:.3 }}>{profile?.role || 'Owner'}</span>
+              <span style={{ fontSize:11, padding:'3px 10px', borderRadius:20, background: isActive ? 'rgba(16,185,129,.18)' : 'rgba(245,158,11,.18)', color: isActive ? '#10B981' : '#F59E0B', fontWeight:700, letterSpacing:.3 }}>
+                {isActive ? '● Connected' : '○ Not connected'}
+              </span>
+              <span style={{ fontSize:11, padding:'3px 10px', borderRadius:20, background:'rgba(255,255,255,.08)', color:'rgba(255,255,255,.6)', fontWeight:700, textTransform:'uppercase', letterSpacing:.3 }}>
+                {profile?.plan === 'pro' ? '⭐ Pro' : 'Free'}
+              </span>
             </div>
           </div>
         </div>
+
+        {/* Quick stats strip */}
+        {stats && (
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:10, marginTop:24, position:'relative', zIndex:1 }}>
+            {[
+              { label:'Total Orders', value: stats.total_orders || 0, color:'#10B981' },
+              { label:'This Month', value: stats.new_orders || 0, color:'#60A5FA' },
+              { label:'Revenue Today', value: `₹${(stats.today_revenue||0).toLocaleString('en-IN')}`, color:'#FBBF24' },
+            ].map((s,i) => (
+              <div key={i} style={{ background:'rgba(255,255,255,.06)', borderRadius:12, padding:'12px 14px', border:'1px solid rgba(255,255,255,.07)', backdropFilter:'blur(8px)' }}>
+                <div style={{ fontSize:18, fontWeight:900, color:s.color, letterSpacing:-0.5 }}>{s.value}</div>
+                <div style={{ fontSize:11, color:'rgba(255,255,255,.4)', marginTop:2, fontWeight:500 }}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
-      <div style={{ padding:'24px 28px', maxWidth:640 }}>
 
-        {/* Header */}
-        <div style={{ marginBottom:0 }}>
-        </div>
-
+      {/* ── Content ── */}
+      <div style={{ padding:'20px 20px 32px', maxWidth:600, margin:'0 auto' }}>
         {loading ? <div style={{ textAlign:'center', padding:60 }}><Spinner lg /></div> : (
           <>
-            {/* Avatar card */}
-            <div style={{ background:'white', borderRadius:16, padding:24, marginBottom:20, border:'1px solid #E4EDE6', display:'flex', alignItems:'center', gap:20 }}>
-              <div style={{ width:72, height:72, borderRadius:'50%', background:av.bg, display:'flex', alignItems:'center', justifyContent:'center', fontSize:26, fontWeight:800, color:'#0F1A14', flexShrink:0 }}>
-                {av.initials}
-              </div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontSize:20, fontWeight:800, color:'#0F1A14' }}>{profile?.name}</div>
-                <div style={{ fontSize:14, color:'#6B7F72', marginTop:2 }}>{profile?.email}</div>
-                <div style={{ display:'flex', gap:8, marginTop:8 }}>
-                  <span style={{ fontSize:11, padding:'3px 10px', borderRadius:20, background:'#E8F5E9', color:'#0A6640', fontWeight:700, textTransform:'uppercase' }}>{profile?.role}</span>
-                  <span style={{ fontSize:11, padding:'3px 10px', borderRadius:20, background: profile?.onboarding_status === 'active' ? '#E8F5E9' : '#FFF8E1', color: profile?.onboarding_status === 'active' ? '#0A6640' : '#D97706', fontWeight:700, textTransform:'uppercase' }}>
-                    {profile?.onboarding_status === 'active' ? '● Connected' : profile?.onboarding_status}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* User details */}
-            <div style={{ background:'white', borderRadius:16, padding:'4px 24px', marginBottom:20, border:'1px solid #E4EDE6' }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'#6B7F72', textTransform:'uppercase', letterSpacing:.8, padding:'16px 0 4px' }}>User</div>
-              <Row label="Full Name" value={profile?.name} />
-              <Row label="Email" value={profile?.email} />
-              <Row label="Role" value={profile?.role?.charAt(0).toUpperCase() + profile?.role?.slice(1)} />
-            </div>
-
-            {/* Business details */}
-            <div style={{ background:'white', borderRadius:16, padding:'4px 24px', marginBottom:20, border:'1px solid #E4EDE6' }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'#6B7F72', textTransform:'uppercase', letterSpacing:.8, padding:'16px 0 4px' }}>Business</div>
-              <Row label="Business Name" value={profile?.business_name} />
+            {/* Account */}
+            <Section title="Account" icon="👤">
+              <Row label="Full Name"  value={profile?.name} />
+              <Row label="Email"      value={profile?.email} />
+              <Row label="Role"       value={profile?.role?.charAt(0).toUpperCase() + profile?.role?.slice(1)} />
               <Row label="Member Since" value={fmtDate(profile?.activated_at)} />
-            </div>
+            </Section>
 
-            {/* WhatsApp details */}
-            <div style={{ background:'white', borderRadius:16, padding:'4px 24px', marginBottom:28, border:'1px solid #E4EDE6' }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'#6B7F72', textTransform:'uppercase', letterSpacing:.8, padding:'16px 0 4px' }}>WhatsApp</div>
-              <Row label="Business Number" value={profile?.whatsapp_number} />
-              <Row label="WABA ID" value={profile?.waba_id} mono />
-              <Row label="Status" value={profile?.onboarding_status === 'active' ? 'Connected ✓' : profile?.onboarding_status} />
-            </div>
+            {/* Business */}
+            <Section title="Business" icon="🏪">
+              <Row label="Business Name"    value={profile?.business_name} />
+              <Row label="WhatsApp Number"  value={profile?.whatsapp_number} copyKey="phone" />
+              <Row label="WABA ID"          value={profile?.waba_id} mono copyKey="waba" />
+              <Row label="Connection"       value={isActive ? 'Connected ✓' : (profile?.onboarding_status || 'Pending')} />
+            </Section>
 
-            {/* Plan card */}
-            <div style={{ marginBottom:20 }}>
-              {profile?.plan === 'free' ? (
-                <div style={{ background:'linear-gradient(135deg, #F0FAF5 0%, #E8F5E9 100%)', border:'1.5px solid #BBE0CC', borderRadius:16, padding:20 }}>
-                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:12 }}>
-                    <div>
-                      <div style={{ fontSize:11, fontWeight:700, color:'#6B7F72', textTransform:'uppercase', letterSpacing:.8, marginBottom:4 }}>Current Plan</div>
-                      <div style={{ fontSize:22, fontWeight:900, color:'#0A6640' }}>Free</div>
-                    </div>
-                    <span style={{ background:'#E8F5E9', color:'#0A6640', fontSize:11, fontWeight:700, padding:'4px 10px', borderRadius:20, border:'1px solid #BBE0CC' }}>Active</span>
+            {/* Plan */}
+            <div style={{ marginBottom:16 }}>
+              {profile?.plan !== 'pro' ? (
+                <div style={{ background:'white', borderRadius:16, border:'1px solid #E4EDE6', overflow:'hidden' }}>
+                  <div style={{ padding:'14px 20px 12px', borderBottom:'1px solid #F0F4F1', display:'flex', alignItems:'center', gap:8 }}>
+                    <span style={{ fontSize:15 }}>💳</span>
+                    <span style={{ fontSize:12, fontWeight:800, color:'#374151', textTransform:'uppercase', letterSpacing:.8 }}>Plan</span>
                   </div>
-                  <div style={{ marginBottom:16 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6, fontSize:13 }}><span style={{ color:'#0A6640' }}>✓</span> 50 orders per month</div>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6, fontSize:13 }}><span style={{ color:'#0A6640' }}>✓</span> WhatsApp inbox & replies</div>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:6, fontSize:13, color:'#9CA3AF' }}><span>✗</span> Unlimited orders</div>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13, color:'#9CA3AF' }}><span>✗</span> Priority support</div>
-                  </div>
-                  <div style={{ background:'white', border:'1.5px solid #0A6640', borderRadius:12, padding:16, marginBottom:12 }}>
-                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:4 }}>
-                      <span style={{ fontWeight:800, fontSize:17, color:'#0A6640' }}>Pro Plan</span>
-                      <span style={{ fontWeight:900, fontSize:20, color:'#0A6640' }}>₹299<span style={{ fontSize:13, fontWeight:500, color:'#6B7F72' }}>/mo</span></span>
+                  <div style={{ padding:20 }}>
+                    {/* Free plan usage bar */}
+                    <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
+                      <span style={{ fontSize:13, fontWeight:700, color:'#0F1A14' }}>Free Plan</span>
+                      <span style={{ fontSize:12, color:'#6B7F72' }}>{stats?.total_orders||0} / 50 orders used</span>
                     </div>
-                    <div style={{ display:'flex', flexDirection:'column', gap:4, marginBottom:12 }}>
-                      <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:12 }}><span style={{ color:'#0A6640' }}>✓</span> Unlimited orders</div>
-                      <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:12 }}><span style={{ color:'#0A6640' }}>✓</span> Priority support</div>
-                      <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:12 }}><span style={{ color:'#0A6640' }}>✓</span> Everything in Free</div>
+                    <div style={{ height:6, background:'#F0F4F1', borderRadius:3, marginBottom:20, overflow:'hidden' }}>
+                      <div style={{ height:'100%', width:`${Math.min(((stats?.total_orders||0)/50)*100,100)}%`, background: (stats?.total_orders||0) >= 45 ? '#EF4444' : (stats?.total_orders||0) >= 35 ? '#F59E0B' : '#0A6640', borderRadius:3, transition:'width .6s' }} />
                     </div>
-                    <button
-                      onClick={() => window.open('mailto:support@whats-order.com?subject=Upgrade to Pro&body=I would like to upgrade to the Pro plan (₹299/month) for my account: ' + (profile?.email||''), '_blank')}
-                      style={{ width:'100%', padding:'10px', background:'#0A6640', color:'white', border:'none', borderRadius:8, fontFamily:'var(--f)', fontSize:14, fontWeight:700, cursor:'pointer' }}>
-                      Upgrade to Pro →
-                    </button>
+                    {/* Upgrade card */}
+                    <div style={{ background:'linear-gradient(135deg,#0A6640,#0D8A52)', borderRadius:12, padding:18, color:'white', position:'relative', overflow:'hidden' }}>
+                      <div style={{ position:'absolute', top:-20, right:-20, width:100, height:100, background:'rgba(255,255,255,.05)', borderRadius:'50%' }} />
+                      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:10 }}>
+                        <div>
+                          <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:.5, marginBottom:3 }}>Upgrade to</div>
+                          <div style={{ fontSize:20, fontWeight:900, letterSpacing:-0.3 }}>Pro Plan</div>
+                        </div>
+                        <div style={{ textAlign:'right' }}>
+                          <div style={{ fontSize:22, fontWeight:900, letterSpacing:-0.5 }}>₹299</div>
+                          <div style={{ fontSize:11, opacity:.6 }}>/month</div>
+                        </div>
+                      </div>
+                      <div style={{ display:'flex', gap:16, marginBottom:14, flexWrap:'wrap' }}>
+                        {['Unlimited orders','Priority support','All features'].map((f,i) => (
+                          <span key={i} style={{ fontSize:12, display:'flex', alignItems:'center', gap:5, opacity:.9 }}><span style={{ color:'#86EFAC' }}>✓</span>{f}</span>
+                        ))}
+                      </div>
+                      <button
+                        onClick={() => window.open('mailto:support@whats-order.com?subject=Upgrade to Pro&body=I would like to upgrade to the Pro plan (₹299/month) for my account: ' + (profile?.email||''), '_blank')}
+                        style={{ width:'100%', padding:'11px', background:'white', color:'#0A6640', border:'none', borderRadius:9, fontFamily:'var(--f)', fontSize:14, fontWeight:800, cursor:'pointer', transition:'opacity .15s' }}
+                        onMouseOver={e=>e.currentTarget.style.opacity='.9'} onMouseOut={e=>e.currentTarget.style.opacity='1'}>
+                        Upgrade Now →
+                      </button>
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div style={{ background:'linear-gradient(135deg, #0A6640 0%, #0D8A52 100%)', borderRadius:16, padding:20, color:'white' }}>
-                  <div style={{ fontSize:11, fontWeight:700, textTransform:'uppercase', letterSpacing:.8, marginBottom:4, opacity:.8 }}>Current Plan</div>
-                  <div style={{ fontSize:22, fontWeight:900, marginBottom:4 }}>Pro ✓</div>
-                  <div style={{ fontSize:13, opacity:.8, marginBottom:16 }}>₹299/month • Unlimited orders</div>
-                  <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13 }}>✓ Unlimited orders</div>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13 }}>✓ Priority support</div>
-                    <div style={{ display:'flex', alignItems:'center', gap:8, fontSize:13 }}>✓ All features included</div>
+                <div style={{ background:'linear-gradient(135deg,#0A6640,#0D8A52)', borderRadius:16, padding:20, color:'white', border:'none' }}>
+                  <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+                    <div>
+                      <div style={{ fontSize:11, fontWeight:700, opacity:.7, textTransform:'uppercase', letterSpacing:.5, marginBottom:3 }}>Current Plan</div>
+                      <div style={{ fontSize:22, fontWeight:900 }}>Pro ⭐</div>
+                    </div>
+                    <div style={{ textAlign:'right' }}>
+                      <div style={{ fontSize:18, fontWeight:900 }}>₹299<span style={{ fontSize:12, fontWeight:500, opacity:.6 }}>/mo</span></div>
+                      <span style={{ fontSize:11, background:'rgba(255,255,255,.15)', padding:'3px 10px', borderRadius:20, fontWeight:700 }}>Active</span>
+                    </div>
                   </div>
+                  {['Unlimited orders','Priority support','All features included'].map((f,i)=>(
+                    <div key={i} style={{ fontSize:13, display:'flex', alignItems:'center', gap:8, marginBottom:4, opacity:.9 }}><span style={{ color:'#86EFAC' }}>✓</span>{f}</div>
+                  ))}
                 </div>
               )}
             </div>
 
-            {/* Change Password */}
-            <div style={{ background:'white', borderRadius:16, padding:'4px 24px', marginBottom:20, border:'1px solid var(--bd)' }}>
-              <div style={{ fontSize:11, fontWeight:700, color:'var(--mt)', textTransform:'uppercase', letterSpacing:.8, padding:'16px 0 4px' }}>Security</div>
-              <ChangePasswordForm />
-            </div>
+            {/* Security */}
+            <Section title="Security" icon="🔒">
+              <div style={{ padding:'4px 20px 16px' }}>
+                <ChangePasswordForm />
+              </div>
+            </Section>
 
-            {/* Logout */}
-            <button onClick={onLogout} style={{ width:'100%', padding:'13px', background:'white', color:'#DC2626', border:'1.5px solid #FCA5A5', borderRadius:10, fontFamily:'var(--f)', fontSize:15, fontWeight:700, cursor:'pointer', transition:'all .2s' }}
-              onMouseOver={e => { e.target.style.background='#FFF5F5' }}
-              onMouseOut={e => { e.target.style.background='white' }}>
+            {/* Sign out */}
+            <button onClick={onLogout}
+              style={{ width:'100%', padding:'13px', background:'white', color:'#DC2626', border:'1.5px solid #FECACA', borderRadius:12, fontFamily:'var(--f)', fontSize:14, fontWeight:700, cursor:'pointer', transition:'all .15s', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}
+              onMouseOver={e=>e.currentTarget.style.background='#FFF5F5'}
+              onMouseOut={e=>e.currentTarget.style.background='white'}>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
               Sign Out
             </button>
           </>
