@@ -897,50 +897,106 @@ function OnboardingScreen({ user, onDone, addToast }) {
                 </div>
               )}
 
-              {phase === 'error' && !manualMode && (
-                <div style={{ marginBottom:16 }}>
-                  <div className="err" style={{ marginBottom:10 }}>
-                    <strong>Connection failed:</strong> {errMsg}
-                  </div>
-                  {errMsg.includes('WABA') || errMsg.includes('waba') || errMsg.includes('step 3') ? (
-                    <div style={{ background:'#F0FAF5', border:'1px solid #BBE0CC', borderRadius:10, padding:'14px 16px', fontSize:13, color:'#1A2E22' }}>
-                      <div style={{ fontWeight:700, marginBottom:6 }}>📋 Connect manually instead</div>
-                      <div style={{ color:'#6B7F72', marginBottom:10, lineHeight:1.5 }}>
-                        Get your details from <strong>business.facebook.com → WhatsApp Accounts → your account → API Setup</strong>
-                      </div>
-                      <button onClick={() => setManualMode(true)} style={{ background:'#0A6640', color:'white', border:'none', borderRadius:8, padding:'8px 16px', fontFamily:'var(--f)', fontSize:13, fontWeight:700, cursor:'pointer' }}>
-                        Enter details manually →
-                      </button>
-                    </div>
-                  ) : null}
-                </div>
+              {phase === 'error' && !manualMode && accepted && (
+                <div style={{ display:'none' }} />
               )}
 
               {manualMode && (
-                <div style={{ background:'#F0FAF5', border:'1px solid #BBE0CC', borderRadius:12, padding:20, marginBottom:16 }}>
-                  <div style={{ fontWeight:700, fontSize:15, color:'#0F1A14', marginBottom:4 }}>Manual Setup</div>
-                  <div style={{ fontSize:12, color:'#6B7F72', marginBottom:16, lineHeight:1.5 }}>
-                    Find these in <strong>Meta Business Suite → WhatsApp Accounts → your WABA → API Setup</strong>
+                <div style={{ background:'#F8FFFE', border:'1.5px solid #BBE0CC', borderRadius:14, padding:20, marginBottom:16 }}>
+                  {/* Header */}
+                  <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+                    <span style={{ fontSize:18 }}>⚙️</span>
+                    <div style={{ fontWeight:800, fontSize:15, color:'#0F1A14' }}>Manual WABA Setup</div>
                   </div>
-                  <div style={{ marginBottom:10 }}>
-                    <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#1A2E22', marginBottom:4 }}>WABA ID</label>
-                    <input className="inp" placeholder="e.g. 191254092271447" value={manualWabaId} onChange={e => setManualWabaId(e.target.value)} style={{ padding:'8px 12px', fontSize:13 }} />
+                  <div style={{ fontSize:12.5, color:'#6B7F72', lineHeight:1.6, marginBottom:18 }}>
+                    Enter your WhatsApp Business Account credentials below. Our team can provide these if we set up your WABA for you.
                   </div>
-                  <div style={{ marginBottom:10 }}>
-                    <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#1A2E22', marginBottom:4 }}>Phone Number ID</label>
-                    <input className="inp" placeholder="e.g. 123456789012345" value={manualPhoneId} onChange={e => setManualPhoneId(e.target.value)} style={{ padding:'8px 12px', fontSize:13 }} />
+
+                  {/* Where to find these */}
+                  <div style={{ background:'#FFFBEB', border:'1px solid #FDE68A', borderRadius:10, padding:'12px 14px', marginBottom:18 }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:'#92400E', marginBottom:8 }}>📍 Where to find these values</div>
+                    <div style={{ display:'flex', flexDirection:'column', gap:6 }}>
+                      {[
+                        { label:'WABA ID & Phone Number ID', path:'business.facebook.com → WhatsApp Accounts → your account → Settings' },
+                        { label:'Access Token', path:'business.facebook.com → WhatsApp Accounts → your account → API Setup → Generate token' },
+                        { label:'Got onboarded by our team?', path:'We will email you these details directly — check your inbox' },
+                      ].map((r,i) => (
+                        <div key={i} style={{ display:'flex', gap:8, fontSize:12, color:'#78350F', lineHeight:1.5 }}>
+                          <span style={{ color:'#D97706', flexShrink:0, fontWeight:700 }}>→</span>
+                          <span><strong>{r.label}:</strong> {r.path}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
+
+                  {/* WABA ID */}
                   <div style={{ marginBottom:14 }}>
-                    <label style={{ display:'block', fontSize:12, fontWeight:600, color:'#1A2E22', marginBottom:4 }}>Access Token <span style={{ color:'#6B7F72', fontWeight:400 }}>(from API Setup → Generate token)</span></label>
-                    <input className="inp" placeholder="EAAxxxxxxxx..." value={manualToken} onChange={e => setManualToken(e.target.value)} style={{ padding:'8px 12px', fontSize:13 }} />
+                    <label style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:5 }}>
+                      <span style={{ fontSize:13, fontWeight:700, color:'#0F1A14' }}>WABA ID</span>
+                      <span style={{ fontSize:11, color:'#9CA3AF' }}>WhatsApp Business Account ID</span>
+                    </label>
+                    <input className="inp" placeholder="e.g. 941397844992819" value={manualWabaId} onChange={e => setManualWabaId(e.target.value)}
+                      style={{ padding:'10px 12px', fontSize:13, fontFamily:'monospace', letterSpacing:0.5 }} />
+                    <div style={{ fontSize:11, color:'#9CA3AF', marginTop:4 }}>15–16 digit number from Meta Business Manager → WhatsApp Accounts</div>
                   </div>
+
+                  {/* Phone Number ID */}
+                  <div style={{ marginBottom:14 }}>
+                    <label style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:5 }}>
+                      <span style={{ fontSize:13, fontWeight:700, color:'#0F1A14' }}>Phone Number ID</span>
+                      <span style={{ fontSize:11, color:'#9CA3AF' }}>Not your phone number</span>
+                    </label>
+                    <input className="inp" placeholder="e.g. 123456789012345" value={manualPhoneId} onChange={e => setManualPhoneId(e.target.value)}
+                      style={{ padding:'10px 12px', fontSize:13, fontFamily:'monospace', letterSpacing:0.5 }} />
+                    <div style={{ fontSize:11, color:'#9CA3AF', marginTop:4 }}>Found under WABA → API Setup → Phone Numbers — different from your actual WhatsApp number</div>
+                  </div>
+
+                  {/* Access Token */}
+                  <div style={{ marginBottom:18 }}>
+                    <label style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:5 }}>
+                      <span style={{ fontSize:13, fontWeight:700, color:'#0F1A14' }}>Access Token</span>
+                      <span style={{ fontSize:11, color:'#9CA3AF' }}>From API Setup → Generate token</span>
+                    </label>
+                    <input className="inp" placeholder="EAAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" value={manualToken} onChange={e => setManualToken(e.target.value)}
+                      style={{ padding:'10px 12px', fontSize:12, fontFamily:'monospace', letterSpacing:0.3 }} />
+                    <div style={{ fontSize:11, color:'#9CA3AF', marginTop:4 }}>
+                      Starts with <code style={{ background:'#F3F4F6', padding:'1px 5px', borderRadius:4 }}>EAA</code> — use a System User token if available (never expires)
+                    </div>
+                  </div>
+
+                  {/* Validation hints */}
+                  {(manualWabaId || manualPhoneId || manualToken) && (
+                    <div style={{ display:'flex', flexDirection:'column', gap:5, marginBottom:14 }}>
+                      {[
+                        { ok: /^\d{14,17}$/.test(manualWabaId.trim()), label: 'WABA ID looks valid (14–17 digits)', fail: manualWabaId.trim() && !/^\d{14,17}$/.test(manualWabaId.trim()) },
+                        { ok: /^\d{14,17}$/.test(manualPhoneId.trim()), label: 'Phone Number ID looks valid (14–17 digits)', fail: manualPhoneId.trim() && !/^\d{14,17}$/.test(manualPhoneId.trim()) },
+                        { ok: manualToken.trim().startsWith('EAA') && manualToken.trim().length > 20, label: 'Access token format looks correct', fail: manualToken.trim() && !(manualToken.trim().startsWith('EAA') && manualToken.trim().length > 20) },
+                      ].map((v,i) => v.ok || v.fail ? (
+                        <div key={i} style={{ display:'flex', gap:7, fontSize:11.5, color: v.ok ? '#0A6640' : '#DC2626', alignItems:'center' }}>
+                          <span style={{ fontWeight:800 }}>{v.ok ? '✓' : '✗'}</span>
+                          {v.ok ? v.label : v.label.replace('looks valid', 'check format').replace('looks correct', 'should start with EAA')}
+                        </div>
+                      ) : null)}
+                    </div>
+                  )}
+
+                  {/* Actions */}
                   <div style={{ display:'flex', gap:8 }}>
-                    <button onClick={submitManual} disabled={!manualWabaId.trim() || !manualPhoneId.trim() || !manualToken.trim()} style={{ flex:1, padding:'10px', background:'#0A6640', color:'white', border:'none', borderRadius:8, fontFamily:'var(--f)', fontSize:14, fontWeight:700, cursor:'pointer', opacity: (!manualWabaId || !manualPhoneId || !manualToken) ? 0.5 : 1 }}>
-                      Connect
+                    <button
+                      onClick={submitManual}
+                      disabled={!manualWabaId.trim() || !manualPhoneId.trim() || !manualToken.trim()}
+                      style={{ flex:1, padding:'12px', background:'#0A6640', color:'white', border:'none', borderRadius:10, fontFamily:'var(--f)', fontSize:14, fontWeight:700, cursor:'pointer', opacity: (!manualWabaId || !manualPhoneId || !manualToken) ? 0.5 : 1, display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                      🔗 Connect WhatsApp
                     </button>
-                    <button onClick={() => { setManualMode(false); setPhase('idle') }} style={{ padding:'10px 16px', background:'white', color:'#6B7F72', border:'1.5px solid #E4EDE6', borderRadius:8, fontFamily:'var(--f)', fontSize:14, fontWeight:600, cursor:'pointer' }}>
-                      Cancel
+                    <button
+                      onClick={() => { setManualMode(false); setPhase('idle') }}
+                      style={{ padding:'12px 16px', background:'white', color:'#6B7F72', border:'1.5px solid #E4EDE6', borderRadius:10, fontFamily:'var(--f)', fontSize:14, fontWeight:600, cursor:'pointer' }}>
+                      ← Back
                     </button>
+                  </div>
+
+                  <div style={{ marginTop:12, textAlign:'center', fontSize:12, color:'#9CA3AF' }}>
+                    Need help finding these? <a href="mailto:whatsorder.help@gmail.com?subject=WABA Setup Help" style={{ color:'#0A6640', fontWeight:600 }}>Email our team</a> — we'll send you the exact values.
                   </div>
                 </div>
               )}
@@ -962,27 +1018,59 @@ function OnboardingScreen({ user, onDone, addToast }) {
 
               {accepted && (phase === 'idle' || phase === 'error') && !manualMode && (
                 <>
-                  <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>
-                    <span style={{ fontSize:11, padding:'3px 8px', borderRadius:4, fontWeight:600,
-                      background: appId ? '#E8F5E9' : '#FFF5F5',
-                      color: appId ? '#0A6640' : '#DC2626' }}>
-                      {appId ? '✓ App ID set' : '✗ VITE_META_APP_ID missing'}
-                    </span>
-                    <span style={{ fontSize:11, padding:'3px 8px', borderRadius:4, fontWeight:600,
-                      background: configId ? '#E8F5E9' : '#FFF5F5',
-                      color: configId ? '#0A6640' : '#DC2626' }}>
-                      {configId ? '✓ Config ID set' : '✗ VITE_META_CONFIG_ID missing'}
-                    </span>
-                    <span style={{ fontSize:11, padding:'3px 8px', borderRadius:4, fontWeight:600,
-                      background: sdkReady ? '#E8F5E9' : '#FFF8E1',
-                      color: sdkReady ? '#0A6640' : '#D97706' }}>
-                      {sdkReady ? '✓ FB SDK ready' : '⏳ FB SDK loading...'}
-                    </span>
+                  {phase === 'error' && (
+                    <div className="err" style={{ marginBottom:16 }}>
+                      <strong>Connection failed:</strong> {errMsg}
+                    </div>
+                  )}
+
+                  {/* ── Option A: Facebook Embedded Signup ── */}
+                  <div style={{ background:'#F8FFFE', border:'1.5px solid #BBE0CC', borderRadius:14, padding:18, marginBottom:12 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+                      <span style={{ fontSize:16 }}>🚀</span>
+                      <div style={{ fontWeight:800, fontSize:14, color:'#0F1A14' }}>Option A — Quick Connect via Facebook</div>
+                      <span style={{ fontSize:11, background:'#E8F5E9', color:'#0A6640', fontWeight:700, padding:'2px 8px', borderRadius:10, marginLeft:'auto' }}>Recommended</span>
+                    </div>
+                    <div style={{ fontSize:12.5, color:'#6B7F72', lineHeight:1.6, marginBottom:14 }}>
+                      Log in with Facebook and select your WhatsApp Business Account. Whats-Order handles the rest automatically — takes under 60 seconds.
+                    </div>
+                    <div style={{ display:'flex', gap:8, marginBottom:12, flexWrap:'wrap' }}>
+                      {[
+                        { label: appId ? '✓ App ready' : '✗ App ID missing', ok: !!appId },
+                        { label: configId ? '✓ Config ready' : '✗ Config ID missing', ok: !!configId },
+                        { label: sdkReady ? '✓ SDK ready' : '⏳ SDK loading…', ok: sdkReady },
+                      ].map((s,i) => (
+                        <span key={i} style={{ fontSize:11, padding:'3px 8px', borderRadius:4, fontWeight:600, background: s.ok ? '#E8F5E9' : '#FFF8E1', color: s.ok ? '#0A6640' : '#D97706' }}>{s.label}</span>
+                      ))}
+                    </div>
+                    <button className="wa-btn" onClick={connectWA} disabled={!appId || !configId || pendingLaunch} style={{ margin:0 }}>
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                      {pendingLaunch ? 'Loading SDK…' : phase === 'error' ? 'Try Again' : 'Connect with Facebook'}
+                    </button>
                   </div>
-                  <button className="wa-btn" onClick={connectWA} disabled={!appId || !configId || pendingLaunch}>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-                    {pendingLaunch ? 'Loading Facebook SDK...' : phase === 'error' ? 'Try Again' : 'Connect WhatsApp Business'}
-                  </button>
+
+                  {/* ── Divider ── */}
+                  <div style={{ display:'flex', alignItems:'center', gap:12, margin:'4px 0' }}>
+                    <div style={{ flex:1, height:1, background:'#E4EDE6' }} />
+                    <span style={{ fontSize:12, color:'#9CA3AF', fontWeight:600 }}>or</span>
+                    <div style={{ flex:1, height:1, background:'#E4EDE6' }} />
+                  </div>
+
+                  {/* ── Option B: Manual ── */}
+                  <div style={{ background:'#FAFBFC', border:'1.5px solid #E4EDE6', borderRadius:14, padding:18, marginTop:4 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+                      <span style={{ fontSize:16 }}>⚙️</span>
+                      <div style={{ fontWeight:800, fontSize:14, color:'#0F1A14' }}>Option B — Enter Details Manually</div>
+                    </div>
+                    <div style={{ fontSize:12.5, color:'#6B7F72', lineHeight:1.6, marginBottom:14 }}>
+                      Already have a WhatsApp Business Account set up? Or our team has onboarded you? Enter your WABA ID, Phone Number ID and access token directly.
+                    </div>
+                    <button
+                      onClick={() => setManualMode(true)}
+                      style={{ width:'100%', padding:'11px', background:'white', color:'#0A6640', border:'1.5px solid #0A6640', borderRadius:10, fontFamily:'var(--f)', fontSize:14, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                      ⚙️ Enter WABA details manually
+                    </button>
+                  </div>
                 </>
               )}
             </>
