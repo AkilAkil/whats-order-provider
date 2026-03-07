@@ -97,6 +97,7 @@ body.dark .loading{color:#6B8070;}
 .sb-uemail{font-size:11px;color:rgba(255,255,255,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* ── INBOX ── */
+.inbox-wrap{flex:1;display:flex;overflow:hidden;}
 .inbox-p{width:300px;border-right:1px solid var(--bd);display:flex;flex-direction:column;background:white;flex-shrink:0;}
 .ph{padding:16px 16px 10px;border-bottom:1px solid var(--bd);}
 .ph-t{font-size:15px;font-weight:800;color:var(--dk);letter-spacing:-0.2px;}
@@ -218,11 +219,11 @@ body.dark .loading{color:#6B8070;}
   .layout{ flex-direction:column; padding-bottom:var(--mob-nav); }
   .app{ padding-bottom:0; }
 
-  /* Each view fills screen */
-  .ord-view, .inbox-wrap{ height:calc(100vh - var(--mob-nav)); overflow:hidden; }
+  /* Orders view fills screen */
+  .ord-view{ height:calc(100vh - var(--mob-nav)); overflow-y:auto; }
 
   /* ── Inbox mobile ── */
-  .inbox-wrap{ display:flex; flex-direction:column; }
+  .inbox-wrap{ display:flex; flex-direction:column; height:calc(100vh - var(--mob-nav)); overflow:hidden; }
   .inbox-p{ width:100%; border-right:none; flex:1; overflow:hidden; display:flex; flex-direction:column; }
   .inbox-p.chat-open{ display:none; }
   .chat-p{ flex:1; display:flex; flex-direction:column; height:100%; }
