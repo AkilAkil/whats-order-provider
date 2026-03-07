@@ -922,6 +922,7 @@ function flashTab(msg) {
 
 // ─── INBOX ────────────────────────────────────────────────────────────────────
 function InboxView({ addToast, onNavOrders, onThreadsChange, onMarkRead, onMarkAllRead }) {
+  // onMarkRead(contactId, lastMsgAt) — store exact message timestamp
   const [threads, setThreads] = useState([])
   const [active, setActive] = useState(null)
   const activeRef = useRef(null)
@@ -959,10 +960,10 @@ function InboxView({ addToast, onNavOrders, onThreadsChange, onMarkRead, onMarkA
       )
       setThreads(normalized)
       onThreadsChange?.(normalized)
-      onMarkAllRead?.(normalized)   // mark all as read in localStorage on every load
+      onMarkAllRead?.(normalized)  // uses ref so always fresh
       if (!activeRef.current && data.length) {
         setActiveWithRef(data[0])
-        onMarkRead?.(data[0].contact?.id)
+        onMarkRead?.(data[0].contact?.id, data[0].last_message?.created_at)
         api.markRead(data[0].contact?.id).catch(() => {})
       }
       const totalUnread = normalized.reduce((s, t) => s + (t.unread_count || 0), 0)
@@ -986,17 +987,7 @@ function InboxView({ addToast, onNavOrders, onThreadsChange, onMarkRead, onMarkA
     loadInbox()
   }, [])
 
-  // When inbox mounts, mark all loaded threads as read
-  useEffect(() => {
-    if (threads.length > 0) {
-      threads.forEach(t => {
-        if (t.contact?.id) {
-          onMarkRead?.(t.contact.id)
-          api.markRead(t.contact.id).catch(() => {})
-        }
-      })
-    }
-  }, [threads.length > 0])
+
   useEffect(() => { if (active?.contact) loadMsgs(active.contact) }, [active])
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior:'smooth' }) }, [msgs])
 
@@ -1082,8 +1073,8 @@ function InboxView({ addToast, onNavOrders, onThreadsChange, onMarkRead, onMarkA
                   onThreadsChange?.(updated)
                   return updated
                 })
-                // Mark as read locally (instant) and in DB (persists refresh)
-                onMarkRead?.(t.contact?.id)
+                // Store last-seen message timestamp so count stays 0 after refresh
+                onMarkRead?.(t.contact?.id, t.last_message?.created_at)
                 api.markRead(t.contact?.id).catch(() => {})
               }}>
                 <div className="av" style={{ width:42, height:42, background:a.bg }}>{a.initials}</div>
@@ -1996,33 +1987,46 @@ function Dashboard({ user, onLogout }) {
     return () => clearInterval(t)
   }, [])
 
-  // localStorage-based read tracking — persists across page refreshes
-  const getReadTimes = () => {
-    try { return JSON.parse(localStorage.getItem('wo_read_times') || '{}') } catch { return {} }
+  // ── Unread tracking: purely localStorage, no server dependency ──
+  // Store last-seen message timestamp per contact: { contactId: isoString }
+  const getSeenTimes = () => {
+    try { return JSON.parse(localStorage.getItem('wo_seen') || '{}') } catch { return {} }
   }
-  const markContactRead = (contactId) => {
+  // Call when user opens a thread — store that thread's last message timestamp
+  const markContactRead = (contactId, lastMsgAt) => {
     if (!contactId) return
-    const times = getReadTimes()
-    times[contactId] = Date.now()
-    localStorage.setItem('wo_read_times', JSON.stringify(times))
+    const seen = getSeenTimes()
+    seen[contactId] = lastMsgAt || new Date().toISOString()
+    localStorage.setItem('wo_seen', JSON.stringify(seen))
   }
+  // Call when inbox loads — store last message timestamp for every thread
   const markAllRead = (threads) => {
     if (!threads?.length) return
-    const times = getReadTimes()
-    threads.forEach(t => { if (t.contact?.id) times[t.contact.id] = Date.now() })
-    localStorage.setItem('wo_read_times', JSON.stringify(times))
+    const seen = getSeenTimes()
+    threads.forEach(t => {
+      if (t.contact?.id) seen[t.contact.id] = t.last_message?.created_at || new Date().toISOString()
+    })
+    localStorage.setItem('wo_seen', JSON.stringify(seen))
   }
+  // Use a ref so loadInbox useCallback always gets fresh version (fixes stale closure)
+  const markAllReadRef = useRef(markAllRead)
+  useEffect(() => { markAllReadRef.current = markAllRead })
+
+  const computeUnread = (threads) => {
+    const seen = getSeenTimes()
+    return threads.reduce((s, t) => {
+      if (!t.contact?.id || !t.last_message?.created_at) return s
+      const seenAt = seen[t.contact.id]
+      if (!seenAt) return s + 1   // never opened
+      // New message = last message is strictly newer than when we last saw this thread
+      return new Date(t.last_message.created_at) > new Date(seenAt) ? s + 1 : s
+    }, 0)
+  }
+  const computeUnreadRef = useRef(computeUnread)
+  useEffect(() => { computeUnreadRef.current = computeUnread })
 
   const handleThreadsChange = (threads) => {
-    const readTimes = getReadTimes()
-    const total = threads.reduce((s, t) => {
-      const lastRead = readTimes[t.contact?.id] || 0
-      const lastMsgTime = t.last_message?.created_at
-        ? new Date(t.last_message.created_at).getTime() : 0
-      if (lastMsgTime <= lastRead) return s   // already read
-      return s + (t.unread_count || 0)
-    }, 0)
-    setUnreadCount(total)
+    setUnreadCount(computeUnreadRef.current(threads))
   }
 
   const NAV = [
