@@ -341,8 +341,11 @@ body.dark .loading{color:#6B8070;}
   .lp-hero-btns > button{ width:100% !important; text-align:center !important; }
   .lp-trust{ flex-direction:column !important; gap:8px !important; font-size:12px !important; }
   .lp-section{ padding:56px 5vw !important; }
-  .lp-steps{ grid-template-columns:1fr 1fr !important; gap:28px !important; }
+  .lp-steps{ grid-template-columns:1fr 1fr !important; gap:20px !important; }
   .lp-steps-line{ display:none !important; }
+  .lp-section-header{ flex-direction:column !important; align-items:flex-start !important; gap:8px !important; }
+  .lp-section-header-title{ font-size:26px !important; max-width:100% !important; }
+  .lp-step-card{ padding:20px 16px !important; }
   .lp-pricing{ grid-template-columns:1fr !important; }
   .lp-stats-grid{ grid-template-columns:1fr 1fr !important; gap:12px !important; }
   .lp-cta-btns{ flex-direction:column !important; align-items:stretch !important; }
@@ -2304,7 +2307,7 @@ function LandingPage({ onLogin, onSignup, onBack, onSetupGuide }) {
         {/* Grid pattern overlay */}
         <div style={{ position:'absolute', inset:0, backgroundImage:'linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px)', backgroundSize:'60px 60px', pointerEvents:'none' }} />
 
-        <div style={{ maxWidth:1100, margin:'0 auto', padding:'80px 5vw 60px', display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(min(100%,460px),1fr))', gap:48, alignItems:'center', width:'100%' }} className='lp-hero-inner'>
+        <div style={{ maxWidth:1160, margin:'0 auto', padding:'88px 5vw 72px', display:'grid', gridTemplateColumns:'1fr 1fr', gap:64, alignItems:'center', width:'100%' }} className='lp-hero-inner'>
           {/* Left */}
           <div>
             <div style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(16,185,129,0.1)', border:'1px solid rgba(16,185,129,0.2)', borderRadius:20, padding:'6px 14px', fontSize:12, fontWeight:600, color:'#10B981', marginBottom:28, letterSpacing:.3 }}>
@@ -2401,36 +2404,48 @@ function LandingPage({ onLogin, onSignup, onBack, onSetupGuide }) {
       </div>
 
       {/* ── How it works ── */}
-      <div style={{ maxWidth:1000, margin:'0 auto', padding:'100px 5vw' }} className='lp-section'>
-        <div style={{ textAlign:'center', marginBottom:64 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:12 }}>How it works</div>
-          <h2 style={{ fontSize:'clamp(26px,3.5vw,42px)', fontWeight:900, color:'white', margin:0, letterSpacing:-1 }}>From WhatsApp message to fulfilled order</h2>
+      <div style={{ maxWidth:1100, margin:'0 auto', padding:'100px 5vw' }} className='lp-section'>
+        {/* Section header — left label, right title */}
+        <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:56, gap:32 }} className='lp-section-header'>
+          <div style={{ flexShrink:0 }}>
+            <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:10 }}>How it works</div>
+            <h2 style={{ fontSize:'clamp(26px,3.2vw,44px)', fontWeight:900, color:'white', margin:0, letterSpacing:-1.5, lineHeight:1.1, maxWidth:420 }} className='lp-section-header-title'>From message<br/>to fulfilled order.</h2>
+          </div>
+          <p style={{ fontSize:15, color:'rgba(255,255,255,0.35)', lineHeight:1.75, maxWidth:340, margin:0, paddingBottom:4 }}>Four steps. No manual data entry. No missed orders. Customers get updates automatically at every stage.</p>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:32 }} className='lp-steps'>
-          {[
-            { n:'01', icon:'📲', title:'Customer messages', desc:'They send order on WhatsApp as usual. Nothing changes for them.' },
-            { n:'02', icon:'⚡', title:'Auto-detected', desc:'Whats-Order detects order intent and pre-fills items for you.' },
-            { n:'03', icon:'📦', title:'Track & notify', desc:'Move through 6 stages. Customer gets WhatsApp updates automatically.' },
-            { n:'04', icon:'💳', title:'Collect payment', desc:'Send UPI links via WhatsApp. Mark as paid. Done.' },
-          ].map((s,i)=>(
-            <div key={i} style={{ padding:'0 20px', textAlign:'center' }}>
-              <div style={{ width:56,height:56,borderRadius:16,background:`rgba(10,102,64,${0.15+i*0.05})`,border:'1px solid rgba(16,185,129,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24,margin:'0 auto 16px',position:'relative',zIndex:1 }}>
-                {s.icon}
-                <div style={{ position:'absolute', top:-8, right:-8, width:22, height:22, background:'#10B981', borderRadius:'50%', display:'flex', alignItems:'center', justifyContent:'center', fontSize:9, fontWeight:900, color:'white' }}>{s.n}</div>
+        {/* Steps with connecting line */}
+        <div style={{ position:'relative' }}>
+          {/* Desktop connector line */}
+          <div className='lp-steps-line' style={{ position:'absolute', top:36, left:'12.5%', right:'12.5%', height:1, background:'linear-gradient(90deg,transparent,rgba(16,185,129,0.3) 15%,rgba(16,185,129,0.3) 85%,transparent)', zIndex:0 }}/>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:20 }} className='lp-steps'>
+            {[
+              { n:'01', icon:'📲', color:'rgba(16,185,129,0.15)', title:'Customer messages', desc:'They send their order on WhatsApp as usual. Nothing changes on their end.' },
+              { n:'02', icon:'⚡', color:'rgba(99,102,241,0.15)', title:'Auto-detected', desc:'Whats-Order reads the message and pre-fills items, quantities, and price.' },
+              { n:'03', icon:'📦', color:'rgba(245,158,11,0.15)', title:'Track & notify', desc:'Move through 6 order stages. Customer gets a WhatsApp update at each one.' },
+              { n:'04', icon:'💳', color:'rgba(16,185,129,0.2)', title:'Collect payment', desc:'Send a UPI link directly in WhatsApp. Mark as paid. Order complete.' },
+            ].map((s,i)=>(
+              <div key={i} className='lp-step-card' style={{ position:'relative', zIndex:1, background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:18, padding:'28px 22px 24px' }}>
+                <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:20 }}>
+                  <div style={{ width:52,height:52,borderRadius:14,background:s.color,border:'1px solid rgba(16,185,129,0.2)',display:'flex',alignItems:'center',justifyContent:'center',fontSize:24 }}>{s.icon}</div>
+                  <div style={{ fontSize:28, fontWeight:900, color:'rgba(255,255,255,0.06)', letterSpacing:-1 }}>{s.n}</div>
+                </div>
+                <div style={{ fontWeight:800, fontSize:15, color:'white', marginBottom:8, letterSpacing:-.3 }}>{s.title}</div>
+                <div style={{ fontSize:12.5, color:'rgba(255,255,255,0.38)', lineHeight:1.65 }}>{s.desc}</div>
               </div>
-              <div style={{ fontWeight:800, fontSize:14, color:'white', marginBottom:8 }}>{s.title}</div>
-              <div style={{ fontSize:12, color:'rgba(255,255,255,0.4)', lineHeight:1.6 }}>{s.desc}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
 
       {/* ── Features ── */}
       <div style={{ background:'rgba(255,255,255,0.015)', borderTop:'1px solid rgba(255,255,255,0.05)', padding:'100px 5vw' }} className='lp-section'>
         <div style={{ maxWidth:1000, margin:'0 auto' }}>
-          <div style={{ textAlign:'center', marginBottom:64 }}>
-            <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:12 }}>Features</div>
-            <h2 style={{ fontSize:'clamp(26px,3.5vw,42px)', fontWeight:900, color:'white', margin:0, letterSpacing:-1 }}>Everything in one place</h2>
+          <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:52, gap:32, flexWrap:'wrap' }}>
+            <div>
+              <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:10 }}>Features</div>
+              <h2 style={{ fontSize:'clamp(26px,3.2vw,44px)', fontWeight:900, color:'white', margin:0, letterSpacing:-1.5, lineHeight:1.1 }}>Everything in<br/>one place.</h2>
+            </div>
+            <p style={{ fontSize:15, color:'rgba(255,255,255,0.35)', lineHeight:1.75, maxWidth:320, margin:0, paddingBottom:4 }}>Every tool you need to run WhatsApp orders professionally — built in from day one.</p>
           </div>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(220px, 1fr))', gap:16 }}>
             {[
@@ -2443,7 +2458,7 @@ function LandingPage({ onLogin, onSignup, onBack, onSetupGuide }) {
               { icon:'📊', title:'Analytics', desc:'Top items, daily revenue, order stats.' },
               { icon:'📤', title:'Export', desc:'Download orders as CSV or Excel anytime.' },
             ].map((f,i)=>(
-              <div key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:22, cursor:'default', transition:'all .2s' }}
+              <div key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'24px 22px', cursor:'default', transition:'all .2s' }}
                 onMouseOver={e=>{e.currentTarget.style.background='rgba(10,102,64,0.12)';e.currentTarget.style.borderColor='rgba(16,185,129,0.2)';e.currentTarget.style.transform='translateY(-3px)'}}
                 onMouseOut={e=>{e.currentTarget.style.background='rgba(255,255,255,0.03)';e.currentTarget.style.borderColor='rgba(255,255,255,0.06)';e.currentTarget.style.transform='translateY(0)'}}>
                 <div style={{ fontSize:26, marginBottom:10 }}>{f.icon}</div>
@@ -2457,10 +2472,12 @@ function LandingPage({ onLogin, onSignup, onBack, onSetupGuide }) {
 
       {/* ── Pricing ── */}
       <div style={{ maxWidth:820, margin:'0 auto', padding:'100px 5vw' }} className='lp-section'>
-        <div style={{ textAlign:'center', marginBottom:64 }}>
-          <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:12 }}>Pricing</div>
-          <h2 style={{ fontSize:'clamp(26px,3.5vw,42px)', fontWeight:900, color:'white', margin:'0 0 12px', letterSpacing:-1 }}>Simple, honest pricing</h2>
-          <p style={{ fontSize:16, color:'rgba(255,255,255,0.4)', margin:0 }}>Start free. Upgrade when your business grows.</p>
+        <div style={{ display:'flex', alignItems:'flex-end', justifyContent:'space-between', marginBottom:52, gap:32, flexWrap:'wrap' }}>
+          <div>
+            <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:10 }}>Pricing</div>
+            <h2 style={{ fontSize:'clamp(26px,3.2vw,44px)', fontWeight:900, color:'white', margin:0, letterSpacing:-1.5, lineHeight:1.1 }}>Simple, honest<br/>pricing.</h2>
+          </div>
+          <p style={{ fontSize:15, color:'rgba(255,255,255,0.35)', lineHeight:1.75, maxWidth:280, margin:0, paddingBottom:4 }}>Start free — 50 orders/month, forever. Upgrade only when your business needs more.</p>
         </div>
         <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }} className='lp-pricing'>
           {/* Free */}
@@ -2515,20 +2532,24 @@ function LandingPage({ onLogin, onSignup, onBack, onSetupGuide }) {
 
       {/* ── About us ── */}
       <div style={{ background:'rgba(255,255,255,0.015)', borderTop:'1px solid rgba(255,255,255,0.05)', padding:'100px 5vw' }}>
-        <div style={{ maxWidth:760, margin:'0 auto', textAlign:'center' }}>
-          <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:12 }}>About us</div>
-          <h2 style={{ fontSize:'clamp(26px,3.5vw,42px)', fontWeight:900, color:'white', margin:'0 0 24px', letterSpacing:-1 }}>We built this because we needed it</h2>
-          <p style={{ fontSize:17, color:'rgba(255,255,255,0.5)', lineHeight:1.8, marginBottom:20 }}>
-            Millions of small businesses in India run entirely on WhatsApp. They get orders over chat, manually note them down, and forget to follow up on payments. We saw this happen every day — and decided to fix it.
-          </p>
-          <p style={{ fontSize:17, color:'rgba(255,255,255,0.5)', lineHeight:1.8, marginBottom:56 }}>
-            Whats-Order is purpose-built for these businesses — <strong style={{ color:'rgba(255,255,255,0.75)' }}>zero technical knowledge required</strong>, works with your existing WhatsApp Business number.
-          </p>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }} className='lp-stats-grid'>
+        <div style={{ maxWidth:1100, margin:'0 auto', display:'grid', gridTemplateColumns:'1fr 1fr', gap:64, alignItems:'center' }} className='lp-hero-inner'>
+          {/* Left */}
+          <div>
+            <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:12 }}>About us</div>
+            <h2 style={{ fontSize:'clamp(26px,3.2vw,44px)', fontWeight:900, color:'white', margin:'0 0 28px', letterSpacing:-1.5, lineHeight:1.1 }}>We built this<br/>because we needed it.</h2>
+            <p style={{ fontSize:16, color:'rgba(255,255,255,0.5)', lineHeight:1.8, marginBottom:18 }}>
+              Millions of small businesses in India run entirely on WhatsApp — getting orders over chat, noting them down manually, forgetting to follow up. We saw this every day and decided to fix it.
+            </p>
+            <p style={{ fontSize:16, color:'rgba(255,255,255,0.5)', lineHeight:1.8, margin:0 }}>
+              Whats-Order is purpose-built for these businesses — <strong style={{ color:'rgba(255,255,255,0.8)' }}>zero technical knowledge required</strong>, works with your existing WhatsApp Business number.
+            </p>
+          </div>
+          {/* Right — stats */}
+          <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:14 }} className='lp-stats-grid'>
             {[['50','Free orders every month'],['₹0','Setup cost'],['6','Order stages'],['₹100','Per month on Pro']].map(([n,l],i)=>(
-              <div key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'20px 16px' }}>
-                <div style={{ fontSize:28, fontWeight:900, color:'#10B981', marginBottom:4 }}>{n}</div>
-                <div style={{ fontSize:12, color:'rgba(255,255,255,0.35)', lineHeight:1.4 }}>{l}</div>
+              <div key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:18, padding:'24px 20px' }}>
+                <div style={{ fontSize:32, fontWeight:900, color:'#10B981', marginBottom:6, letterSpacing:-1 }}>{n}</div>
+                <div style={{ fontSize:12.5, color:'rgba(255,255,255,0.35)', lineHeight:1.4 }}>{l}</div>
               </div>
             ))}
           </div>
