@@ -985,13 +985,17 @@ function InboxView({ addToast, onNavOrders, onThreadsChange, onMarkRead }) {
     loadInbox()
   }, [])
 
-  // When switching back to Inbox from another tab, re-mark current thread as read
+  // When inbox mounts, mark all loaded threads as read
   useEffect(() => {
-    if (active?.contact?.id) {
-      onMarkRead?.(active.contact.id)
-      api.markRead(active.contact.id).catch(() => {})
+    if (threads.length > 0) {
+      threads.forEach(t => {
+        if (t.contact?.id) {
+          onMarkRead?.(t.contact.id)
+          api.markRead(t.contact.id).catch(() => {})
+        }
+      })
     }
-  }, [])
+  }, [threads.length > 0])
   useEffect(() => { if (active?.contact) loadMsgs(active.contact) }, [active])
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior:'smooth' }) }, [msgs])
 
@@ -2008,7 +2012,7 @@ function Dashboard({ user, onLogout }) {
   }
 
   const NAV = [
-    { id:'inbox', icon:'💬', label:'Inbox', badge: unreadCount },
+    { id:'inbox', icon:'💬', label:'Inbox', badge: view === 'inbox' ? 0 : unreadCount },
     { id:'orders', icon:'📋', label:'Orders', badge: view === 'orders' ? 0 : pendingOrders },
   ]
 
