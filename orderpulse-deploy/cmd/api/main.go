@@ -155,6 +155,7 @@ func main() {
 		})
 
 		r.Get("/inbox", inboxHandler.ListThreads)
+		r.Post("/inbox/read-all", inboxHandler.MarkAllRead)
 		r.Get("/inbox/{contactId}/messages", inboxHandler.GetMessages)
 		r.Post("/inbox/{contactId}/reply", inboxHandler.Reply)
 		r.Patch("/inbox/{contactId}/tag", inboxHandler.TagChat)
