@@ -921,7 +921,7 @@ function flashTab(msg) {
 }
 
 // ─── INBOX ────────────────────────────────────────────────────────────────────
-function InboxView({ addToast, onNavOrders, onThreadsChange }) {
+function InboxView({ addToast, onNavOrders, onThreadsChange, onMarkRead }) {
   const [threads, setThreads] = useState([])
   const [active, setActive] = useState(null)
   const activeRef = useRef(null)
@@ -961,6 +961,7 @@ function InboxView({ addToast, onNavOrders, onThreadsChange }) {
       onThreadsChange?.(normalized)
       if (!activeRef.current && data.length) {
         setActiveWithRef(data[0])
+        onMarkRead?.(data[0].contact?.id)
         api.markRead(data[0].contact?.id).catch(() => {})
       }
       const totalUnread = normalized.reduce((s, t) => s + (t.unread_count || 0), 0)
@@ -980,7 +981,17 @@ function InboxView({ addToast, onNavOrders, onThreadsChange }) {
     catch {}
   }, [])
 
-  useEffect(() => { loadInbox() }, [])
+  useEffect(() => {
+    loadInbox()
+  }, [])
+
+  // When switching back to Inbox from another tab, re-mark current thread as read
+  useEffect(() => {
+    if (active?.contact?.id) {
+      onMarkRead?.(active.contact.id)
+      api.markRead(active.contact.id).catch(() => {})
+    }
+  }, [])
   useEffect(() => { if (active?.contact) loadMsgs(active.contact) }, [active])
   useEffect(() => { chatEnd.current?.scrollIntoView({ behavior:'smooth' }) }, [msgs])
 
@@ -1066,7 +1077,8 @@ function InboxView({ addToast, onNavOrders, onThreadsChange }) {
                   onThreadsChange?.(updated)
                   return updated
                 })
-                // Mark as read in DB so count stays 0 after refresh
+                // Mark as read locally (instant) and in DB (persists refresh)
+                onMarkRead?.(t.contact?.id)
                 api.markRead(t.contact?.id).catch(() => {})
               }}>
                 <div className="av" style={{ width:42, height:42, background:a.bg }}>{a.initials}</div>
@@ -1979,9 +1991,20 @@ function Dashboard({ user, onLogout }) {
     return () => clearInterval(t)
   }, [])
 
-  // Inbox badge: driven by InboxView thread state (so opening a thread clears it instantly)
+  // Track contacts opened this session — always show 0 for them regardless of server count
+  const readContacts = useRef(new Set())
+
+  const markContactRead = (contactId) => {
+    if (!contactId) return
+    readContacts.current.add(contactId)
+  }
+
   const handleThreadsChange = (threads) => {
-    setUnreadCount(threads.reduce((s, t) => s + (t.unread_count || 0), 0))
+    const total = threads.reduce((s, t) => {
+      if (readContacts.current.has(t.contact?.id)) return s
+      return s + (t.unread_count || 0)
+    }, 0)
+    setUnreadCount(total)
   }
 
   const NAV = [
@@ -2030,7 +2053,7 @@ function Dashboard({ user, onLogout }) {
       </div>
 
       {view==='home'    && <HomeView user={user} onNav={setView} />}
-      {view==='inbox'   && <InboxView addToast={addToast} onNavOrders={() => setView('orders')} onThreadsChange={handleThreadsChange} />}
+      {view==='inbox'   && <InboxView addToast={addToast} onNavOrders={() => setView('orders')} onThreadsChange={handleThreadsChange} onMarkRead={markContactRead} />}
       {view==='orders'  && <OrdersView addToast={addToast} />}
       {view==='profile' && <ProfileView user={user} onLogout={onLogout} />}
       {toasts.map(t => <Toast key={t.id} msg={t.msg} type={t.type} action={t.action} onDone={() => removeToast(t.id)} />)}
