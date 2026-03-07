@@ -921,8 +921,7 @@ function flashTab(msg) {
 }
 
 // ─── INBOX ────────────────────────────────────────────────────────────────────
-function InboxView({ addToast, onNavOrders, onThreadsChange, onMarkRead, onMarkAllRead }) {
-  // onMarkRead(contactId, lastMsgAt) — store exact message timestamp
+function InboxView({ addToast, onNavOrders, onUnreadChange }) {
   const [threads, setThreads] = useState([])
   const [active, setActive] = useState(null)
   const activeRef = useRef(null)
@@ -947,31 +946,51 @@ function InboxView({ addToast, onNavOrders, onThreadsChange, onMarkRead, onMarkA
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
 
-  const prevUnreadRef = useRef(0)
+  // openedIds: contacts the user has opened this session — their count is always 0
+  const openedIds = useRef(new Set())
+  // onUnreadChange ref so loadInbox (useCallback) always calls fresh version
+  const onUnreadChangeRef = useRef(onUnreadChange)
+  useEffect(() => { onUnreadChangeRef.current = onUnreadChange }, [onUnreadChange])
+
+  const computeAndReportUnread = (data) => {
+    // Count contacts with unread messages, excluding ones the user has opened
+    const n = data.reduce((s, t) => {
+      if (openedIds.current.has(t.contact?.id)) return s
+      return s + (t.unread_count > 0 ? 1 : 0)
+    }, 0)
+    onUnreadChangeRef.current?.(n)
+    return n
+  }
+
+  const prevUnreadRef = useRef(-1)
   const loadInbox = useCallback(async () => {
     try {
       const data = await api.getInbox()
-      // Zero out unread for the currently active thread (already read)
+      // Zero out count for active thread in local display
       const active = activeRef.current
-      const normalized = data.map(t =>
+      const display = data.map(t =>
         active && t.contact?.id === active.contact?.id
-          ? { ...t, unread_count: 0 }
-          : t
+          ? { ...t, unread_count: 0 } : t
       )
-      setThreads(normalized)
-      onThreadsChange?.(normalized)
-      onMarkAllRead?.(normalized)  // uses ref so always fresh
-      if (!activeRef.current && data.length) {
-        setActiveWithRef(data[0])
-        onMarkRead?.(data[0].contact?.id, data[0].last_message?.created_at)
-        api.markRead(data[0].contact?.id).catch(() => {})
-      }
-      const totalUnread = normalized.reduce((s, t) => s + (t.unread_count || 0), 0)
-      if (totalUnread > prevUnreadRef.current && prevUnreadRef.current >= 0 && document.hidden) {
+      setThreads(display)
+      computeAndReportUnread(data)  // use raw data (not display) for accurate count
+
+      // Notify on new messages while tab is hidden
+      const totalUnread = data.reduce((s, t) => s + (t.unread_count || 0), 0)
+      if (prevUnreadRef.current >= 0 && totalUnread > prevUnreadRef.current && document.hidden) {
         playNotifSound()
         flashTab('New WhatsApp message!')
       }
       prevUnreadRef.current = totalUnread
+
+      // Auto-select first thread on initial load
+      if (!activeRef.current && data.length) {
+        const first = data[0]
+        setActiveWithRef(first)
+        openedIds.current.add(first.contact?.id)
+        api.markRead(first.contact?.id).catch(() => {})
+        onUnreadChangeRef.current?.(computeAndReportUnread(data))
+      }
     }
     catch { addToast('Failed to load inbox', 'error') }
     finally { setLoading(false) }
@@ -1068,13 +1087,14 @@ function InboxView({ addToast, onNavOrders, onThreadsChange, onMarkRead, onMarkA
               <div key={t.contact?.id} className={`thread ${active?.contact?.id===t.contact?.id?'on':''}`} onClick={() => {
                 const cleared = { ...t, unread_count: 0 }
                 setActiveWithRef(cleared)
+                // Mark as opened — persists for full session, badge stays 0
+                openedIds.current.add(t.contact?.id)
                 setThreads(prev => {
                   const updated = prev.map(x => x.contact?.id === t.contact?.id ? cleared : x)
-                  onThreadsChange?.(updated)
+                  computeAndReportUnread(updated)
                   return updated
                 })
-                // Store last-seen message timestamp so count stays 0 after refresh
-                onMarkRead?.(t.contact?.id, t.last_message?.created_at)
+                // Persist to DB so count is 0 after refresh too
                 api.markRead(t.contact?.id).catch(() => {})
               }}>
                 <div className="av" style={{ width:42, height:42, background:a.bg }}>{a.initials}</div>
@@ -1987,47 +2007,8 @@ function Dashboard({ user, onLogout }) {
     return () => clearInterval(t)
   }, [])
 
-  // ── Unread tracking: purely localStorage, no server dependency ──
-  // Store last-seen message timestamp per contact: { contactId: isoString }
-  const getSeenTimes = () => {
-    try { return JSON.parse(localStorage.getItem('wo_seen') || '{}') } catch { return {} }
-  }
-  // Call when user opens a thread — store that thread's last message timestamp
-  const markContactRead = (contactId, lastMsgAt) => {
-    if (!contactId) return
-    const seen = getSeenTimes()
-    seen[contactId] = lastMsgAt || new Date().toISOString()
-    localStorage.setItem('wo_seen', JSON.stringify(seen))
-  }
-  // Call when inbox loads — store last message timestamp for every thread
-  const markAllRead = (threads) => {
-    if (!threads?.length) return
-    const seen = getSeenTimes()
-    threads.forEach(t => {
-      if (t.contact?.id) seen[t.contact.id] = t.last_message?.created_at || new Date().toISOString()
-    })
-    localStorage.setItem('wo_seen', JSON.stringify(seen))
-  }
-  // Use a ref so loadInbox useCallback always gets fresh version (fixes stale closure)
-  const markAllReadRef = useRef(markAllRead)
-  useEffect(() => { markAllReadRef.current = markAllRead })
-
-  const computeUnread = (threads) => {
-    const seen = getSeenTimes()
-    return threads.reduce((s, t) => {
-      if (!t.contact?.id || !t.last_message?.created_at) return s
-      const seenAt = seen[t.contact.id]
-      if (!seenAt) return s + 1   // never opened
-      // New message = last message is strictly newer than when we last saw this thread
-      return new Date(t.last_message.created_at) > new Date(seenAt) ? s + 1 : s
-    }, 0)
-  }
-  const computeUnreadRef = useRef(computeUnread)
-  useEffect(() => { computeUnreadRef.current = computeUnread })
-
-  const handleThreadsChange = (threads) => {
-    setUnreadCount(computeUnreadRef.current(threads))
-  }
+  // Inbox unread count is managed entirely by InboxView and reported up here
+  const handleUnreadChange = useCallback((n) => setUnreadCount(n), [])
 
   const NAV = [
     { id:'inbox', icon:'💬', label:'Inbox', badge: view === 'inbox' ? 0 : unreadCount },
@@ -2075,7 +2056,7 @@ function Dashboard({ user, onLogout }) {
       </div>
 
       {view==='home'    && <HomeView user={user} onNav={setView} />}
-      {view==='inbox'   && <InboxView addToast={addToast} onNavOrders={() => setView('orders')} onThreadsChange={handleThreadsChange} onMarkRead={markContactRead} onMarkAllRead={markAllRead} />}
+      {view==='inbox'   && <InboxView addToast={addToast} onNavOrders={() => setView('orders')} onUnreadChange={handleUnreadChange} />}
       {view==='orders'  && <OrdersView addToast={addToast} />}
       {view==='profile' && <ProfileView user={user} onLogout={onLogout} />}
       {toasts.map(t => <Toast key={t.id} msg={t.msg} type={t.type} action={t.action} onDone={() => removeToast(t.id)} />)}
