@@ -163,3 +163,7 @@ export async function updateOrderItems(id, items, notes) {
 export async function markRead(contactId) {
   return request('POST', `/api/inbox/${contactId}/read`, {})
 }
+
+export async function markAllRead() {
+  return request('POST', '/api/inbox/read-all', {})
+}
