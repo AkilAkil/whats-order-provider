@@ -142,6 +142,18 @@ func (h *InboxHandler) Reply(w http.ResponseWriter, r *http.Request) {
 }
 
 
+// ─── POST /api/inbox/read-all ────────────────────────────────────────────────
+// Marks ALL contacts for this tenant as read (sets last_read_at = NOW()).
+// Called whenever the user opens the inbox tab.
+func (h *InboxHandler) MarkAllRead(w http.ResponseWriter, r *http.Request) {
+	tenantID := middleware.TenantIDFromCtx(r.Context())
+	h.db.Exec(r.Context(), `
+		UPDATE contacts SET last_read_at = NOW()
+		WHERE tenant_id = $1
+	`, tenantID)
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
+}
+
 // ─── POST /api/inbox/{contactId}/read ────────────────────────────────────────
 // Marks all messages in a thread as read by updating last_read_at on the contact.
 func (h *InboxHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
