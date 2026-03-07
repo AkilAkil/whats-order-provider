@@ -2013,7 +2013,7 @@ function ProfileView({ user, onLogout }) {
                         ))}
                       </div>
                       <button
-                        onClick={() => window.open('mailto:support@whats-order.com?subject=Upgrade to Pro&body=I would like to upgrade to the Pro plan (₹299/month) for my account: ' + (profile?.email||''), '_blank')}
+                        onClick={() => window.open('mailto:whatsorder.help@gmail.com?subject=Upgrade to Pro&body=I would like to upgrade to the Pro plan (₹299/month) for my account: ' + (profile?.email||''), '_blank')}
                         style={{ width:'100%', padding:'11px', background:'white', color:'#0A6640', border:'none', borderRadius:9, fontFamily:'var(--f)', fontSize:14, fontWeight:800, cursor:'pointer', transition:'opacity .15s' }}
                         onMouseOver={e=>e.currentTarget.style.opacity='.9'} onMouseOut={e=>e.currentTarget.style.opacity='1'}>
                         Upgrade Now →
@@ -2140,7 +2140,7 @@ function HomeView({ user, onNav }) {
 
         {/* Footer links */}
         <div style={{ display:'flex', gap:16, paddingBottom:28 }}>
-          {[['Privacy Policy','/privacy'],['Terms of Service','/terms'],['support@whats-order.com','mailto:support@whats-order.com']].map(([label,href],i) => (
+          {[['Privacy Policy','/privacy'],['Terms of Service','/terms'],['whatsorder.help@gmail.com','mailto:whatsorder.help@gmail.com']].map(([label,href],i) => (
             <a key={i} href={href} target="_blank" style={{ fontSize:12, color:'#7A8E82', textDecoration:'none', fontWeight:600 }}
               onMouseOver={e=>e.currentTarget.style.color='#0A6640'} onMouseOut={e=>e.currentTarget.style.color='#7A8E82'}>{label}</a>
           ))}
@@ -2617,7 +2617,7 @@ function LegalPage({ title, onBack, children }) {
       {/* Footer */}
       <div style={{ borderTop:'1px solid rgba(255,255,255,0.06)', padding:'20px 5vw', display:'flex', justifyContent:'space-between', alignItems:'center', flexWrap:'wrap', gap:8 }}>
         <span style={{ fontSize:12, color:'rgba(255,255,255,0.2)' }}>© 2026 Whats-Order. All rights reserved.</span>
-        <span style={{ fontSize:12, color:'rgba(255,255,255,0.2)' }}>support@whats-order.com</span>
+        <span style={{ fontSize:12, color:'rgba(255,255,255,0.2)' }}>whatsorder.help@gmail.com</span>
       </div>
     </div>
   )
@@ -2637,7 +2637,7 @@ function PrivacyPage({ onBack }) {
   return (
     <LegalPage title="Privacy Policy" onBack={onBack}>
       <Section title="1. Who we are">
-        Whats-Order ("we", "our", "us") is an order management platform for WhatsApp Business, operated by Akil Abi, Dharmapuri, Tamil Nadu, India. We are reachable at <strong style={{ color:'#10B981' }}>support@whats-order.com</strong>.
+        Whats-Order ("we", "our", "us") is an order management platform for WhatsApp Business, operated by Akil Abi, Dharmapuri, Tamil Nadu, India. We are reachable at <strong style={{ color:'#10B981' }}>whatsorder.help@gmail.com</strong>.
       </Section>
 
       <Section title="2. What data we collect">
@@ -2697,7 +2697,7 @@ function PrivacyPage({ onBack }) {
           <li>Request deletion of your account and all associated data</li>
           <li>Export your order data (via the CSV/Excel export feature)</li>
         </ul>
-        <p style={{ marginTop:12 }}>To request data deletion, email us at <strong style={{ color:'#10B981' }}>support@whats-order.com</strong> with the subject "Data Deletion Request". We will delete your data within 30 days.</p>
+        <p style={{ marginTop:12 }}>To request data deletion, email us at <strong style={{ color:'#10B981' }}>whatsorder.help@gmail.com</strong> with the subject "Data Deletion Request". We will delete your data within 30 days.</p>
       </Section>
 
       <Section title="9. Cookies">
@@ -2709,7 +2709,7 @@ function PrivacyPage({ onBack }) {
       </Section>
 
       <Section title="11. Contact">
-        For any privacy-related questions or requests, contact us at <strong style={{ color:'#10B981' }}>support@whats-order.com</strong>.
+        For any privacy-related questions or requests, contact us at <strong style={{ color:'#10B981' }}>whatsorder.help@gmail.com</strong>.
       </Section>
     </LegalPage>
   )
@@ -2740,7 +2740,7 @@ function TermsPage({ onBack }) {
         <p style={{ marginBottom:12 }}><strong style={{ color:'white' }}>Free Plan:</strong> Allows up to 50 orders per month at no charge. Free forever with no credit card required.</p>
         <p style={{ marginBottom:12 }}><strong style={{ color:'white' }}>Pro Plan:</strong> ₹299 per month. Provides unlimited orders and priority support. Billed monthly.</p>
         <ul style={{ paddingLeft:20, display:'flex', flexDirection:'column', gap:8 }}>
-          <li>Pro plan payments are processed manually — contact us at support@whats-order.com to upgrade.</li>
+          <li>Pro plan payments are processed manually — contact us at whatsorder.help@gmail.com to upgrade.</li>
           <li>We reserve the right to change pricing with 30 days notice.</li>
           <li>No refunds are provided for partial months of Pro service.</li>
           <li>Free plan limits (50 orders/month) are enforced automatically. Cancelled orders do not count toward the limit.</li>
@@ -2781,7 +2781,7 @@ function TermsPage({ onBack }) {
 
       <Section title="10. Account termination">
         <ul style={{ paddingLeft:20, display:'flex', flexDirection:'column', gap:8 }}>
-          <li>You may delete your account at any time by contacting us at support@whats-order.com.</li>
+          <li>You may delete your account at any time by contacting us at whatsorder.help@gmail.com.</li>
           <li>We may suspend or terminate accounts that violate these Terms, with or without notice.</li>
           <li>Upon termination, your data will be deleted within 30 days per our Privacy Policy.</li>
         </ul>
@@ -2796,7 +2796,7 @@ function TermsPage({ onBack }) {
       </Section>
 
       <Section title="13. Contact">
-        For any questions about these Terms, contact us at <strong style={{ color:'#10B981' }}>support@whats-order.com</strong>.
+        For any questions about these Terms, contact us at <strong style={{ color:'#10B981' }}>whatsorder.help@gmail.com</strong>.
       </Section>
     </LegalPage>
   )
