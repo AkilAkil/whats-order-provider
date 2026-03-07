@@ -951,27 +951,54 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
   useEffect(() => { onUnreadChangeRef.current = onUnreadChange }, [onUnreadChange])
 
   const prevUnreadRef = useRef(-1)
+  // lastSeenRef tracks last-known message timestamp per contact
+  // On first load all entries are null → no "new" detection yet → all zeroed
+  // From 2nd poll onward, genuinely new messages are detected by timestamp comparison
+  const lastSeenRef = useRef({})
   const loadInbox = useCallback(async () => {
     try {
       const data = await api.getInbox()
 
-      // Sound/tab flash for genuinely new messages (tab was hidden)
-      const totalUnread = data.reduce((s, t) => s + (t.unread_count || 0), 0)
-      if (prevUnreadRef.current >= 0 && totalUnread > prevUnreadRef.current && document.hidden) {
+      // Compare with last known state to detect truly new messages
+      // lastSeenMsgAt: { contactId -> ISO timestamp of last message we saw }
+      const lastSeen = lastSeenRef.current
+      let newMsgCount = 0
+
+      const display = data.map(t => {
+        const cid = t.contact?.id
+        const msgAt = t.last_message?.created_at
+        const prevAt = lastSeen[cid]
+
+        // A message is "new" only if it arrived after the last time we polled
+        const isNew = msgAt && prevAt && new Date(msgAt) > new Date(prevAt)
+
+        if (isNew) {
+          newMsgCount++
+          return t  // keep server unread_count for new messages
+        }
+        return { ...t, unread_count: 0 }  // zero out stale counts
+      })
+
+      // Update our snapshot of last-seen timestamps
+      const newSeen = {}
+      data.forEach(t => {
+        if (t.contact?.id) newSeen[t.contact.id] = t.last_message?.created_at
+      })
+      lastSeenRef.current = newSeen
+
+      setThreads(display)
+
+      // Notify if new messages arrived while tab was hidden
+      if (newMsgCount > 0 && document.hidden) {
         playNotifSound()
         flashTab('New WhatsApp message!')
       }
-      prevUnreadRef.current = totalUnread
 
-      // Zero out all unread counts in local display — user is looking at inbox
-      const cleared = data.map(t => ({ ...t, unread_count: 0 }))
-      setThreads(cleared)
+      // Sidebar badge = new message count only (0 if none)
+      onUnreadChangeRef.current?.(newMsgCount)
 
-      // Mark all read in DB so counts stay 0 after refresh
+      // Mark all read in DB (persists 0 after refresh for stale messages)
       api.markAllRead().catch(() => {})
-
-      // Sidebar badge = 0 while on inbox
-      onUnreadChangeRef.current?.(0)
 
       // Auto-select first thread
       if (!activeRef.current && data.length) setActiveWithRef(data[0])
