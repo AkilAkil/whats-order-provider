@@ -974,7 +974,7 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
 
         if (isNew) {
           newMsgCount++
-          return t  // keep server unread_count for new messages
+          return { ...t, unread_count: 1 }  // always show 1, not total server count
         }
         return { ...t, unread_count: 0 }  // zero out stale counts
       })
