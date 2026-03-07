@@ -168,6 +168,7 @@ func main() {
 		r.Patch("/orders/{id}/payment", orderHandler.ConfirmPayment)
 		r.Patch("/orders/{id}/items", orderHandler.UpdateItems)
 		r.Patch("/inbox/{contactId}/name", contactHandler.UpdateName)
+			r.Post("/inbox/{contactId}/read", inboxHandler.MarkRead)
 		r.Post("/auth/change-password", changePwHandler.Change)
 	})
 
