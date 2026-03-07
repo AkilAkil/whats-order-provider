@@ -862,7 +862,7 @@ function OnboardingScreen({ user, onDone, addToast }) {
                     <div style={{ display:'flex', flexDirection:'column', gap:8, fontSize:13, color:'#1A2E22' }}>
                       <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
                         <span style={{ color:'#0A6640', fontWeight:800, flexShrink:0, marginTop:1 }}>✓</span>
-                        <span style={{ lineHeight:1.6 }}><strong>Whats-Order is free</strong> for up to 50 orders/month. Pro plan is ₹299/month for unlimited orders.</span>
+                        <span style={{ lineHeight:1.6 }}><strong>Whats-Order is free</strong> for up to 50 orders/month. Pro plan is ₹299 for 3 months (just ₹100/month) for unlimited orders.</span>
                       </div>
                       <div style={{ display:'flex', gap:10, alignItems:'flex-start' }}>
                         <span style={{ color:'#D97706', fontWeight:800, flexShrink:0, marginTop:1 }}>ℹ</span>
@@ -1988,8 +1988,11 @@ function ProfileView({ user, onLogout }) {
                   <div style={{ padding:20 }}>
                     {/* Free plan usage bar */}
                     <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:6 }}>
-                      <span style={{ fontSize:13, fontWeight:700, color:'#0F1A14' }}>Free Plan</span>
-                      <span style={{ fontSize:12, color:'#6B7F72' }}>{stats?.total_orders||0} / 50 orders used</span>
+                      <div>
+                        <span style={{ fontSize:13, fontWeight:800, color:'#0F1A14' }}>Free Plan</span>
+                        <span style={{ fontSize:11, fontWeight:700, color:'#0A6640', background:'#E8F5E9', padding:'2px 8px', borderRadius:20, marginLeft:8 }}>50 orders/month FREE</span>
+                      </div>
+                      <span style={{ fontSize:12, color:'#6B7F72' }}>{stats?.total_orders||0} / 50 used</span>
                     </div>
                     <div style={{ height:6, background:'#F0F4F1', borderRadius:3, marginBottom:20, overflow:'hidden' }}>
                       <div style={{ height:'100%', width:`${Math.min(((stats?.total_orders||0)/50)*100,100)}%`, background: (stats?.total_orders||0) >= 45 ? '#EF4444' : (stats?.total_orders||0) >= 35 ? '#F59E0B' : '#0A6640', borderRadius:3, transition:'width .6s' }} />
@@ -2004,7 +2007,8 @@ function ProfileView({ user, onLogout }) {
                         </div>
                         <div style={{ textAlign:'right' }}>
                           <div style={{ fontSize:22, fontWeight:900, letterSpacing:-0.5 }}>₹299</div>
-                          <div style={{ fontSize:11, opacity:.6 }}>/month</div>
+                          <div style={{ fontSize:11, color:'#86EFAC', fontWeight:700 }}>/ 3 months</div>
+                          <div style={{ fontSize:11, opacity:.5, marginTop:1 }}>₹100/month</div>
                         </div>
                       </div>
                       <div style={{ display:'flex', gap:16, marginBottom:14, flexWrap:'wrap' }}>
@@ -2013,7 +2017,7 @@ function ProfileView({ user, onLogout }) {
                         ))}
                       </div>
                       <button
-                        onClick={() => window.open('mailto:whatsorder.help@gmail.com?subject=Upgrade to Pro&body=I would like to upgrade to the Pro plan (₹299/month) for my account: ' + (profile?.email||''), '_blank')}
+                        onClick={() => window.open('mailto:whatsorder.help@gmail.com?subject=Upgrade to Pro&body=I would like to upgrade to the Pro plan (₹299 for 3 months) for my account: ' + (profile?.email||''), '_blank')}
                         style={{ width:'100%', padding:'11px', background:'white', color:'#0A6640', border:'none', borderRadius:9, fontFamily:'var(--f)', fontSize:14, fontWeight:800, cursor:'pointer', transition:'opacity .15s' }}
                         onMouseOver={e=>e.currentTarget.style.opacity='.9'} onMouseOut={e=>e.currentTarget.style.opacity='1'}>
                         Upgrade Now →
@@ -2029,7 +2033,7 @@ function ProfileView({ user, onLogout }) {
                       <div style={{ fontSize:22, fontWeight:900 }}>Pro ⭐</div>
                     </div>
                     <div style={{ textAlign:'right' }}>
-                      <div style={{ fontSize:18, fontWeight:900 }}>₹299<span style={{ fontSize:12, fontWeight:500, opacity:.6 }}>/mo</span></div>
+                      <div style={{ fontSize:18, fontWeight:900 }}>₹299<span style={{ fontSize:12, fontWeight:500, opacity:.6 }}> / 3 months</span></div>
                       <span style={{ fontSize:11, background:'rgba(255,255,255,.15)', padding:'3px 10px', borderRadius:20, fontWeight:700 }}>Active</span>
                     </div>
                   </div>
@@ -2323,7 +2327,7 @@ function LandingPage({ onLogin, onSignup, onBack }) {
               </button>
             </div>
             <div style={{ display:'flex', gap:12, color:'rgba(255,255,255,0.35)', fontSize:12.5, flexWrap:'wrap' }} className='lp-trust'>
-              {['No credit card required','Free forever up to 50 orders','Cancel anytime'].map((t,i)=>(
+              {['No credit card required','50 orders/month FREE forever','Cancel anytime'].map((t,i)=>(
                 <span key={i} style={{ display:'flex', alignItems:'center', gap:5 }}><span style={{ color:'#10B981' }}>✓</span>{t}</span>
               ))}
             </div>
@@ -2458,9 +2462,12 @@ function LandingPage({ onLogin, onSignup, onBack }) {
           <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:24, padding:32 }}>
             <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Free Plan</div>
             <div style={{ fontSize:48, fontWeight:900, color:'white', lineHeight:1, marginBottom:4 }}>₹0</div>
-            <div style={{ fontSize:14, color:'rgba(255,255,255,0.3)', margin:'0 0 28px' }}>Forever free</div>
+            <div style={{ display:'flex', alignItems:'center', gap:8, margin:'6px 0 20px', flexWrap:'wrap' }}>
+              <span style={{ fontSize:13, fontWeight:800, color:'#10B981', background:'rgba(16,185,129,.15)', padding:'3px 10px', borderRadius:20 }}>50 orders FREE every month</span>
+              <span style={{ fontSize:12, color:'rgba(255,255,255,.35)' }}>No credit card · Forever free</span>
+            </div>
             <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:32 }}>
-              {['50 orders per month','WhatsApp inbox & replies','6-stage order tracking','Quick reply templates','Invoice printing','Sales analytics'].map((f,i)=>(
+              {['50 orders/month — completely free','WhatsApp inbox & replies','6-stage order tracking','Quick reply templates','Invoice printing','Sales analytics'].map((f,i)=>(
                 <div key={i} style={{ display:'flex', alignItems:'center', gap:10, fontSize:14, color:'rgba(255,255,255,0.7)' }}>
                   <span style={{ color:'#10B981', flexShrink:0, fontWeight:700 }}>✓</span>{f}
                 </div>
@@ -2477,8 +2484,14 @@ function LandingPage({ onLogin, onSignup, onBack }) {
             <div style={{ position:'absolute', top:0, right:0, background:'linear-gradient(135deg,#0A6640,#10B981)', padding:'6px 20px', fontSize:11, fontWeight:800, letterSpacing:.5, borderRadius:'0 24px 0 14px' }}>POPULAR</div>
             <div style={{ position:'absolute', bottom:-60, right:-60, width:180, height:180, background:'radial-gradient(circle, rgba(16,185,129,0.15) 0%, transparent 70%)', pointerEvents:'none' }} />
             <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.5)', textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Pro Plan</div>
-            <div style={{ fontSize:48, fontWeight:900, color:'white', lineHeight:1, marginBottom:4 }}>₹299</div>
-            <div style={{ fontSize:14, color:'rgba(255,255,255,0.4)', margin:'0 0 28px' }}>per month</div>
+            <div style={{ display:'flex', alignItems:'baseline', gap:8, marginBottom:4 }}>
+              <div style={{ fontSize:48, fontWeight:900, color:'white', lineHeight:1 }}>₹299</div>
+              <div style={{ fontSize:16, color:'rgba(255,255,255,.5)', fontWeight:500 }}>/ 3 months</div>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:8, margin:'4px 0 20px', flexWrap:'wrap' }}>
+              <span style={{ fontSize:13, fontWeight:800, color:'#10B981', background:'rgba(16,185,129,.15)', padding:'3px 10px', borderRadius:20 }}>₹100/month</span>
+              <span style={{ fontSize:12, color:'rgba(255,255,255,.35)' }}>Unlimited orders</span>
+            </div>
             <div style={{ display:'flex', flexDirection:'column', gap:12, marginBottom:32 }}>
               {['Unlimited orders','Everything in Free','Priority support','Early access to new features'].map((f,i)=>(
                 <div key={i} style={{ display:'flex', alignItems:'center', gap:10, fontSize:14, color:'rgba(255,255,255,0.85)' }}>
@@ -2507,7 +2520,7 @@ function LandingPage({ onLogin, onSignup, onBack }) {
             Whats-Order is purpose-built for these businesses — <strong style={{ color:'rgba(255,255,255,0.75)' }}>zero technical knowledge required</strong>, works with your existing WhatsApp Business number.
           </p>
           <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }} className='lp-stats-grid'>
-            {[['50+','Free orders/month'],['₹0','Setup cost'],['6','Order stages'],['1-click','Invoice printing']].map(([n,l],i)=>(
+            {[['50','Free orders every month'],['₹0','Setup cost'],['6','Order stages'],['₹100','Per month on Pro']].map(([n,l],i)=>(
               <div key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'20px 16px' }}>
                 <div style={{ fontSize:28, fontWeight:900, color:'#10B981', marginBottom:4 }}>{n}</div>
                 <div style={{ fontSize:12, color:'rgba(255,255,255,0.35)', lineHeight:1.4 }}>{l}</div>
@@ -2524,7 +2537,8 @@ function LandingPage({ onLogin, onSignup, onBack }) {
           <h2 style={{ fontSize:'clamp(28px,4vw,48px)', fontWeight:900, color:'white', margin:'0 0 16px', letterSpacing:-1.5 }}>
             Start managing orders<br/>smarter today.
           </h2>
-          <p style={{ fontSize:16, color:'rgba(255,255,255,0.4)', margin:'0 0 40px', lineHeight:1.7 }}>Free forever for up to 50 orders/month. No credit card. No technical setup.</p>
+          <p style={{ fontSize:16, color:'rgba(255,255,255,0.4)', margin:'0 0 8px', lineHeight:1.7 }}>Start free — <strong style={{ color:'#10B981' }}>50 orders/month free forever.</strong> No credit card. No setup.</p>
+          <p style={{ fontSize:14, color:'rgba(255,255,255,0.3)', margin:'0 0 40px' }}>Need more? Upgrade to Pro for just ₹299 for 3 months (₹100/month).</p>
           <div style={{ display:'flex', gap:12, justifyContent:'center', flexWrap:'wrap' }} className='lp-cta-btns'>
             <button onClick={onSignup} style={{ background:'linear-gradient(135deg,#0A6640,#10B981)', color:'white', border:'none', borderRadius:12, padding:'15px 36px', fontFamily:'inherit', fontSize:16, fontWeight:800, cursor:'pointer', boxShadow:'0 8px 40px rgba(10,102,64,0.5)', letterSpacing:-.3, transition:'all .15s' }}
               onMouseOver={e=>{e.currentTarget.style.transform='translateY(-2px)';e.currentTarget.style.boxShadow='0 16px 48px rgba(16,185,129,0.5)'}}
@@ -2719,7 +2733,7 @@ function TermsPage({ onBack }) {
 
       <Section title="4. Plans & billing">
         <p style={{ marginBottom:12 }}><strong style={{ color:'white' }}>Free Plan:</strong> Allows up to 50 orders per month at no charge. Free forever with no credit card required.</p>
-        <p style={{ marginBottom:12 }}><strong style={{ color:'white' }}>Pro Plan:</strong> ₹299 per month. Provides unlimited orders and priority support. Billed monthly.</p>
+        <p style={{ marginBottom:12 }}><strong style={{ color:'white' }}>Pro Plan:</strong> ₹299 per 3 months (₹100/month). Provides unlimited orders and priority support. Billed quarterly.</p>
         <ul style={{ paddingLeft:20, display:'flex', flexDirection:'column', gap:8 }}>
           <li>Pro plan payments are processed manually — contact us at whatsorder.help@gmail.com to upgrade.</li>
           <li>We reserve the right to change pricing with 30 days notice.</li>
@@ -2876,7 +2890,10 @@ function AboutPage({ onBack }) {
           <div style={{ background:'white', border:'1.5px solid #E4EDE6', borderRadius:20, padding:32 }}>
             <div style={{ fontSize:13, fontWeight:700, color:'#6B7F72', textTransform:'uppercase', letterSpacing:.8, marginBottom:8 }}>Free Plan</div>
             <div style={{ fontSize:40, fontWeight:900, color:'#0F1A14', marginBottom:4 }}>₹0</div>
-            <div style={{ fontSize:14, color:'#6B7F72', marginBottom:24 }}>Forever free</div>
+            <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:20, flexWrap:'wrap' }}>
+              <span style={{ fontSize:12, fontWeight:800, color:'#0A6640', background:'#E8F5E9', padding:'3px 10px', borderRadius:20 }}>50 orders FREE/month</span>
+              <span style={{ fontSize:12, color:'#9CA3AF' }}>No credit card</span>
+            </div>
             <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:28 }}>
               {['50 orders per month','WhatsApp inbox & replies','Order tracking (6 stages)','Invoice printing','Top selling items report','Quick reply templates'].map((f,i) => (
                 <div key={i} style={{ display:'flex', alignItems:'center', gap:10, fontSize:14 }}>
@@ -2892,8 +2909,14 @@ function AboutPage({ onBack }) {
           <div style={{ background:'linear-gradient(135deg, #0A6640 0%, #0D8A52 100%)', borderRadius:20, padding:32, color:'white', position:'relative', overflow:'hidden' }}>
             <div style={{ position:'absolute', top:16, right:16, background:'rgba(255,255,255,0.2)', borderRadius:20, padding:'4px 12px', fontSize:12, fontWeight:700 }}>POPULAR</div>
             <div style={{ fontSize:13, fontWeight:700, opacity:.8, textTransform:'uppercase', letterSpacing:.8, marginBottom:8 }}>Pro Plan</div>
-            <div style={{ fontSize:40, fontWeight:900, marginBottom:4 }}>₹299</div>
-            <div style={{ fontSize:14, opacity:.8, marginBottom:24 }}>per month</div>
+            <div style={{ display:'flex', alignItems:'baseline', gap:8, marginBottom:4 }}>
+              <div style={{ fontSize:40, fontWeight:900 }}>₹299</div>
+              <div style={{ fontSize:15, opacity:.6, fontWeight:500 }}>/ 3 months</div>
+            </div>
+            <div style={{ display:'flex', alignItems:'center', gap:6, marginBottom:20, flexWrap:'wrap' }}>
+              <span style={{ fontSize:12, fontWeight:800, color:'#86EFAC', background:'rgba(255,255,255,.1)', padding:'3px 10px', borderRadius:20 }}>₹100/month</span>
+              <span style={{ fontSize:12, opacity:.5 }}>Unlimited orders</span>
+            </div>
             <div style={{ display:'flex', flexDirection:'column', gap:10, marginBottom:28 }}>
               {['Unlimited orders','Everything in Free','Priority support','Early access to new features'].map((f,i) => (
                 <div key={i} style={{ display:'flex', alignItems:'center', gap:10, fontSize:14 }}>
@@ -3124,6 +3147,47 @@ function SignupScreen({ onDone, onLogin, onBack }) {
 export default function App() {
   injectCSS()
 
+  // ── PWA install prompt ──────────────────────────────────────────────────────
+  const [installPrompt, setInstallPrompt] = useState(null)
+  const [showInstallBanner, setShowInstallBanner] = useState(false)
+  const [showUpdateBanner, setShowUpdateBanner] = useState(false)
+
+  useEffect(() => {
+    // Capture the beforeinstallprompt event
+    const handler = e => {
+      e.preventDefault()
+      setInstallPrompt(e)
+      // Only show if user hasn't dismissed before
+      if (!localStorage.getItem('pwa-install-dismissed')) {
+        setTimeout(() => setShowInstallBanner(true), 3000)
+      }
+    }
+    window.addEventListener('beforeinstallprompt', handler)
+
+    // Listen for SW update
+    window.addEventListener('pwa-update-available', () => setShowUpdateBanner(true))
+
+    return () => window.removeEventListener('beforeinstallprompt', handler)
+  }, [])
+
+  const handleInstall = async () => {
+    if (!installPrompt) return
+    installPrompt.prompt()
+    const { outcome } = await installPrompt.userChoice
+    if (outcome === 'accepted') setShowInstallBanner(false)
+    setInstallPrompt(null)
+  }
+
+  const dismissInstall = () => {
+    setShowInstallBanner(false)
+    localStorage.setItem('pwa-install-dismissed', '1')
+  }
+
+  const handleUpdate = () => {
+    setShowUpdateBanner(false)
+    window.location.reload()
+  }
+
   // Detect reset token in URL on load
   const initialScreen = () => {
     const params = new URLSearchParams(window.location.search)
@@ -3172,6 +3236,33 @@ export default function App() {
       {screen==='reset-password' && <ResetPasswordScreen token={resetToken} onDone={goLogin} />}
       {screen==='onboarding'     && <OnboardingScreen user={user} onDone={afterOnboarding} addToast={(m,t) => console.warn('onboarding:', m)} />}
       {screen==='dashboard'      && <Dashboard user={user} onLogout={logout} />}
+
+      {/* ── PWA Install Banner ── */}
+      {showInstallBanner && installPrompt && (
+        <div style={{ position:'fixed', bottom: window.innerWidth < 768 ? 'calc(60px + env(safe-area-inset-bottom,0px) + 12px)' : '20px', left:'50%', transform:'translateX(-50%)', zIndex:9999, background:'#0A6640', color:'white', borderRadius:16, padding:'14px 18px', display:'flex', alignItems:'center', gap:12, boxShadow:'0 8px 32px rgba(0,0,0,0.4)', width:'min(360px,calc(100vw - 32px))', fontFamily:'var(--f)' }}>
+          <div style={{ width:40, height:40, borderRadius:10, background:'rgba(255,255,255,.15)', display:'flex', alignItems:'center', justifyContent:'center', fontSize:22, flexShrink:0 }}>W</div>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontWeight:800, fontSize:14, marginBottom:2 }}>Install Whats-Order</div>
+            <div style={{ fontSize:12, opacity:.8 }}>Add to home screen for quick access</div>
+          </div>
+          <div style={{ display:'flex', gap:8, flexShrink:0 }}>
+            <button onClick={handleInstall} style={{ background:'white', color:'#0A6640', border:'none', borderRadius:8, padding:'7px 14px', fontFamily:'var(--f)', fontSize:13, fontWeight:800, cursor:'pointer' }}>Install</button>
+            <button onClick={dismissInstall} style={{ background:'rgba(255,255,255,.15)', color:'white', border:'none', borderRadius:8, padding:'7px 10px', fontFamily:'var(--f)', fontSize:13, cursor:'pointer' }}>✕</button>
+          </div>
+        </div>
+      )}
+
+      {/* ── PWA Update Banner ── */}
+      {showUpdateBanner && (
+        <div style={{ position:'fixed', top:16, left:'50%', transform:'translateX(-50%)', zIndex:9999, background:'#1E293B', color:'white', borderRadius:12, padding:'12px 18px', display:'flex', alignItems:'center', gap:12, boxShadow:'0 8px 32px rgba(0,0,0,0.4)', width:'min(340px,calc(100vw - 32px))', fontFamily:'var(--f)' }}>
+          <span style={{ fontSize:20 }}>🔄</span>
+          <div style={{ flex:1 }}>
+            <div style={{ fontWeight:700, fontSize:13 }}>Update available</div>
+            <div style={{ fontSize:12, opacity:.7 }}>Refresh to get the latest version</div>
+          </div>
+          <button onClick={handleUpdate} style={{ background:'#10B981', color:'white', border:'none', borderRadius:8, padding:'7px 14px', fontFamily:'var(--f)', fontSize:13, fontWeight:700, cursor:'pointer' }}>Refresh</button>
+        </div>
+      )}
     </div>
   )
 }
