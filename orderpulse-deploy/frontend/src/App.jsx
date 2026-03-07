@@ -946,51 +946,34 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
   const [editingName, setEditingName] = useState(false)
   const [nameInput, setNameInput] = useState('')
 
-  // openedIds: contacts the user has opened this session — their count is always 0
-  const openedIds = useRef(new Set())
-  // onUnreadChange ref so loadInbox (useCallback) always calls fresh version
+  // onUnreadChange ref — avoids stale closure in useCallback
   const onUnreadChangeRef = useRef(onUnreadChange)
   useEffect(() => { onUnreadChangeRef.current = onUnreadChange }, [onUnreadChange])
-
-  const computeAndReportUnread = (data) => {
-    // Count contacts with unread messages, excluding ones the user has opened
-    const n = data.reduce((s, t) => {
-      if (openedIds.current.has(t.contact?.id)) return s
-      return s + (t.unread_count > 0 ? 1 : 0)
-    }, 0)
-    onUnreadChangeRef.current?.(n)
-    return n
-  }
 
   const prevUnreadRef = useRef(-1)
   const loadInbox = useCallback(async () => {
     try {
       const data = await api.getInbox()
-      // Zero out count for active thread in local display
-      const active = activeRef.current
-      const display = data.map(t =>
-        active && t.contact?.id === active.contact?.id
-          ? { ...t, unread_count: 0 } : t
-      )
-      setThreads(display)
-      computeAndReportUnread(data)  // use raw data (not display) for accurate count
+      setThreads(data)
 
-      // Notify on new messages while tab is hidden
+      // Mark ALL contacts read in DB every time inbox loads — this is the source of truth
+      // After this, server will return unread_count=0 for all contacts until new messages arrive
+      api.markAllRead().catch(() => {})
+
+      // Badge = count of contacts that still have unread (before markAllRead propagates)
       const totalUnread = data.reduce((s, t) => s + (t.unread_count || 0), 0)
+      // Report 0 immediately since user is looking at inbox right now
+      onUnreadChangeRef.current?.(0)
+
+      // Sound/tab flash for new messages when tab was hidden
       if (prevUnreadRef.current >= 0 && totalUnread > prevUnreadRef.current && document.hidden) {
         playNotifSound()
         flashTab('New WhatsApp message!')
       }
       prevUnreadRef.current = totalUnread
 
-      // Auto-select first thread on initial load
-      if (!activeRef.current && data.length) {
-        const first = data[0]
-        setActiveWithRef(first)
-        openedIds.current.add(first.contact?.id)
-        api.markRead(first.contact?.id).catch(() => {})
-        onUnreadChangeRef.current?.(computeAndReportUnread(data))
-      }
+      // Auto-select first thread
+      if (!activeRef.current && data.length) setActiveWithRef(data[0])
     }
     catch { addToast('Failed to load inbox', 'error') }
     finally { setLoading(false) }
@@ -1085,16 +1068,7 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
             const intent = intentOf(t.last_message?.body)
             return (
               <div key={t.contact?.id} className={`thread ${active?.contact?.id===t.contact?.id?'on':''}`} onClick={() => {
-                const cleared = { ...t, unread_count: 0 }
-                setActiveWithRef(cleared)
-                // Mark as opened — persists for full session, badge stays 0
-                openedIds.current.add(t.contact?.id)
-                setThreads(prev => {
-                  const updated = prev.map(x => x.contact?.id === t.contact?.id ? cleared : x)
-                  computeAndReportUnread(updated)
-                  return updated
-                })
-                // Persist to DB so count is 0 after refresh too
+                setActiveWithRef(t)
                 api.markRead(t.contact?.id).catch(() => {})
               }}>
                 <div className="av" style={{ width:42, height:42, background:a.bg }}>{a.initials}</div>
@@ -2007,7 +1981,6 @@ function Dashboard({ user, onLogout }) {
     return () => clearInterval(t)
   }, [])
 
-  // Inbox unread count is managed entirely by InboxView and reported up here
   const handleUnreadChange = useCallback((n) => setUnreadCount(n), [])
 
   const NAV = [
