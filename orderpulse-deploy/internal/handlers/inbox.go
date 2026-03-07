@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"io"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -182,4 +184,167 @@ func (h *InboxHandler) TagChat(w http.ResponseWriter, r *http.Request) {
 		"status":         "tagged",
 		"messages_tagged": tag.RowsAffected(),
 	})
+}
+
+// ─── GET /api/media/{mediaId} ────────────────────────────────────────────────
+// Proxies a Meta media download. Meta's direct URLs expire in ~5 minutes and
+// require authentication — so we proxy through our backend per-tenant.
+// The frontend never contacts Meta directly for media.
+func (h *InboxHandler) ProxyMedia(w http.ResponseWriter, r *http.Request) {
+	tenantID := middleware.TenantIDFromCtx(r.Context())
+	mediaID   := chi.URLParam(r, "mediaId")
+	if mediaID == "" {
+		writeError(w, http.StatusBadRequest, "missing mediaId", "bad_request")
+		return
+	}
+
+	// Fetch tenant's access token
+	var waToken string
+	err := h.db.QueryRow(r.Context(), `
+		SELECT wa_access_token FROM tenants WHERE id = $1
+	`, tenantID).Scan(&waToken)
+	if err != nil || waToken == "" {
+		writeError(w, http.StatusUnauthorized, "tenant token not found", "no_token")
+		return
+	}
+
+	// Step 1: Get the temporary download URL from Meta
+	info, err := whatsapp.GetMediaURL(mediaID, waToken)
+	if err != nil {
+		writeError(w, http.StatusBadGateway, "failed to get media URL: "+err.Error(), "meta_error")
+		return
+	}
+
+	// Step 2: Download the actual bytes
+	data, contentType, err := whatsapp.DownloadMedia(info.URL, waToken)
+	if err != nil {
+		writeError(w, http.StatusBadGateway, "failed to download media: "+err.Error(), "meta_error")
+		return
+	}
+
+	// Stream back to frontend with proper content type
+	if contentType == "" {
+		contentType = info.MimeType
+	}
+	if contentType == "" {
+		contentType = "application/octet-stream"
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Cache-Control", "private, max-age=3600") // cache 1 hour in browser
+	w.Header().Set("X-Content-Type-Options", "nosniff")
+	w.WriteHeader(http.StatusOK)
+	w.Write(data)
+}
+
+// ─── POST /api/inbox/{contactId}/send-media ──────────────────────────────────
+// Sends a media message (image, document, audio) to a contact.
+// Accepts multipart/form-data with: file (binary), type (image|document|audio), caption (optional)
+func (h *InboxHandler) SendMedia(w http.ResponseWriter, r *http.Request) {
+	tenantID  := middleware.TenantIDFromCtx(r.Context())
+	contactID := chi.URLParam(r, "contactId")
+
+	// Max 16MB for media
+	if err := r.ParseMultipartForm(16 << 20); err != nil {
+		writeError(w, http.StatusBadRequest, "failed to parse form", "bad_request")
+		return
+	}
+
+	file, header, err := r.FormFile("file")
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "missing file", "bad_request")
+		return
+	}
+	defer file.Close()
+
+	caption     := r.FormValue("caption")
+	msgType     := r.FormValue("type") // image | document | audio
+	if msgType == "" { msgType = "image" }
+
+	// Read file bytes
+	fileData, err := io.ReadAll(file)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to read file", "read_error")
+		return
+	}
+
+	// Detect MIME type from header or filename
+	mimeType := header.Header.Get("Content-Type")
+	if mimeType == "" || mimeType == "application/octet-stream" {
+		mimeType = detectMimeType(header.Filename)
+	}
+
+	// Fetch tenant credentials
+	var waPhoneID, waToken, customerNumber string
+	err = h.db.QueryRow(r.Context(), `
+		SELECT t.wa_phone_id, t.wa_access_token, c.wa_number
+		FROM tenants t
+		JOIN contacts c ON c.id = $2::uuid AND c.tenant_id = t.id
+		WHERE t.id = $1
+	`, tenantID, contactID).Scan(&waPhoneID, &waToken, &customerNumber)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "contact not found", "not_found")
+		return
+	}
+
+	// Upload to Meta first to get a media ID
+	uploadedID, err := whatsapp.UploadMedia(waPhoneID, waToken, mimeType, header.Filename, fileData)
+	if err != nil {
+		writeError(w, http.StatusBadGateway, "failed to upload to Meta: "+err.Error(), "meta_error")
+		return
+	}
+
+	// Send via Cloud API
+	switch msgType {
+	case "image":
+		err = whatsapp.SendImageMessage(waPhoneID, waToken, customerNumber, uploadedID, caption)
+	case "audio":
+		err = whatsapp.SendAudioMessage(waPhoneID, waToken, customerNumber, uploadedID)
+	default: // document
+		err = whatsapp.SendDocumentMessage(waPhoneID, waToken, customerNumber, uploadedID, header.Filename, caption)
+	}
+	if err != nil {
+		writeError(w, http.StatusBadGateway, "failed to send: "+err.Error(), "meta_error")
+		return
+	}
+
+	// Store in messages table
+	body := caption
+	if body == "" && msgType != "image" {
+		body = header.Filename
+	}
+	h.db.Exec(r.Context(), `
+		INSERT INTO messages (tenant_id, contact_id, direction, type, body, media_url)
+		VALUES ($1, $2::uuid, 'outbound', $3, $4, $5)
+	`, tenantID, contactID, msgType, body, uploadedID)
+
+	writeJSON(w, http.StatusOK, map[string]string{"status": "sent", "media_id": uploadedID})
+}
+
+// detectMimeType returns a reasonable MIME type based on file extension.
+func detectMimeType(filename string) string {
+	lower := strings.ToLower(filename)
+	switch {
+	case strings.HasSuffix(lower, ".jpg") || strings.HasSuffix(lower, ".jpeg"):
+		return "image/jpeg"
+	case strings.HasSuffix(lower, ".png"):
+		return "image/png"
+	case strings.HasSuffix(lower, ".webp"):
+		return "image/webp"
+	case strings.HasSuffix(lower, ".pdf"):
+		return "application/pdf"
+	case strings.HasSuffix(lower, ".mp3"):
+		return "audio/mpeg"
+	case strings.HasSuffix(lower, ".ogg"):
+		return "audio/ogg"
+	case strings.HasSuffix(lower, ".m4a"):
+		return "audio/mp4"
+	case strings.HasSuffix(lower, ".mp4"):
+		return "video/mp4"
+	case strings.HasSuffix(lower, ".xlsx"):
+		return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+	case strings.HasSuffix(lower, ".docx"):
+		return "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+	default:
+		return "application/octet-stream"
+	}
 }
