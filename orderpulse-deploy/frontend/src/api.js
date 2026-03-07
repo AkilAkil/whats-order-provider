@@ -149,21 +149,21 @@ export async function resetPassword(token, password) {
 }
 
 export async function updateContactName(contactId, name) {
-  return request('PATCH', `/api/inbox/${contactId}/name`, { name })
+  return request('PATCH', `/inbox/${contactId}/name`, { name })
 }
 
 export async function changePassword(currentPassword, newPassword) {
-  return request('POST', '/api/auth/change-password', { current_password: currentPassword, new_password: newPassword })
+  return request('POST', '/auth/change-password', { current_password: currentPassword, new_password: newPassword })
 }
 
 export async function updateOrderItems(id, items, notes) {
-  return request('PATCH', `/api/orders/${id}/items`, { items, notes })
+  return request('PATCH', `/orders/${id}/items`, { items, notes })
 }
 
 export async function markRead(contactId) {
-  return request('POST', `/api/inbox/${contactId}/read`, {})
+  return request('POST', `/inbox/${contactId}/read`, {})
 }
 
 export async function markAllRead() {
-  return request('POST', '/api/inbox/read-all', {})
+  return request('POST', '/inbox/read-all', {})
 }
