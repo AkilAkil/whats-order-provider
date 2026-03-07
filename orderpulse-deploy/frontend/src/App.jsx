@@ -405,6 +405,186 @@ function intentOf(text) {
   return null
 }
 
+// ─── AUTHENTICATED MEDIA HOOK ─────────────────────────────────────────────────
+// Browsers don't send Authorization headers for <img src> / <audio src> / <a href>.
+// This hook fetches the media with the token and returns a local blob URL instead.
+function useAuthMedia(mediaId) {
+  const [blobUrl, setBlobUrl] = useState(null)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState(false)
+
+  useEffect(() => {
+    if (!mediaId) return
+    let active = true
+    setLoading(true)
+    setError(false)
+
+    fetch(`/api/media/${mediaId}`, {
+      headers: { 'Authorization': 'Bearer ' + localStorage.getItem('op_token') }
+    })
+      .then(r => {
+        if (!r.ok) throw new Error('failed')
+        return r.blob()
+      })
+      .then(blob => {
+        if (!active) return
+        setBlobUrl(URL.createObjectURL(blob))
+      })
+      .catch(() => { if (active) setError(true) })
+      .finally(() => { if (active) setLoading(false) })
+
+    return () => {
+      active = false
+      // Revoke on unmount to free memory
+      setBlobUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null })
+    }
+  }, [mediaId])
+
+  return { blobUrl, loading, error }
+}
+
+// AuthImage — renders an image loaded with auth header
+// ─── IMAGE LIGHTBOX ───────────────────────────────────────────────────────────
+function ImageLightbox({ src, caption, onClose }) {
+  // Close on Escape key
+  useEffect(() => {
+    const handler = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position:'fixed', inset:0, zIndex:9999,
+        background:'rgba(0,0,0,0.88)',
+        display:'flex', flexDirection:'column',
+        alignItems:'center', justifyContent:'center',
+        padding:20,
+        backdropFilter:'blur(4px)',
+        animation:'fadeIn .15s ease',
+      }}
+    >
+      {/* Close button */}
+      <button
+        onClick={onClose}
+        style={{
+          position:'absolute', top:16, right:16,
+          background:'rgba(255,255,255,0.15)', border:'none', borderRadius:'50%',
+          width:40, height:40, color:'white', fontSize:20, cursor:'pointer',
+          display:'flex', alignItems:'center', justifyContent:'center',
+          backdropFilter:'blur(4px)',
+        }}
+      >×</button>
+
+      {/* Image — stop propagation so clicking the image doesn't close */}
+      <img
+        src={src}
+        alt="photo"
+        onClick={e => e.stopPropagation()}
+        style={{
+          maxWidth:'90vw', maxHeight:'82vh',
+          objectFit:'contain', borderRadius:12,
+          boxShadow:'0 8px 40px rgba(0,0,0,0.6)',
+        }}
+      />
+
+      {/* Caption + download */}
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{ display:'flex', alignItems:'center', gap:16, marginTop:14 }}
+      >
+        {caption && (
+          <div style={{ color:'rgba(255,255,255,0.8)', fontSize:13, maxWidth:400, textAlign:'center' }}>{caption}</div>
+        )}
+        <a
+          href={src} download="photo.jpg"
+          style={{
+            color:'white', background:'rgba(255,255,255,0.15)',
+            padding:'6px 14px', borderRadius:8, fontSize:12, fontWeight:600,
+            textDecoration:'none', backdropFilter:'blur(4px)',
+          }}
+        >↓ Save</a>
+      </div>
+    </div>
+  )
+}
+
+function AuthImage({ mediaId, caption, style }) {
+  const { blobUrl, loading, error } = useAuthMedia(mediaId)
+  const [lightbox, setLightbox] = useState(false)
+
+  if (loading) return (
+    <div style={{ width:180, height:100, background:'#F0FAF5', borderRadius:10, display:'flex', alignItems:'center', justifyContent:'center', fontSize:12, color:'#6B7F72' }}>
+      ⏳ Loading photo…
+    </div>
+  )
+  if (error) return (
+    <div style={{ padding:'8px 12px', background:'rgba(0,0,0,0.06)', borderRadius:8, fontSize:12, color:'#9CA3AF' }}>
+      🖼 Photo — could not load
+    </div>
+  )
+  return (
+    <>
+      <div>
+        <img
+          src={blobUrl}
+          alt="photo"
+          style={{ maxWidth:240, maxHeight:240, borderRadius:10, display:'block', cursor:'zoom-in', objectFit:'cover', ...style }}
+          onClick={() => setLightbox(true)}
+        />
+        {caption ? <div style={{ fontSize:13, marginTop:5, color:'inherit' }}>{caption}</div> : null}
+      </div>
+      {lightbox && <ImageLightbox src={blobUrl} caption={caption} onClose={() => setLightbox(false)} />}
+    </>
+  )
+}
+
+// AuthAudio — renders an audio player loaded with auth header
+function AuthAudio({ mediaId }) {
+  const { blobUrl, loading, error } = useAuthMedia(mediaId)
+  if (loading) return (
+    <div style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 4px', fontSize:12, color:'#6B7F72' }}>
+      🎤 <span>Loading audio…</span>
+    </div>
+  )
+  if (error) return (
+    <div style={{ padding:'8px 12px', background:'rgba(0,0,0,0.06)', borderRadius:8, fontSize:12, color:'#9CA3AF' }}>
+      🎤 Voice message — could not load
+    </div>
+  )
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:8, padding:'4px 0' }}>
+      <span style={{ fontSize:18 }}>🎤</span>
+      <audio controls src={blobUrl} style={{ height:32, maxWidth:200 }} />
+    </div>
+  )
+}
+
+// AuthDocument — renders a downloadable document card loaded with auth header
+function AuthDocument({ mediaId, filename, caption }) {
+  const { blobUrl, loading, error } = useAuthMedia(mediaId)
+  const displayName = filename || 'Document'
+  return (
+    <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 10px', background:'rgba(0,0,0,0.04)', borderRadius:10, border:'1px solid rgba(0,0,0,0.08)', minWidth:180 }}>
+      <span style={{ fontSize:22, flexShrink:0 }}>📄</span>
+      <div style={{ flex:1, minWidth:0 }}>
+        <div style={{ fontSize:12.5, fontWeight:600, color:'#1A2E22', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{displayName}</div>
+        {caption && <div style={{ fontSize:11, color:'#6B7F72', marginTop:1 }}>{caption}</div>}
+        {loading && <div style={{ fontSize:11, color:'#9CA3AF', marginTop:2 }}>Loading…</div>}
+        {error && <div style={{ fontSize:11, color:'#DC2626', marginTop:2 }}>Could not load</div>}
+      </div>
+      {blobUrl && (
+        <a href={blobUrl} download={displayName}
+          style={{ fontSize:11, fontWeight:700, color:'#0A6640', textDecoration:'none', background:'#E8F5E9', padding:'4px 9px', borderRadius:6, flexShrink:0 }}>
+          ↓ Save
+        </a>
+      )}
+    </div>
+  )
+}
+
 // ─── SMALL COMPONENTS ─────────────────────────────────────────────────────────
 function Spinner({ lg }) {
   return lg
@@ -1380,41 +1560,17 @@ function InboxView({ addToast, onNavOrders, onUnreadChange }) {
 
                   {/* ── Media bubble renderer ── */}
                   {m.type === 'image' && m.media_url ? (
-                    <div style={{ marginBottom: m.body ? 6 : 0 }}>
-                      <img
-                        src={`/api/media/${m.media_url}`}
-                        alt="photo"
-                        style={{ maxWidth:240, maxHeight:240, borderRadius:10, display:'block', cursor:'pointer', objectFit:'cover' }}
-                        onClick={() => window.open(`/api/media/${m.media_url}`, '_blank')}
-                        onError={e => { e.target.style.display='none'; e.target.nextSibling.style.display='flex' }}
-                      />
-                      <div style={{ display:'none', alignItems:'center', gap:6, padding:'8px 10px', background:'rgba(0,0,0,0.06)', borderRadius:8, fontSize:12, color:'#6B7F72' }}>
-                        🖼 Photo — <a href={`/api/media/${m.media_url}`} target="_blank" style={{ color:'#0A6640', fontWeight:600 }}>Open</a>
-                      </div>
-                      {m.body ? <div className="mb" style={{ marginTop:4 }}>{m.body}</div> : null}
-                    </div>
+                    <AuthImage mediaId={m.media_url} caption={m.body} />
                   ) : m.type === 'audio' || m.type === 'voice' ? (
-                    <div style={{ display:'flex', alignItems:'center', gap:8, padding:'6px 4px' }}>
-                      <span style={{ fontSize:18 }}>🎤</span>
-                      <audio controls src={`/api/media/${m.media_url}`} style={{ height:32, maxWidth:200 }} />
-                    </div>
+                    <AuthAudio mediaId={m.media_url} />
                   ) : m.type === 'document' && m.media_url ? (
-                    <div style={{ display:'flex', alignItems:'center', gap:10, padding:'8px 10px', background:'rgba(0,0,0,0.04)', borderRadius:10, border:'1px solid rgba(0,0,0,0.08)' }}>
-                      <span style={{ fontSize:22, flexShrink:0 }}>📄</span>
-                      <div style={{ flex:1, minWidth:0 }}>
-                        <div style={{ fontSize:12.5, fontWeight:600, color:'#1A2E22', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>
-                          {m.media_url.includes('|') ? m.media_url.split('|')[1] : 'Document'}
-                        </div>
-                        {m.body && <div style={{ fontSize:11, color:'#6B7F72', marginTop:1 }}>{m.body}</div>}
-                      </div>
-                      <a href={`/api/media/${m.media_url.split('|')[0]}`} target="_blank" download
-                        style={{ fontSize:11, fontWeight:700, color:'#0A6640', textDecoration:'none', background:'#E8F5E9', padding:'3px 8px', borderRadius:6, flexShrink:0 }}>
-                        ↓ Save
-                      </a>
-                    </div>
+                    <AuthDocument
+                      mediaId={m.media_url.split('|')[0]}
+                      filename={m.media_url.includes('|') ? m.media_url.split('|')[1] : 'Document'}
+                      caption={m.body}
+                    />
                   ) : m.type === 'sticker' && m.media_url ? (
-                    <img src={`/api/media/${m.media_url}`} alt="sticker" style={{ width:80, height:80, objectFit:'contain' }}
-                      onError={e => { e.target.outerHTML = '<span style="font-size:24px">🩹</span>' }} />
+                    <AuthImage mediaId={m.media_url} style={{ width:80, height:80, objectFit:'contain', maxWidth:80, maxHeight:80 }} />
                   ) : (
                     <div className="mb">{m.body || <span style={{ opacity:.5, fontStyle:'italic' }}>[{m.type || 'message'}]</span>}</div>
                   )}
