@@ -2397,7 +2397,7 @@ function LandingPage({ onLogin, onSignup, onBack }) {
           <div style={{ fontSize:11, fontWeight:700, color:'#10B981', textTransform:'uppercase', letterSpacing:2, marginBottom:12 }}>How it works</div>
           <h2 style={{ fontSize:'clamp(26px,3.5vw,42px)', fontWeight:900, color:'white', margin:0, letterSpacing:-1 }}>From WhatsApp message to fulfilled order</h2>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))', gap:32, position:'relative' }} className='lp-steps'>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:32 }} className='lp-steps'>
           {[
             { n:'01', icon:'📲', title:'Customer messages', desc:'They send order on WhatsApp as usual. Nothing changes for them.' },
             { n:'02', icon:'⚡', title:'Auto-detected', desc:'Whats-Order detects order intent and pre-fills items for you.' },
@@ -2453,7 +2453,7 @@ function LandingPage({ onLogin, onSignup, onBack }) {
           <h2 style={{ fontSize:'clamp(26px,3.5vw,42px)', fontWeight:900, color:'white', margin:'0 0 12px', letterSpacing:-1 }}>Simple, honest pricing</h2>
           <p style={{ fontSize:16, color:'rgba(255,255,255,0.4)', margin:0 }}>Start free. Upgrade when your business grows.</p>
         </div>
-        <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit, minmax(300px, 1fr))', gap:20 }} className='lp-pricing'>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }} className='lp-pricing'>
           {/* Free */}
           <div style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.08)', borderRadius:24, padding:32 }}>
             <div style={{ fontSize:12, fontWeight:700, color:'rgba(255,255,255,0.4)', textTransform:'uppercase', letterSpacing:1, marginBottom:10 }}>Free Plan</div>
@@ -2506,7 +2506,7 @@ function LandingPage({ onLogin, onSignup, onBack }) {
           <p style={{ fontSize:17, color:'rgba(255,255,255,0.5)', lineHeight:1.8, marginBottom:56 }}>
             Whats-Order is purpose-built for these businesses — <strong style={{ color:'rgba(255,255,255,0.75)' }}>zero technical knowledge required</strong>, works with your existing WhatsApp Business number.
           </p>
-          <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fit,minmax(140px,1fr))', gap:16 }} className='lp-stats-grid'>
+          <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:16 }} className='lp-stats-grid'>
             {[['50+','Free orders/month'],['₹0','Setup cost'],['6','Order stages'],['1-click','Invoice printing']].map(([n,l],i)=>(
               <div key={i} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.06)', borderRadius:16, padding:'20px 16px' }}>
                 <div style={{ fontSize:28, fontWeight:900, color:'#10B981', marginBottom:4 }}>{n}</div>
@@ -2562,25 +2562,6 @@ function LandingPage({ onLogin, onSignup, onBack }) {
       <style>{`
         @keyframes scroll { from { transform: translateX(0) } to { transform: translateX(-50%) } }
         @keyframes pulse { 0%,100% { opacity:1; box-shadow:0 0 6px #10B981 } 50% { opacity:.5; box-shadow:0 0 12px #10B981 } }
-        @media (max-width: 768px) {
-          .lp-hero-grid { grid-template-columns: 1fr !important; padding: 40px 5vw 32px !important; }
-          .lp-mock { display: none !important; }
-          .lp-how { padding: 60px 5vw !important; }
-          .lp-features { padding: 60px 5vw !important; }
-          .lp-pricing { padding: 60px 5vw !important; }
-          .lp-stats { padding: 60px 5vw !important; }
-          .lp-cta { padding: 60px 5vw !important; }
-          .lp-cta h2 { font-size: 28px !important; }
-          .lp-cta-btns { flex-direction: column !important; align-items: stretch !important; }
-          .lp-cta-btns button { width: 100% !important; }
-          .lp-footer { flex-direction: column !important; gap: 16px !important; text-align: center !important; }
-          .lp-footer-links { flex-wrap: wrap !important; justify-content: center !important; gap: 12px !important; }
-          .lp-nav-btns .lp-login { display: none !important; }
-          .lp-hero-h1 { font-size: 34px !important; }
-          .lp-hero-btns { flex-direction: column !important; }
-          .lp-hero-btns button { width: 100% !important; text-align: center !important; }
-          .lp-pricing-grid { grid-template-columns: 1fr !important; }
-        }
       `}</style>
     </div>
   )
