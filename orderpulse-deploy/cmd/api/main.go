@@ -158,7 +158,9 @@ func main() {
 		r.Post("/inbox/read-all", inboxHandler.MarkAllRead)
 		r.Get("/inbox/{contactId}/messages", inboxHandler.GetMessages)
 		r.Post("/inbox/{contactId}/reply", inboxHandler.Reply)
+		r.Post("/inbox/{contactId}/send-media", inboxHandler.SendMedia)
 		r.Patch("/inbox/{contactId}/tag", inboxHandler.TagChat)
+		r.Get("/media/{mediaId}", inboxHandler.ProxyMedia)
 
 		r.Get("/orders", orderHandler.List)
 		r.Post("/orders", orderHandler.Create)
