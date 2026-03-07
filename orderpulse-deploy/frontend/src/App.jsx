@@ -222,12 +222,19 @@ body.dark .loading{color:#6B8070;}
   /* Orders view fills screen */
   .ord-view{ height:calc(100vh - var(--mob-nav)); overflow-y:auto; }
 
+  /* Profile + Home fill screen */
+  .profile-wrap{ height:calc(100vh - var(--mob-nav)) !important; overflow-y:auto !important; padding:0 !important; }
+  .home-wrap{ height:calc(100vh - var(--mob-nav)) !important; overflow-y:auto !important; }
+
   /* ── Inbox mobile ── */
   .inbox-wrap{ display:flex; flex-direction:column; height:calc(100vh - var(--mob-nav)); overflow:hidden; }
   .inbox-p{ width:100%; border-right:none; flex:1; overflow:hidden; display:flex; flex-direction:column; }
   .inbox-p.chat-open{ display:none; }
-  .chat-p{ flex:1; display:flex; flex-direction:column; height:100%; }
+  /* Chat panel: fixed height, internal scroll only in msgs */
+  .chat-p{ flex:none !important; width:100%; height:calc(100vh - var(--mob-nav)); display:flex; flex-direction:column; overflow:hidden; }
   .chat-p.no-chat{ display:none; }
+  .msgs{ flex:1 !important; overflow-y:auto !important; -webkit-overflow-scrolling:touch; padding:14px 14px 8px; gap:8px; }
+  .cinput-bar{ flex-shrink:0; padding:10px 12px; padding-bottom:calc(10px + env(safe-area-inset-bottom,0px)); }
   .ph{ padding:14px 16px 10px; display:flex; align-items:center; gap:10px; }
   .ph-t{ font-size:17px; font-weight:800; }
   .thread{ padding:14px 16px; gap:12px; }
@@ -258,9 +265,8 @@ body.dark .loading{color:#6B8070;}
   .ord-filters{ padding:0 14px 8px !important; gap:6px !important; flex-wrap:nowrap !important; overflow-x:auto !important; -webkit-overflow-scrolling:touch; }
   .ord-filters::-webkit-scrollbar{ display:none; }
 
-  /* Profile mobile */
-  .profile-wrap{ padding:14px !important; }
-  .profile-wrap > div[style]{ padding:20px 18px !important; }
+  /* Profile inner content padding on mobile */
+  .profile-wrap > div:last-child{ padding:16px 16px 32px !important; }
 
   /* Modals — bottom sheet on mobile */
   .ov{ align-items:flex-end !important; }
@@ -2063,7 +2069,7 @@ function HomeView({ user, onNav }) {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   return (
-    <div style={{ flex:1, overflowY:'auto', background:'#F7F8F6' }}>
+    <div style={{ flex:1, overflowY:'auto', background:'#F7F8F6' }} className="home-wrap">
       {/* Hero banner */}
       <div style={{ background:'linear-gradient(135deg, #0A6640 0%, #0D8A52 60%, #10B981 100%)', padding:'36px 36px 40px', position:'relative', overflow:'hidden' }}>
         <div style={{ position:'absolute', inset:0, opacity:.06, backgroundImage:'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize:'24px 24px' }} />
