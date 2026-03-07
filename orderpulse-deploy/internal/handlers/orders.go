@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
-	"encoding/json"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -161,7 +161,7 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	if plan == "free" && monthlyCount >= 50 {
 		writeError(w, http.StatusPaymentRequired,
-			"You've reached the 50 orders/month limit on the free plan. Upgrade to Pro (₹299/month) for unlimited orders.",
+			"You've reached the 50 orders/month limit on the free plan. Upgrade to Pro (₹299 for 3 months) for unlimited orders.",
 			"plan_limit_exceeded")
 		return
 	}
@@ -483,7 +483,7 @@ func (h *OrderHandler) ConfirmPayment(w http.ResponseWriter, r *http.Request) {
 
 	if plan == "free" && monthlyCount >= 50 {
 		writeError(w, http.StatusPaymentRequired,
-			"You've reached the 50 orders/month limit on the free plan. Upgrade to Pro (₹299/month) for unlimited orders.",
+			"You've reached the 50 orders/month limit on the free plan. Upgrade to Pro (₹299 for 3 months) for unlimited orders.",
 			"plan_limit_exceeded")
 		return
 	}
