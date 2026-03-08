@@ -412,10 +412,13 @@ function useAuthMedia(mediaId) {
   const [blobUrl, setBlobUrl] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(false)
+  // Keep a ref to the current blob URL so cleanup can revoke it without
+  // needing to read state (which is stale inside cleanup closures).
+  const blobRef = useRef(null)
 
   useEffect(() => {
     if (!mediaId) return
-    let active = true
+    let cancelled = false
     setLoading(true)
     setError(false)
 
@@ -427,16 +430,23 @@ function useAuthMedia(mediaId) {
         return r.blob()
       })
       .then(blob => {
-        if (!active) return
-        setBlobUrl(URL.createObjectURL(blob))
+        if (cancelled) return
+        const url = URL.createObjectURL(blob)
+        blobRef.current = url
+        setBlobUrl(url)
       })
-      .catch(() => { if (active) setError(true) })
-      .finally(() => { if (active) setLoading(false) })
+      .catch(() => { if (!cancelled) setError(true) })
+      .finally(() => { if (!cancelled) setLoading(false) })
 
     return () => {
-      active = false
-      // Revoke on unmount to free memory
-      setBlobUrl(prev => { if (prev) URL.revokeObjectURL(prev); return null })
+      cancelled = true
+      // Revoke the blob URL synchronously on unmount — safe because blobRef
+      // is a plain ref, not state, so no stale closure issues.
+      if (blobRef.current) {
+        URL.revokeObjectURL(blobRef.current)
+        blobRef.current = null
+      }
+      setBlobUrl(null)
     }
   }, [mediaId])
 
@@ -1713,7 +1723,7 @@ function PrintInvoiceModal({ order, onClose }) {
       <div class="section">
         <div class="section-title">Order Items</div>
         <table>
-          <thead><tr><th>#</th><th>Item</th><th>Qty</th><th>Unit</th><th style="text-align:right">Price (₹)</th></tr></thead>
+          <thead><tr><th>#</th><th>Item</th><th>Qty</th><th>Unit</th><th style="text-align:right">Rate (₹)</th><th style="text-align:right">Amount (₹)</th></tr></thead>
           <tbody>
             ${(order.items||[]).map((item,i) => `
               <tr>
@@ -1721,10 +1731,11 @@ function PrintInvoiceModal({ order, onClose }) {
                 <td style="font-weight:600">${item.name}</td>
                 <td>${item.qty}</td>
                 <td style="color:#6B7F72">${item.unit||'—'}</td>
-                <td style="text-align:right">${item.price ? '₹'+Number(item.price).toLocaleString('en-IN') : '—'}</td>
+                <td style="text-align:right">${item.unit_price ? '₹'+Number(item.unit_price).toLocaleString('en-IN') : '—'}</td>
+                <td style="text-align:right;font-weight:600">${item.unit_price ? '₹'+Number(item.qty * item.unit_price).toLocaleString('en-IN') : '—'}</td>
               </tr>`).join('')}
             <tr class="total-row">
-              <td colspan="4" style="text-align:right;color:#6B7F72;font-size:13px;">Total Amount</td>
+              <td colspan="5" style="text-align:right;color:#6B7F72;font-size:13px;">Total Amount</td>
               <td style="text-align:right;color:#0A6640">₹${Number(order.total_amount||0).toLocaleString('en-IN')}</td>
             </tr>
           </tbody>
@@ -1771,18 +1782,22 @@ function PrintInvoiceModal({ order, onClose }) {
             <thead><tr style={{ background:'#F0FAF5' }}>
               <th style={{ padding:'6px 8px', textAlign:'left', color:'#0A6640', fontSize:11 }}>Item</th>
               <th style={{ padding:'6px 8px', textAlign:'center', color:'#0A6640', fontSize:11 }}>Qty</th>
-              <th style={{ padding:'6px 8px', textAlign:'right', color:'#0A6640', fontSize:11 }}>Price</th>
+              <th style={{ padding:'6px 8px', textAlign:'center', color:'#0A6640', fontSize:11 }}>Unit</th>
+              <th style={{ padding:'6px 8px', textAlign:'right', color:'#0A6640', fontSize:11 }}>Rate</th>
+              <th style={{ padding:'6px 8px', textAlign:'right', color:'#0A6640', fontSize:11 }}>Amount</th>
             </tr></thead>
             <tbody>
               {(order.items||[]).map((item,i) => (
                 <tr key={i} style={{ borderBottom:'1px solid #F0F0F0' }}>
                   <td style={{ padding:'6px 8px', fontWeight:600 }}>{item.name}</td>
-                  <td style={{ padding:'6px 8px', textAlign:'center', color:'#6B7F72' }}>{item.qty}{item.unit?' '+item.unit:''}</td>
-                  <td style={{ padding:'6px 8px', textAlign:'right' }}>{item.price ? '₹'+Number(item.price).toLocaleString('en-IN') : '—'}</td>
+                  <td style={{ padding:'6px 8px', textAlign:'center', color:'#6B7F72' }}>{item.qty}</td>
+                  <td style={{ padding:'6px 8px', textAlign:'center', color:'#6B7F72' }}>{item.unit||'—'}</td>
+                  <td style={{ padding:'6px 8px', textAlign:'right' }}>{item.unit_price ? '₹'+Number(item.unit_price).toLocaleString('en-IN') : '—'}</td>
+                  <td style={{ padding:'6px 8px', textAlign:'right', fontWeight:600 }}>{item.unit_price ? '₹'+Number(item.qty * item.unit_price).toLocaleString('en-IN') : '—'}</td>
                 </tr>
               ))}
               <tr>
-                <td colSpan={2} style={{ padding:'10px 8px', textAlign:'right', fontWeight:700, color:'#6B7F72', fontSize:12 }}>Total</td>
+                <td colSpan={4} style={{ padding:'10px 8px', textAlign:'right', fontWeight:700, color:'#6B7F72', fontSize:12 }}>Total</td>
                 <td style={{ padding:'10px 8px', textAlign:'right', fontWeight:800, color:'#0A6640', fontSize:15 }}>₹{Number(order.total_amount||0).toLocaleString('en-IN')}</td>
               </tr>
             </tbody>
