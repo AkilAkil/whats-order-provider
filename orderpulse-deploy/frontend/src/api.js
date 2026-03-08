@@ -113,7 +113,7 @@ export async function getOrder(id) {
 export async function createOrder(contactId, items, notes, sourceMsgId) {
   return request('POST', '/orders', {
     contact_id: contactId,
-    items: items.map(i => ({ name: i.name, qty: i.qty, unit_price: i.price })),
+    items: items.map(i => ({ name: i.name, qty: i.qty, unit: i.unit || '', unit_price: i.price })),
     notes: notes || '',
     source_msg_id: sourceMsgId || undefined,
   })
@@ -157,7 +157,10 @@ export async function changePassword(currentPassword, newPassword) {
 }
 
 export async function updateOrderItems(id, items, notes) {
-  return request('PATCH', `/orders/${id}/items`, { items, notes })
+  return request('PATCH', `/orders/${id}/items`, {
+    items: items.map(i => ({ name: i.name, qty: i.qty, unit: i.unit || '', price: i.price })),
+    notes,
+  })
 }
 
 export async function markRead(contactId) {
