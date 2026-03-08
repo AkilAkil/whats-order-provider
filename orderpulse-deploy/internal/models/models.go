@@ -193,6 +193,7 @@ type OrderItem struct {
 	OrderID   uuid.UUID `json:"order_id"`
 	Name      string    `json:"name"`
 	Qty       int       `json:"qty"`
+	Unit      string    `json:"unit"`       // e.g. "kg", "pcs", "dozen" — empty string if unspecified
 	UnitPrice float64   `json:"unit_price"`
 	Subtotal  float64   `json:"subtotal"` // computed: qty * unit_price
 }
