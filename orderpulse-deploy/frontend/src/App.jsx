@@ -835,6 +835,7 @@ function OnboardingScreen({ user, onDone, addToast }) {
 
   const [pendingLaunch, setPendingLaunch] = useState(false)
   const [manualMode, setManualMode] = useState(false)
+  const [coexistenceMode, setCoexistenceMode] = useState(false)
   const [accepted, setAccepted] = useState(false)
   const [manualWabaId, setManualWabaId] = useState('')
   const [manualPhoneId, setManualPhoneId] = useState('')
@@ -945,6 +946,62 @@ function OnboardingScreen({ user, onDone, addToast }) {
     api.connectWABA(manualToken.trim(), '', manualWabaId.trim(), manualPhoneId.trim())
       .then(() => { setPhase('done'); setTimeout(onDone, 2000) })
       .catch(err => { setErrMsg(err.error || 'Connection failed'); setPhase('error') })
+  }
+
+  // ── Coexistence: same FB.login but featureType:'coexistence' tells Meta
+  //    to show the QR scan screen instead of OTP — backend unchanged
+  const launchCoexistence = () => {
+    if (!appId || !configId) {
+      setErrMsg('Meta App ID or Config ID missing. Check Railway Variables.')
+      setPhase('error')
+      return
+    }
+    if (!sdkReady || !window.FB) {
+      setPendingLaunch(true)
+      return
+    }
+    setPhase('popup')
+    let wabaId = ''
+    let phoneNumberId = ''
+    const sessionInfoListener = (event) => {
+      if (!['https://www.facebook.com', 'https://web.facebook.com'].includes(event.origin)) return
+      try {
+        const data = JSON.parse(event.data)
+        if (data.type === 'WA_EMBEDDED_SIGNUP') {
+          if (data.event === 'FINISH' || data.event === 'FINISH_ONLY_WABA') {
+            wabaId = data.data?.waba_id || ''
+            phoneNumberId = data.data?.phone_number_id || ''
+          }
+        }
+      } catch {}
+    }
+    window.addEventListener('message', sessionInfoListener)
+    window.FB.login((response) => {
+      window.removeEventListener('message', sessionInfoListener)
+      if (response.status !== 'connected' || !response?.authResponse) {
+        setPhase('idle')
+        setCoexistenceMode(false)
+        return
+      }
+      setPhase('pipeline')
+      const code = response.authResponse.code
+      const accessToken = response.authResponse.accessToken
+      const redirectUri = 'https://www.facebook.com/connect/login_success.html'
+      const token = code || accessToken
+      api.connectWABA(token, redirectUri, wabaId, phoneNumberId)
+        .then(() => { setPhase('done'); setTimeout(onDone, 2000) })
+        .catch(err => { setErrMsg(err.error || 'Connection failed'); setPhase('error') })
+    }, {
+      config_id: configId,
+      response_type: 'code',
+      override_default_response_type: true,
+      scope: 'public_profile,business_management,whatsapp_business_management,whatsapp_business_messaging',
+      extras: {
+        setup: {},
+        featureType: 'coexistence',   // ← tells Meta to show QR scan instead of OTP
+        sessionInfoVersion: 3,
+      },
+    })
   }
 
   // Poll onboarding status to show real pipeline steps
@@ -1091,6 +1148,79 @@ function OnboardingScreen({ user, onDone, addToast }) {
                 <div style={{ display:'none' }} />
               )}
 
+              {/* ── Coexistence detail panel ── */}
+              {coexistenceMode && (
+                <div style={{ background:'#FFFBF0', border:'1.5px solid #FDE68A', borderRadius:14, padding:20, marginBottom:16 }}>
+                  <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+                      <span style={{ fontSize:18 }}>📱</span>
+                      <div style={{ fontWeight:800, fontSize:15, color:'#0F1A14' }}>Coexistence Setup</div>
+                    </div>
+                    <button onClick={() => { setCoexistenceMode(false); setPhase('idle') }} style={{ background:'none', border:'none', fontSize:20, cursor:'pointer', color:'#9CA3AF' }}>×</button>
+                  </div>
+
+                  {/* Eligibility checklist */}
+                  <div style={{ background:'#FEF9EC', border:'1px solid #FDE68A', borderRadius:10, padding:14, marginBottom:16 }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:'#92400E', marginBottom:8, textTransform:'uppercase', letterSpacing:.4 }}>✅ Check eligibility before continuing</div>
+                    {[
+                      { ok: true,  label: 'WhatsApp Business App installed on your phone' },
+                      { ok: true,  label: 'App version 2.24.17 or newer' },
+                      { ok: true,  label: 'Number actively used in Business App for 7+ days' },
+                      { ok: true,  label: 'Indian phone number (+91) — fully supported' },
+                      { ok: false, label: 'If previously on another API provider — must wait 1–2 months after disconnecting' },
+                    ].map((item, i) => (
+                      <div key={i} style={{ display:'flex', gap:8, alignItems:'flex-start', marginBottom:5 }}>
+                        <span style={{ fontSize:13, marginTop:1, flexShrink:0 }}>{item.ok ? '✅' : '⚠️'}</span>
+                        <span style={{ fontSize:12.5, color:'#374151', lineHeight:1.5 }}>{item.label}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Step-by-step what happens inside the popup */}
+                  <div style={{ marginBottom:16 }}>
+                    <div style={{ fontSize:12, fontWeight:700, color:'#6B7F72', marginBottom:10, textTransform:'uppercase', letterSpacing:.4 }}>What happens when you click Connect</div>
+                    {[
+                      { step:'1', text:'A Facebook popup opens — log in with the account linked to your WhatsApp Business App' },
+                      { step:'2', text:'Select your WhatsApp Business Account from the list' },
+                      { step:'3', text:'Choose "Connect your existing WhatsApp Business App"' },
+                      { step:'4', text:'A QR code appears on screen — open your WhatsApp Business App → Settings → Linked Devices → Scan QR' },
+                      { step:'5', text:'Your chat history and contacts sync automatically (up to 6 months)' },
+                      { step:'6', text:'Done — both your phone app and Whats-Order work on the same number' },
+                    ].map(({ step, text }) => (
+                      <div key={step} style={{ display:'flex', gap:10, alignItems:'flex-start', marginBottom:10 }}>
+                        <div style={{ width:22, height:22, borderRadius:'50%', background:'#F59E0B', color:'white', display:'flex', alignItems:'center', justifyContent:'center', fontSize:11, fontWeight:800, flexShrink:0 }}>{step}</div>
+                        <span style={{ fontSize:12.5, color:'#374151', lineHeight:1.5, paddingTop:3 }}>{text}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Limitations reminder */}
+                  <div style={{ background:'#F9FAFB', border:'1px solid #E4EDE6', borderRadius:8, padding:12, marginBottom:16 }}>
+                    <div style={{ fontSize:11, fontWeight:700, color:'#6B7F72', marginBottom:6 }}>⚠️ A few things are disabled in Coexistence mode</div>
+                    <div style={{ fontSize:12, color:'#6B7F72', lineHeight:1.6 }}>
+                      Broadcast lists · View-once messages · Live location<br/>
+                      <span style={{ color:'#0A6640' }}>All normal chats, contacts, calls and status updates still work.</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display:'flex', gap:10 }}>
+                    <button
+                      className="wa-btn"
+                      onClick={launchCoexistence}
+                      disabled={!appId || !configId}
+                      style={{ flex:1, margin:0, background:'#F59E0B', border:'none' }}>
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                      Connect &amp; Scan QR
+                    </button>
+                    <button
+                      onClick={() => { setCoexistenceMode(false); setPhase('idle') }}
+                      style={{ padding:'12px 16px', background:'white', color:'#374151', border:'1.5px solid #E4EDE6', borderRadius:10, fontFamily:'var(--f)', fontSize:13, fontWeight:600, cursor:'pointer' }}>
+                      ← Back
+                    </button>
+                  </div>
+                </div>
+              )}
+
               {manualMode && (
                 <div style={{ background:'#F8FFFE', border:'1.5px solid #BBE0CC', borderRadius:14, padding:20, marginBottom:16 }}>
                   {/* Header */}
@@ -1206,7 +1336,7 @@ function OnboardingScreen({ user, onDone, addToast }) {
                 </div>
               )}
 
-              {accepted && (phase === 'idle' || phase === 'error') && !manualMode && (
+              {accepted && (phase === 'idle' || phase === 'error') && !manualMode && !coexistenceMode && (
                 <>
                   {phase === 'error' && (
                     <div className="err" style={{ marginBottom:16 }}>
@@ -1246,11 +1376,40 @@ function OnboardingScreen({ user, onDone, addToast }) {
                     <div style={{ flex:1, height:1, background:'#E4EDE6' }} />
                   </div>
 
-                  {/* ── Option B: Manual ── */}
+                  {/* ── Option B: Coexistence — keep WhatsApp Business App ── */}
+                  <div style={{ background:'#FFFBF0', border:'1.5px solid #FDE68A', borderRadius:14, padding:18, marginBottom:12 }}>
+                    <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
+                      <span style={{ fontSize:16 }}>📱</span>
+                      <div style={{ fontWeight:800, fontSize:14, color:'#0F1A14' }}>Option B — Keep Your WhatsApp Business App</div>
+                      <span style={{ fontSize:11, background:'#FEF3C7', color:'#92400E', fontWeight:700, padding:'2px 8px', borderRadius:10, marginLeft:'auto' }}>Coexistence</span>
+                    </div>
+                    <div style={{ fontSize:12.5, color:'#6B7F72', lineHeight:1.6, marginBottom:8 }}>
+                      Already using WhatsApp Business App on your phone? Keep using it — and also get Whats-Order. Both work together on the same number.
+                    </div>
+                    <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:14 }}>
+                      {['✅ Keep your phone app','✅ Chat history preserved','✅ All contacts synced','⚠️ Must open app every 14 days'].map((t,i) => (
+                        <span key={i} style={{ fontSize:11, padding:'3px 8px', borderRadius:4, fontWeight:600, background: t.startsWith('✅') ? '#F0FDF4' : '#FFFBEB', color: t.startsWith('✅') ? '#166534' : '#92400E' }}>{t}</span>
+                      ))}
+                    </div>
+                    <button
+                      onClick={() => setCoexistenceMode(true)}
+                      style={{ width:'100%', padding:'11px', background:'white', color:'#92400E', border:'1.5px solid #F59E0B', borderRadius:10, fontFamily:'var(--f)', fontSize:14, fontWeight:700, cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', gap:8 }}>
+                      📱 Connect via Coexistence
+                    </button>
+                  </div>
+
+                  {/* ── Divider ── */}
+                  <div style={{ display:'flex', alignItems:'center', gap:12, margin:'4px 0' }}>
+                    <div style={{ flex:1, height:1, background:'#E4EDE6' }} />
+                    <span style={{ fontSize:12, color:'#9CA3AF', fontWeight:600 }}>or</span>
+                    <div style={{ flex:1, height:1, background:'#E4EDE6' }} />
+                  </div>
+
+                  {/* ── Option C: Manual entry ── */}
                   <div style={{ background:'#FAFBFC', border:'1.5px solid #E4EDE6', borderRadius:14, padding:18, marginTop:4 }}>
                     <div style={{ display:'flex', alignItems:'center', gap:10, marginBottom:4 }}>
                       <span style={{ fontSize:16 }}>⚙️</span>
-                      <div style={{ fontWeight:800, fontSize:14, color:'#0F1A14' }}>Option B — Enter Details Manually</div>
+                      <div style={{ fontWeight:800, fontSize:14, color:'#0F1A14' }}>Option C — Enter Details Manually</div>
                     </div>
                     <div style={{ fontSize:12.5, color:'#6B7F72', lineHeight:1.6, marginBottom:14 }}>
                       Already have a WhatsApp Business Account set up? Or our team has onboarded you? Enter your WABA ID, Phone Number ID and access token directly.
