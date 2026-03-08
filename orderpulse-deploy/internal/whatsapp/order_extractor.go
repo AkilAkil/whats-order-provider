@@ -500,7 +500,7 @@ func llmExtractOpenAI(client *http.Client, text, apiKey string) []ExtractedItem 
 	}
 	defer resp.Body.Close()
 
-	raw, _ := io.ReadAll(resp.Body)
+	raw, _ := io.ReadAll(io.LimitReader(resp.Body, 5<<20))
 	var result struct {
 		Choices []struct {
 			Message struct {
