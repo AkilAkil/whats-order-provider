@@ -69,6 +69,10 @@ func (h *InboxHandler) ListThreads(w http.ResponseWriter, r *http.Request) {
 		}
 		threads = append(threads, t)
 	}
+	if err := rows.Err(); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to read inbox", "server_error")
+		return
+	}
 	writeJSON(w, http.StatusOK, threads)
 }
 
@@ -92,8 +96,14 @@ func (h *InboxHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
 	msgs := make([]models.Message, 0)
 	for rows.Next() {
 		var m models.Message
-		rows.Scan(&m.ID, &m.Direction, &m.Type, &m.Body, &m.MediaURL, &m.IsTagged, &m.ExtractedOrder, &m.CreatedAt)
+		if err := rows.Scan(&m.ID, &m.Direction, &m.Type, &m.Body, &m.MediaURL, &m.IsTagged, &m.ExtractedOrder, &m.CreatedAt); err != nil {
+			continue
+		}
 		msgs = append(msgs, m)
+	}
+	if err := rows.Err(); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to read messages", "server_error")
+		return
 	}
 	writeJSON(w, http.StatusOK, msgs)
 }
@@ -243,11 +253,13 @@ func (h *InboxHandler) SendMedia(w http.ResponseWriter, r *http.Request) {
 	tenantID  := middleware.TenantIDFromCtx(r.Context())
 	contactID := chi.URLParam(r, "contactId")
 
-	// Max 16MB for media
+	// Max 16MB for media — ParseMultipartForm writes overflow to /tmp
 	if err := r.ParseMultipartForm(16 << 20); err != nil {
 		writeError(w, http.StatusBadRequest, "failed to parse form", "bad_request")
 		return
 	}
+	// Always clean up temp files written to disk by ParseMultipartForm
+	defer r.MultipartForm.RemoveAll()
 
 	file, header, err := r.FormFile("file")
 	if err != nil {
