@@ -300,7 +300,8 @@ func (h *OrderHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 
 	// Notify customer on WhatsApp — async, non-blocking
 	go func() {
-		msg := orderStatusMessage(string(newStatus), orderNumber)
+		items := h.fetchItems(context.Background(), uuid.MustParse(orderID))
+		msg := orderStatusMessage(string(newStatus), orderNumber, items)
 		if msg == "" {
 			return
 		}
@@ -361,7 +362,8 @@ func (h *OrderHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 
 	// Notify customer with plain text + save to chat
 	go func() {
-		msg := orderStatusMessage("cancelled", orderNumber)
+		items := h.fetchItems(context.Background(), uuid.MustParse(orderID))
+		msg := orderStatusMessage("cancelled", orderNumber, items)
 		if req.Reason != "" {
 			msg += "\n\nReason: " + req.Reason
 		}
@@ -583,18 +585,31 @@ func (h *OrderHandler) UpdateItems(w http.ResponseWriter, r *http.Request) {
 // Plain text WhatsApp messages sent to customers on each status change.
 // These work immediately without Meta template approval.
 
-func orderStatusMessage(status, orderNumber string) string {
+func orderStatusMessage(status, orderNumber string, items []models.OrderItem) string {
+	// Build item summary block
+	itemLines := ""
+	var total float64
+	for _, it := range items {
+		lineTotal := float64(it.Qty) * it.UnitPrice
+		total += lineTotal
+		itemLines += fmt.Sprintf("\n  • %s × %d — ₹%.0f", it.Name, it.Qty, lineTotal)
+	}
+	itemBlock := ""
+	if len(items) > 0 {
+		itemBlock = "\n\n📋 *Your order:*" + itemLines + fmt.Sprintf("\n  ─────────────\n  *Total: ₹%.0f*", total)
+	}
+
 	switch status {
 	case "confirmed":
-		return "✅ *Order Confirmed!*\n\nHi! Your order *#" + orderNumber + "* has been confirmed and is being prepared. We'll update you as it progresses.\n\nThank you for your order! 🙏"
+		return "✅ *Order Confirmed!*\n\nHi! Your order *#" + orderNumber + "* has been confirmed and is being prepared." + itemBlock + "\n\nWe'll update you as it progresses. Thank you! 🙏"
 	case "packed":
-		return "📦 *Order Packed!*\n\nGreat news! Your order *#" + orderNumber + "* is packed and ready. It will be picked up for delivery soon.\n\nWe'll notify you once it's on the way!"
+		return "📦 *Order Packed!*\n\nYour order *#" + orderNumber + "* is packed and ready for pickup." + itemBlock + "\n\nWe'll notify you once it's on the way!"
 	case "dispatched":
-		return "🚚 *Order Dispatched!*\n\nYour order *#" + orderNumber + "* is on its way to you! Our delivery person is heading your direction.\n\nPlease be available to receive your order."
+		return "🚚 *Order Dispatched!*\n\nYour order *#" + orderNumber + "* is on its way to you!" + itemBlock + "\n\nPlease be available to receive your order."
 	case "delivered":
-		return "🎉 *Order Delivered!*\n\nYour order *#" + orderNumber + "* has been delivered successfully. We hope you enjoy it!\n\nThank you for choosing us. Feel free to message us anytime 😊"
+		return "🎉 *Order Delivered!*\n\nYour order *#" + orderNumber + "* has been delivered successfully." + itemBlock + "\n\nThank you for choosing us. Feel free to message us anytime 😊"
 	case "cancelled":
-		return "❌ *Order Cancelled*\n\nYour order *#" + orderNumber + "* has been cancelled."
+		return "❌ *Order Cancelled*\n\nYour order *#" + orderNumber + "* has been cancelled." + itemBlock
 	default:
 		return ""
 	}
