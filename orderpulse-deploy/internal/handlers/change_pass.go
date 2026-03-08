@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"net/http"
-
+	"encoding/json"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"golang.org/x/crypto/bcrypt"
 	"orderpulse/internal/middleware"
