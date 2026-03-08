@@ -67,17 +67,23 @@ func (h *OrderHandler) List(w http.ResponseWriter, r *http.Request) {
 	for rows.Next() {
 		var o models.Order
 		var contact models.Contact
-		rows.Scan(
+		if err := rows.Scan(
 			&o.ID, &o.TenantID, &o.ContactID, &o.OrderNumber,
 			&o.Status, &o.PaymentStatus, &o.PaymentMethod,
 			&o.TotalAmount, &o.Notes, &o.SourceMsgID,
 			&o.CreatedAt, &o.UpdatedAt,
 			&contact.WaNumber, &contact.Name,
-		)
+		); err != nil {
+			continue
+		}
 		contact.ID = o.ContactID
 		o.Contact = &contact
 		o.Items = h.fetchItems(r.Context(), o.ID)
 		orders = append(orders, o)
+	}
+	if err := rows.Err(); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to read orders", "server_error")
+		return
 	}
 	writeJSON(w, http.StatusOK, orders)
 }
@@ -149,7 +155,7 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// Free plan: 50 orders/month. Pro plan: unlimited.
 	var plan string
 	var monthlyCount int
-	h.db.QueryRow(ctx, `
+	if err := h.db.QueryRow(ctx, `
 		SELECT t.plan, COUNT(o.id)
 		FROM tenants t
 		LEFT JOIN orders o ON o.tenant_id = t.id
@@ -157,7 +163,10 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 			AND o.status != 'cancelled'
 		WHERE t.id = $1
 		GROUP BY t.plan
-	`, tenantID).Scan(&plan, &monthlyCount)
+	`, tenantID).Scan(&plan, &monthlyCount); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to check plan limit", "server_error")
+		return
+	}
 
 	if plan == "free" && monthlyCount >= 50 {
 		writeError(w, http.StatusPaymentRequired,
@@ -300,7 +309,9 @@ func (h *OrderHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 
 	// Notify customer on WhatsApp — async, non-blocking
 	go func() {
-		items := h.fetchItems(context.Background(), uuid.MustParse(orderID))
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		items := h.fetchItems(ctx, uuid.MustParse(orderID))
 		msg := orderStatusMessage(string(newStatus), orderNumber, items)
 		if msg == "" {
 			return
@@ -312,7 +323,7 @@ func (h *OrderHandler) UpdateStatus(w http.ResponseWriter, r *http.Request) {
 		}
 		slog.Info("status notification sent", "order", orderNumber, "status", newStatus)
 		// Save to messages table so it appears in chat history
-		h.db.Exec(context.Background(), `
+		h.db.Exec(ctx, `
 			INSERT INTO messages (tenant_id, contact_id, direction, type, body)
 			VALUES ($1, $2::uuid, 'outbound', 'text', $3)
 		`, tenantID, contactID, msg)
@@ -355,14 +366,20 @@ func (h *OrderHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.db.Exec(r.Context(), `
+	result, err := h.db.Exec(r.Context(), `
 		UPDATE orders SET status = 'cancelled', notes = CONCAT(COALESCE(notes,''), $1), updated_at = NOW()
 		WHERE id = $2::uuid AND tenant_id = $3
 	`, "\nCancellation reason: "+req.Reason, orderID, tenantID)
+	if err != nil || result.RowsAffected() == 0 {
+		writeError(w, http.StatusInternalServerError, "failed to cancel order", "server_error")
+		return
+	}
 
 	// Notify customer with plain text + save to chat
 	go func() {
-		items := h.fetchItems(context.Background(), uuid.MustParse(orderID))
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		items := h.fetchItems(ctx, uuid.MustParse(orderID))
 		msg := orderStatusMessage("cancelled", orderNumber, items)
 		if req.Reason != "" {
 			msg += "\n\nReason: " + req.Reason
@@ -371,7 +388,7 @@ func (h *OrderHandler) Cancel(w http.ResponseWriter, r *http.Request) {
 			slog.Error("failed to send cancel notification", "order", orderNumber, "err", err)
 			return
 		}
-		h.db.Exec(context.Background(), `
+		h.db.Exec(ctx, `
 			INSERT INTO messages (tenant_id, contact_id, direction, type, body)
 			VALUES ($1, $2::uuid, 'outbound', 'text', $3)
 		`, tenantID, contactID2, msg)
@@ -473,7 +490,7 @@ func (h *OrderHandler) ConfirmPayment(w http.ResponseWriter, r *http.Request) {
 	// Free plan: 50 orders/month. Pro plan: unlimited.
 	var plan string
 	var monthlyCount int
-	h.db.QueryRow(ctx, `
+	if err := h.db.QueryRow(ctx, `
 		SELECT t.plan, COUNT(o.id)
 		FROM tenants t
 		LEFT JOIN orders o ON o.tenant_id = t.id
@@ -481,7 +498,10 @@ func (h *OrderHandler) ConfirmPayment(w http.ResponseWriter, r *http.Request) {
 			AND o.status != 'cancelled'
 		WHERE t.id = $1
 		GROUP BY t.plan
-	`, tenantID).Scan(&plan, &monthlyCount)
+	`, tenantID).Scan(&plan, &monthlyCount); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to check plan limit", "server_error")
+		return
+	}
 
 	if plan == "free" && monthlyCount >= 50 {
 		writeError(w, http.StatusPaymentRequired,
@@ -536,6 +556,9 @@ func (h *OrderHandler) fetchItems(ctx context.Context, orderID uuid.UUID) []mode
 		rows.Scan(&item.ID, &item.OrderID, &item.Name, &item.Qty, &item.UnitPrice, &item.Subtotal)
 		items = append(items, item)
 	}
+	if rows.Err() != nil {
+		return nil
+	}
 	return items
 }
 
@@ -563,22 +586,37 @@ func (h *OrderHandler) UpdateItems(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer tx.Rollback(ctx)
+
 	// Recalculate total
 	var total float64
 	for _, it := range req.Items {
 		total += it.Qty * it.Price
 	}
-	// Delete old items and update order
-	tx.Exec(ctx, `DELETE FROM order_items WHERE order_id = $1`, orderID)
-	tx.Exec(ctx, `UPDATE orders SET total_amount=$1, notes=$2, updated_at=NOW() WHERE id=$3::uuid AND tenant_id=$4`,
+
+	// Delete old items — include tenant_id join to prevent cross-tenant tampering
+	tx.Exec(ctx, `
+		DELETE FROM order_items WHERE order_id = $1::uuid
+		AND EXISTS (SELECT 1 FROM orders WHERE id = $1::uuid AND tenant_id = $2)
+	`, orderID, tenantID)
+
+	result, err := tx.Exec(ctx,
+		`UPDATE orders SET total_amount=$1, notes=$2, updated_at=NOW() WHERE id=$3::uuid AND tenant_id=$4`,
 		total, req.Notes, orderID, tenantID)
+	if err != nil || result.RowsAffected() == 0 {
+		writeError(w, http.StatusNotFound, "order not found", "not_found")
+		return
+	}
+
 	for _, it := range req.Items {
 		tx.Exec(ctx, `INSERT INTO order_items (order_id, name, qty, unit_price) VALUES ($1::uuid,$2,$3,$4)`,
 			orderID, it.Name, it.Qty, it.Price)
 	}
-	tx.Commit(ctx)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+
+	if err := tx.Commit(ctx); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to commit", "server_error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
 
 // ─── ORDER STATUS MESSAGES ────────────────────────────────────────────────────
