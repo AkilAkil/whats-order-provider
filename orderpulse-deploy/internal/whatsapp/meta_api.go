@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"time"
@@ -227,7 +228,7 @@ func SubscribeAppToWABA(wabaID, accessToken string) error {
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 5<<20))
 	if resp.StatusCode != http.StatusOK {
 		return fmt.Errorf("subscribe failed (%d): %s", resp.StatusCode, body)
 	}
@@ -257,7 +258,7 @@ func UnsubscribeAppFromWABA(wabaID, accessToken string) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, 5<<20))
 		return fmt.Errorf("unsubscribe failed (%d): %s", resp.StatusCode, b)
 	}
 	return nil
@@ -379,7 +380,7 @@ func sendMessage(phoneNumberID, accessToken string, payload interface{}) error {
 	defer resp.Body.Close()
 
 	if resp.StatusCode >= 400 {
-		body, _ := io.ReadAll(resp.Body)
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 5<<20))
 		// Parse Meta error for better diagnostics
 		var metaErr struct {
 			Error struct {
@@ -403,7 +404,7 @@ func metaGet(url string) ([]byte, error) {
 		return nil, fmt.Errorf("GET %s: %w", url, err)
 	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 5<<20))
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GET %s failed (%d): %s", url, resp.StatusCode, body)
 	}
@@ -455,11 +456,11 @@ func DownloadMedia(downloadURL, accessToken string) ([]byte, string, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		b, _ := io.ReadAll(resp.Body)
+		b, _ := io.ReadAll(io.LimitReader(resp.Body, 5<<20))
 		return nil, "", fmt.Errorf("download failed (%d): %s", resp.StatusCode, b)
 	}
 
-	data, err := io.ReadAll(resp.Body)
+	data, err := io.ReadAll(io.LimitReader(resp.Body, 5<<20))
 	if err != nil {
 		return nil, "", fmt.Errorf("read media body: %w", err)
 	}
@@ -470,30 +471,38 @@ func DownloadMedia(downloadURL, accessToken string) ([]byte, string, error) {
 // This media ID can then be referenced in outbound image/audio/document messages.
 // mimeType examples: "image/jpeg", "image/png", "audio/ogg; codecs=opus", "application/pdf"
 func UploadMedia(phoneNumberID, accessToken, mimeType, filename string, data []byte) (string, error) {
-	body := &bytes.Buffer{}
-	// Meta requires multipart/form-data with fields: file + type + messaging_product
-	boundary := "----MetaBoundary"
-	body.WriteString("--" + boundary + "\r\n")
-	body.WriteString(fmt.Sprintf(`Content-Disposition: form-data; name="file"; filename="%s"`+"\r\n", filename))
-	body.WriteString("Content-Type: " + mimeType + "\r\n\r\n")
-	body.Write(data)
-	body.WriteString("\r\n--" + boundary + "\r\n")
-	body.WriteString(`Content-Disposition: form-data; name="type"` + "\r\n\r\n")
-	body.WriteString(mimeType)
-	body.WriteString("\r\n--" + boundary + "\r\n")
-	body.WriteString(`Content-Disposition: form-data; name="messaging_product"` + "\r\n\r\n")
-	body.WriteString("whatsapp")
-	body.WriteString("\r\n--" + boundary + "--\r\n")
+	var buf bytes.Buffer
+	mw := multipart.NewWriter(&buf)
+
+	// messaging_product field
+	if err := mw.WriteField("messaging_product", "whatsapp"); err != nil {
+		return "", fmt.Errorf("write messaging_product field: %w", err)
+	}
+	// type field
+	if err := mw.WriteField("type", mimeType); err != nil {
+		return "", fmt.Errorf("write type field: %w", err)
+	}
+	// file field — use CreateFormFile which handles content-disposition correctly
+	fw, err := mw.CreateFormFile("file", filename)
+	if err != nil {
+		return "", fmt.Errorf("create form file: %w", err)
+	}
+	if _, err := fw.Write(data); err != nil {
+		return "", fmt.Errorf("write file data: %w", err)
+	}
+	if err := mw.Close(); err != nil {
+		return "", fmt.Errorf("close multipart writer: %w", err)
+	}
 
 	req, err := http.NewRequest(http.MethodPost,
 		fmt.Sprintf("%s/%s/media", graphBase, phoneNumberID),
-		body,
+		&buf,
 	)
 	if err != nil {
 		return "", fmt.Errorf("build upload request: %w", err)
 	}
 	req.Header.Set("Authorization", "Bearer "+accessToken)
-	req.Header.Set("Content-Type", "multipart/form-data; boundary="+boundary)
+	req.Header.Set("Content-Type", mw.FormDataContentType()) // includes correct boundary
 
 	client := &http.Client{Timeout: 60 * time.Second}
 	resp, err := client.Do(req)
@@ -502,7 +511,7 @@ func UploadMedia(phoneNumberID, accessToken, mimeType, filename string, data []b
 	}
 	defer resp.Body.Close()
 
-	respBody, _ := io.ReadAll(resp.Body)
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 5<<20))
 	if resp.StatusCode >= 400 {
 		return "", fmt.Errorf("upload failed (%d): %s", resp.StatusCode, respBody)
 	}
@@ -564,7 +573,7 @@ func metaGetWithAuth(url, accessToken string) ([]byte, error) {
 		return nil, fmt.Errorf("GET %s: %w", url, err)
 	}
 	defer resp.Body.Close()
-	body, _ := io.ReadAll(resp.Body)
+	body, _ := io.ReadAll(io.LimitReader(resp.Body, 5<<20))
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("GET %s failed (%d): %s", url, resp.StatusCode, body)
 	}
