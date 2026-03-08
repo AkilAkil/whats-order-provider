@@ -188,3 +188,7 @@ END; $$;
 
 -- Add last_read_at to contacts so we can track when the user last read each thread
 ALTER TABLE contacts ADD COLUMN IF NOT EXISTS last_read_at TIMESTAMPTZ;
+
+-- Add unit column to order_items (kg, pcs, dozen, etc.)
+-- Nullable so existing rows are unaffected
+ALTER TABLE order_items ADD COLUMN IF NOT EXISTS unit TEXT NOT NULL DEFAULT '';
