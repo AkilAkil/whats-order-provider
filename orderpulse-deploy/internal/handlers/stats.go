@@ -47,17 +47,16 @@ func (h *StatsHandler) Get(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Top selling items — explode order items JSONB and aggregate
+	// Top selling items — join order_items table (items are NOT a JSONB column on orders)
 	rows, err := h.db.Query(r.Context(), `
 		SELECT
-			LOWER(TRIM(item->>'name'))          AS item_name,
-			SUM((item->>'qty')::numeric)        AS total_qty,
-			COUNT(*)                            AS order_count
-		FROM orders,
-			jsonb_array_elements(items) AS item
-		WHERE tenant_id = $1
-		  AND status != 'cancelled'
-		  AND items IS NOT NULL
+			LOWER(TRIM(oi.name))            AS item_name,
+			SUM(oi.qty)                     AS total_qty,
+			COUNT(DISTINCT oi.order_id)     AS order_count
+		FROM order_items oi
+		JOIN orders o ON o.id = oi.order_id
+		WHERE o.tenant_id = $1
+		  AND o.status != 'cancelled'
 		GROUP BY 1
 		ORDER BY total_qty DESC
 		LIMIT 10
@@ -70,6 +69,7 @@ func (h *StatsHandler) Get(w http.ResponseWriter, r *http.Request) {
 				stats.TopItems = append(stats.TopItems, item)
 			}
 		}
+		_ = rows.Err() // non-fatal — return partial top-items rather than failing the whole stats response
 	}
 
 	writeJSON(w, http.StatusOK, stats)
