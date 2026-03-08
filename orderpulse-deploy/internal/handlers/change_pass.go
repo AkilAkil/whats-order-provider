@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -31,7 +30,7 @@ func (h *ChangePasswordHandler) Change(w http.ResponseWriter, r *http.Request) {
 	}
 	var userID, hash string
 	err := h.db.QueryRow(r.Context(),
-		`SELECT u.id, u.password_hash FROM users u WHERE u.tenant_id = $1 LIMIT 1`,
+		`SELECT u.id, u.password FROM users u WHERE u.tenant_id = $1 LIMIT 1`,
 		tenantID).Scan(&userID, &hash)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "user not found", "not_found")
@@ -41,8 +40,15 @@ func (h *ChangePasswordHandler) Change(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnauthorized, "current password is incorrect", "wrong_password")
 		return
 	}
-	newHash, _ := bcrypt.GenerateFromPassword([]byte(req.NewPassword), 12)
-	h.db.Exec(r.Context(), `UPDATE users SET password_hash = $1 WHERE id = $2`, string(newHash), userID)
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
+	newHash, err := bcrypt.GenerateFromPassword([]byte(req.NewPassword), 12)
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to hash password", "server_error")
+		return
+	}
+	if _, err := h.db.Exec(r.Context(),
+		`UPDATE users SET password = $1 WHERE id = $2`, string(newHash), userID); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to update password", "server_error")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]string{"status": "ok"})
 }
