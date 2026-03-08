@@ -433,24 +433,21 @@ func (h *OnboardingHandler) GetStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Fetch step audit trail
-	rows, _ := h.db.Query(r.Context(), `
+	rows, err := h.db.Query(r.Context(), `
 		SELECT step, status, created_at
 		FROM onboarding_events WHERE tenant_id = $1
 		ORDER BY created_at ASC
 	`, tenantID)
-	defer func() {
-		if rows != nil {
-			rows.Close()
-		}
-	}()
 
 	steps := make([]stepSummary, 0)
-	if rows != nil {
+	if err == nil {
+		defer rows.Close()
 		for rows.Next() {
 			var s stepSummary
 			rows.Scan(&s.Step, &s.Status, &s.CreatedAt)
 			steps = append(steps, s)
 		}
+		_ = rows.Err() // non-fatal — return partial steps rather than failing the status response
 	}
 
 	resp := statusResp{
