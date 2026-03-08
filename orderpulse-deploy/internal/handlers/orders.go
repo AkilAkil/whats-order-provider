@@ -2,11 +2,12 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"net/http"
 	"time"
-	"encoding/json"
+
 	"github.com/go-chi/chi/v5"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -212,9 +213,9 @@ func (h *OrderHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	for _, item := range req.Items {
 		if _, err := tx.Exec(ctx, `
-			INSERT INTO order_items (order_id, name, qty, unit_price)
-			VALUES ($1, $2, $3, $4)
-		`, orderID, item.Name, item.Qty, item.UnitPrice); err != nil {
+			INSERT INTO order_items (order_id, name, qty, unit, unit_price)
+			VALUES ($1, $2, $3, $4, $5)
+		`, orderID, item.Name, item.Qty, item.Unit, item.UnitPrice); err != nil {
 			writeError(w, http.StatusInternalServerError, "failed to insert items", "server_error")
 			return
 		}
@@ -543,7 +544,7 @@ func (h *OrderHandler) ConfirmPayment(w http.ResponseWriter, r *http.Request) {
 
 func (h *OrderHandler) fetchItems(ctx context.Context, orderID uuid.UUID) []models.OrderItem {
 	rows, err := h.db.Query(ctx, `
-		SELECT id, order_id, name, qty, unit_price, (qty * unit_price) AS subtotal
+		SELECT id, order_id, name, qty, COALESCE(unit,''), unit_price, (qty * unit_price) AS subtotal
 		FROM order_items WHERE order_id = $1 ORDER BY id
 	`, orderID)
 	if err != nil {
@@ -553,7 +554,7 @@ func (h *OrderHandler) fetchItems(ctx context.Context, orderID uuid.UUID) []mode
 	items := make([]models.OrderItem, 0)
 	for rows.Next() {
 		var item models.OrderItem
-		rows.Scan(&item.ID, &item.OrderID, &item.Name, &item.Qty, &item.UnitPrice, &item.Subtotal)
+		rows.Scan(&item.ID, &item.OrderID, &item.Name, &item.Qty, &item.Unit, &item.UnitPrice, &item.Subtotal)
 		items = append(items, item)
 	}
 	if rows.Err() != nil {
@@ -608,8 +609,8 @@ func (h *OrderHandler) UpdateItems(w http.ResponseWriter, r *http.Request) {
 	}
 
 	for _, it := range req.Items {
-		tx.Exec(ctx, `INSERT INTO order_items (order_id, name, qty, unit_price) VALUES ($1::uuid,$2,$3,$4)`,
-			orderID, it.Name, it.Qty, it.Price)
+		tx.Exec(ctx, `INSERT INTO order_items (order_id, name, qty, unit, unit_price) VALUES ($1::uuid,$2,$3,$4,$5)`,
+			orderID, it.Name, it.Qty, it.Unit, it.Price)
 	}
 
 	if err := tx.Commit(ctx); err != nil {
