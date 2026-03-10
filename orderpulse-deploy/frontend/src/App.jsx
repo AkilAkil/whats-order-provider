@@ -3755,7 +3755,10 @@ export default function App() {
     if (params.get('token')) return 'reset-password'
     if (window.location.pathname === '/privacy') return 'privacy'
     if (window.location.pathname === '/terms') return 'terms'
-    if (api.isLoggedIn()) return 'dashboard'
+    if (api.isLoggedIn()) {
+      const status = localStorage.getItem('op_onboarding_status')
+      return status === 'active' ? 'dashboard' : 'onboarding'
+    }
     return 'landing'
   }
 
@@ -3767,14 +3770,19 @@ export default function App() {
     const u = data.user || { name: data.business_name, email: data.email }
     setUser(u)
     localStorage.setItem('op_user', JSON.stringify(u))
+    localStorage.setItem('op_onboarding_status', data.onboarding_status || 'pending')
     setScreen(data.onboarding_status === 'active' ? 'dashboard' : 'onboarding')
   }
 
-  const afterOnboarding = () => setScreen('dashboard')
+  const afterOnboarding = () => {
+    localStorage.setItem('op_onboarding_status', 'active')
+    setScreen('dashboard')
+  }
 
   const logout = () => {
     api.logout()
     localStorage.removeItem('op_user')
+    localStorage.removeItem('op_onboarding_status')
     setUser(null)
     setScreen('login')
   }
